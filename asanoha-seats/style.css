@@ -58,6 +58,22 @@ body {
   display: flex; align-items: center; justify-content: space-between; gap: 14px;
   max-width: 720px; margin: 0 auto;
 }
+.topbar__back {
+  font-size: 10px;
+  color: var(--color-text-muted);
+  text-decoration: none;
+  letter-spacing: 0.2em;
+  padding: 7px 11px;
+  border: 1px solid var(--color-paper-line);
+  border-radius: 999px;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.topbar__back:hover {
+  color: var(--color-ink);
+  border-color: var(--color-ink);
+  background: var(--color-bg);
+}
 .topbar__brand { display: flex; flex-direction: column; gap: 2px; }
 .topbar__brand-yomi { font-size: 9px; color: var(--color-text-muted); letter-spacing: 0.55em; }
 .topbar__brand-name {

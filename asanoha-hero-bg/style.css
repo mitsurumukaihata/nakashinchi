@@ -337,6 +337,40 @@ a { color: inherit; text-decoration: none; }
   animation: scrollLine 2.4s 3.6s ease-in-out infinite;
 }
 
+/* 店主向け 管理リンク（右下隅・控えめ） */
+.hero__admin {
+  position: absolute;
+  right: 18px;
+  bottom: 18px;
+  z-index: 6;
+  font-family: var(--font-jp);
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: rgba(245, 239, 230, 0.45);
+  padding: 8px 14px;
+  border: 1px solid rgba(245, 239, 230, 0.18);
+  background: rgba(0, 0, 0, 0.25);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  border-radius: 999px;
+  text-decoration: none;
+  transition: color 0.25s, border-color 0.25s, background 0.25s;
+  opacity: 0;
+  animation: fadeUp 1.4s 2.8s ease forwards;
+}
+.hero__admin:hover {
+  color: var(--color-paper);
+  border-color: rgba(245, 239, 230, 0.6);
+  background: rgba(200, 16, 46, 0.45);
+}
+.hero__admin:focus-visible {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: 3px;
+}
+@media (max-width: 600px) {
+  .hero__admin { right: 14px; bottom: 14px; font-size: 9px; padding: 7px 12px; }
+}
+
 @keyframes fadeUp {
   from { opacity: 0; transform: translateY(18px); }
   to   { opacity: 1; transform: translateY(0); }

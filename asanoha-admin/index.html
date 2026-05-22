@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1a0c08">
+<title>麻ノ葉 — 管理ダッシュボード</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;700&family=Yuji+Syuku&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="topbar">
+  <div class="topbar__inner">
+    <a href="../asanoha-hero-bg/" class="topbar__back" title="公開ページへ戻る">
+      <span class="arr">←</span> 公開ページ
+    </a>
+    <div class="topbar__center">
+      <span class="topbar__yomi">M A N O H A &nbsp;/&nbsp; 管 理</span>
+      <h1 class="topbar__brand">麻<span class="ja-accent">ノ</span>葉</h1>
+    </div>
+    <div class="topbar__meta">
+      <span class="topbar__time" id="time">--:--</span>
+      <span class="topbar__date" id="date">- 月 -日 (-)</span>
+    </div>
+  </div>
+</header>
+
+<section class="summary">
+  <div class="summary__inner">
+    <div class="summary__col">
+      <span class="summary__label">営業</span>
+      <span class="summary__value">
+        <span class="dot" id="open-dot"></span>
+        <span id="open-status">確認中…</span>
+      </span>
+      <span class="summary__sub">17:00 — 25:00</span>
+    </div>
+    <div class="summary__col">
+      <span class="summary__label">空席</span>
+      <span class="summary__value summary__value--big" id="seats-open">11</span>
+      <span class="summary__sub">/ 11 席</span>
+    </div>
+    <div class="summary__col">
+      <span class="summary__label">着席</span>
+      <span class="summary__value summary__value--big summary__value--accent" id="seats-taken">0</span>
+      <span class="summary__sub">/ 11 席</span>
+    </div>
+    <div class="summary__col">
+      <span class="summary__label">本日の予約</span>
+      <span class="summary__value summary__value--big">—</span>
+      <span class="summary__sub">準備中</span>
+    </div>
+  </div>
+</section>
+
+<main class="cards">
+  <h2 class="cards__heading">運営</h2>
+  <div class="cards__grid">
+
+    <a href="../asanoha-seats/" class="card card--active">
+      <div class="card__head">
+        <span class="card__num">01</span>
+        <span class="card__badge card__badge--live">稼働中</span>
+      </div>
+      <h3 class="card__title">席の状況</h3>
+      <p class="card__desc">BOX 5 + カウンター 6 / 一括切替・アンドゥ対応</p>
+      <div class="card__foot">
+        <span class="card__live"><span id="card-seats-info">空席 11 / 着 0</span></span>
+        <span class="card__arrow">→</span>
+      </div>
+    </a>
+
+    <button type="button" class="card card--coming" data-feature="hours">
+      <div class="card__head">
+        <span class="card__num">02</span>
+        <span class="card__badge">準備中</span>
+      </div>
+      <h3 class="card__title">営業時間・定休日</h3>
+      <p class="card__desc">通常営業時間、特別営業、貸切日の登録</p>
+      <div class="card__foot">
+        <span class="card__live">現在: 17:00 — 25:00</span>
+        <span class="card__arrow">→</span>
+      </div>
+    </button>
+
+    <button type="button" class="card card--coming" data-feature="reservation">
+      <div class="card__head">
+        <span class="card__num">03</span>
+        <span class="card__badge">準備中</span>
+      </div>
+      <h3 class="card__title">予約・お問い合わせ</h3>
+      <p class="card__desc">電話・LINE 経由の予約を一元管理</p>
+      <div class="card__foot">
+        <span class="card__live">本日 — 件</span>
+        <span class="card__arrow">→</span>
+      </div>
+    </button>
+
+  </div>
+
+  <h2 class="cards__heading">コンテンツ</h2>
+  <div class="cards__grid">
+
+    <button type="button" class="card card--coming" data-feature="menu">
+      <div class="card__head">
+        <span class="card__num">04</span>
+        <span class="card__badge">準備中</span>
+      </div>
+      <h3 class="card__title">お品書き</h3>
+      <p class="card__desc">メニューの追加・編集・並び替え</p>
+      <div class="card__foot">
+        <span class="card__live">登録 — 品</span>
+        <span class="card__arrow">→</span>
+      </div>
+    </button>
+
+    <button type="button" class="card card--coming" data-feature="news">
+      <div class="card__head">
+        <span class="card__num">05</span>
+        <span class="card__badge">準備中</span>
+      </div>
+      <h3 class="card__title">お知らせ・今日の一言</h3>
+      <p class="card__desc">トップ画面に表示する告知の編集</p>
+      <div class="card__foot">
+        <span class="card__live">未投稿</span>
+        <span class="card__arrow">→</span>
+      </div>
+    </button>
+
+    <button type="button" class="card card--coming" data-feature="photos">
+      <div class="card__head">
+        <span class="card__num">06</span>
+        <span class="card__badge">準備中</span>
+      </div>
+      <h3 class="card__title">写真ギャラリー</h3>
+      <p class="card__desc">店内・料理写真の差し替え・並び替え</p>
+      <div class="card__foot">
+        <span class="card__live">未登録</span>
+        <span class="card__arrow">→</span>
+      </div>
+    </button>
+
+    <button type="button" class="card card--coming" data-feature="info">
+      <div class="card__head">
+        <span class="card__num">07</span>
+        <span class="card__badge">準備中</span>
+      </div>
+      <h3 class="card__title">店舗情報</h3>
+      <p class="card__desc">住所・電話・アクセス・地図</p>
+      <div class="card__foot">
+        <span class="card__live">未設定</span>
+        <span class="card__arrow">→</span>
+      </div>
+    </button>
+
+  </div>
+
+  <h2 class="cards__heading">分析・設定</h2>
+  <div class="cards__grid">
+
+    <button type="button" class="card card--coming" data-feature="stats">
+      <div class="card__head">
+        <span class="card__num">08</span>
+        <span class="card__badge">準備中</span>
+      </div>
+      <h3 class="card__title">統計・分析</h3>
+      <p class="card__desc">着席履歴、ピーク時間、回転率</p>
+      <div class="card__foot">
+        <span class="card__live">データ未収集</span>
+        <span class="card__arrow">→</span>
+      </div>
+    </button>
+
+    <button type="button" class="card card--coming" data-feature="settings">
+      <div class="card__head">
+        <span class="card__num">09</span>
+        <span class="card__badge">準備中</span>
+      </div>
+      <h3 class="card__title">設定</h3>
+      <p class="card__desc">パスワード・通知・スタッフ管理</p>
+      <div class="card__foot">
+        <span class="card__live">単一端末</span>
+        <span class="card__arrow">→</span>
+      </div>
+    </button>
+
+  </div>
+</main>
+
+<footer class="footer">
+  <p class="footer__brand">麻ノ葉 — まのは / Manoha</p>
+  <p class="footer__note">広島・中新地 &nbsp;·&nbsp; 管理画面 v0.1</p>
+</footer>
+
+<!-- 「準備中」カードのお知らせモーダル -->
+<div class="modal" id="modal" hidden>
+  <div class="modal__backdrop" data-close></div>
+  <div class="modal__panel" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <button class="modal__close" data-close aria-label="閉じる">✕</button>
+    <p class="modal__num" id="modal-num"></p>
+    <h3 class="modal__title" id="modal-title"></h3>
+    <p class="modal__desc" id="modal-desc"></p>
+    <div class="modal__plan">
+      <p class="modal__plan-label">対応予定</p>
+      <p class="modal__plan-body" id="modal-plan"></p>
+    </div>
+    <button class="modal__btn" data-close>閉じる</button>
+  </div>
+</div>
+
+<script src="script.js" defer></script>
+</body>
+</html>
