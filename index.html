@@ -148,6 +148,25 @@ img { display: block; max-width: 100%; height: auto; }
   color: var(--color-text-soft);
   letter-spacing: 0.08em;
 }
+.stores__actions {
+  display: flex; justify-content: center; gap: 10px; flex-wrap: wrap;
+  margin-top: 22px;
+}
+.locate-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 20px;
+  background: var(--color-ink); color: var(--color-paper);
+  border: none; border-radius: 999px;
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  transition: background 0.25s, transform 0.18s;
+}
+.locate-btn:hover  { background: var(--color-accent); transform: translateY(-1px); }
+.locate-btn:active { transform: translateY(0); }
+.locate-btn[data-state="locating"] { opacity: 0.55; pointer-events: none; }
+.locate-btn[data-state="done"]     { background: var(--color-accent); }
+.locate-btn svg { width: 14px; height: 14px; }
 
 .store-grid {
   max-width: 1100px;
@@ -155,6 +174,33 @@ img { display: block; max-width: 100%; height: auto; }
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 24px;
+}
+/* スマホ：横スワイプ・スナップで店舗をめくれる */
+@media (max-width: 760px) {
+  .store-grid {
+    display: flex;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    gap: 14px;
+    padding: 4px 24px 16px;
+    margin: 0 -24px;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .store-grid::-webkit-scrollbar { display: none; }
+  .store-card { flex: 0 0 86%; scroll-snap-align: start; }
+  .store-card--placeholder { min-height: 340px; }
+}
+.scroll-hint {
+  display: none;
+  text-align: center;
+  font-size: 10px; color: var(--color-text-soft);
+  letter-spacing: 0.4em;
+  margin-top: 14px;
+  opacity: 0.7;
+}
+@media (max-width: 760px) {
+  .scroll-hint { display: block; }
 }
 
 /* ===== Store Card ===== */
@@ -205,9 +251,15 @@ img { display: block; max-width: 100%; height: auto; }
   backdrop-filter: blur(6px);
   border-radius: 999px;
 }
-.store-card__badge[data-status="open"]   { color: #d8f4dc; border-color: rgba(74,222,128,0.5); }
-.store-card__badge[data-status="open"]   .dot { background: var(--color-success); box-shadow: 0 0 8px rgba(90,208,110,0.7); }
-.store-card__badge[data-status="closed"] .dot { background: rgba(245,239,230,0.45); }
+.store-card__badge[data-status="open"]    { color: #d8f4dc; border-color: rgba(74,222,128,0.5); }
+.store-card__badge[data-status="open"]    .dot { background: var(--color-success); box-shadow: 0 0 8px rgba(90,208,110,0.7); }
+.store-card__badge[data-status="closed"]  .dot { background: rgba(245,239,230,0.45); }
+.store-card__badge[data-status="stopped"] { color: #ffd8a8; border-color: rgba(232,148,80,0.5); }
+.store-card__badge[data-status="stopped"] .dot { background: #f08c40; box-shadow: 0 0 8px rgba(240,140,64,0.6); }
+.store-card__badge[data-status="ended"]   { color: rgba(245,239,230,0.65); }
+.store-card__badge[data-status="ended"]   .dot { background: rgba(245,239,230,0.55); }
+.store-card__badge[data-status="full"]    { color: #ffb8c0; border-color: rgba(232,80,96,0.6); }
+.store-card__badge[data-status="full"]    .dot { background: var(--color-accent); box-shadow: 0 0 8px rgba(200,16,46,0.6); }
 .store-card__badge .dot {
   width: 7px; height: 7px; border-radius: 50%;
 }
@@ -398,6 +450,14 @@ img { display: block; max-width: 100%; height: auto; }
     <p class="stores__crumb">SHOPS</p>
     <h2 class="stores__title">掲載店舗</h2>
     <p class="stores__lead">中新地で、いま「語らいの場」を構えるお店たち。</p>
+    <div class="stores__actions">
+      <button class="locate-btn" id="locate-btn" type="button">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+          <path d="M12 2a8 8 0 0 0-8 8c0 5.4 7 11.5 7.3 11.8a1 1 0 0 0 1.4 0C13 21.5 20 15.4 20 10a8 8 0 0 0-8-8zm0 11a3 3 0 1 1 0-6 3 3 0 0 1 0 6z"/>
+        </svg>
+        <span id="locate-label">現在地から近い順</span>
+      </button>
+    </div>
   </header>
 
   <div class="store-grid">
@@ -424,6 +484,10 @@ img { display: block; max-width: 100%; height: auto; }
             席数
             <strong>BOX 5 / カウンター 6</strong>
           </div>
+          <div class="store-card__meta-item" id="card-distance-asanoha" hidden>
+            現在地から
+            <strong id="dist-asanoha">— km</strong>
+          </div>
         </div>
         <div class="store-card__cta">店ページを見る →</div>
       </div>
@@ -442,6 +506,7 @@ img { display: block; max-width: 100%; height: auto; }
     </div>
 
   </div>
+  <p class="scroll-hint">← &nbsp; 横にスワイプ &nbsp; →</p>
 </section>
 
 <!-- ============ CTA ============ -->
@@ -466,37 +531,149 @@ img { display: block; max-width: 100%; height: auto; }
 </footer>
 
 <script>
-// 麻ノ葉カードに営業状態を表示（公開ヒーローと同じロジック）
+// ===========================================
+// 中新地 ランディング
+// - 店舗カードの営業状態・空席表示（hero と同じデータを参照）
+// - 現在地から距離を計算して表示
+// ===========================================
 (function () {
-  var HOURS_KEY = 'manoha-hours-v1';
-  var DEFAULT = { open: '17:00', close: '01:00', crossDay: true, closedDays: [] };
-  var badge = document.getElementById('card-status-asanoha');
-  var badgeTxt = badge ? badge.querySelector('.store-card__badge-text') : null;
-  var hoursEl = document.getElementById('card-hours-asanoha');
+  'use strict';
 
-  function readHours() {
-    try { return JSON.parse(localStorage.getItem(HOURS_KEY) || 'null') || DEFAULT; }
-    catch (_) { return DEFAULT; }
+  var HOURS_KEY   = 'manoha-hours-v1';
+  var DISPLAY_KEY = 'manoha-display-v1';
+  var SEATS_KEY   = 'manoha-seats-v1';
+  var DEFAULT_HOURS   = { open: '17:00', close: '01:00', crossDay: true, closedDays: [], reception: 'normal', receptionDate: '' };
+  var DEFAULT_DISPLAY = { showBadge: true, showSeats: true, showSeatsDetail: false, showWhenFull: false };
+  var TOTAL_SEATS = 11;
+
+  // 店舗データ（位置情報・将来増やしていく）
+  var STORES = [
+    { id: 'asanoha', name: '麻ノ葉', lat: 34.3925, lng: 132.4541 }
+  ];
+
+  // ---- 営業判定 ----
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
-  function isOpen(now, h) {
-    if ((h.closedDays || []).indexOf(now.getDay()) !== -1) return false;
-    var op = h.open.split(':'),  cl = h.close.split(':');
+  function readHours() {
+    try {
+      var v = JSON.parse(localStorage.getItem(HOURS_KEY) || 'null');
+      var m = Object.assign({}, DEFAULT_HOURS, v || {});
+      if (m.reception !== 'normal' && m.receptionDate !== todayStr()) m.reception = 'normal';
+      return m;
+    } catch (_) { return Object.assign({}, DEFAULT_HOURS); }
+  }
+  function readDisplay() {
+    try { return Object.assign({}, DEFAULT_DISPLAY, JSON.parse(localStorage.getItem(DISPLAY_KEY) || 'null') || {}); }
+    catch (_) { return Object.assign({}, DEFAULT_DISPLAY); }
+  }
+  function readSeats() {
+    try { return JSON.parse(localStorage.getItem(SEATS_KEY) || '{}') || {}; }
+    catch (_) { return {}; }
+  }
+  function countTaken(seats) {
+    var t = 0;
+    Object.keys(seats).forEach(function (k) { if (seats[k]) t++; });
+    return t;
+  }
+  function isOpenNow(now, h) {
+    if (h.reception === 'closed')  return { open: false, state: 'ended',   label: '本日終了' };
+    if (h.reception === 'stopped') return { open: false, state: 'stopped', label: '受付停止中' };
+    if ((h.closedDays || []).indexOf(now.getDay()) !== -1) return { open: false, state: 'closed', label: '本日 定休日' };
+    var op = h.open.split(':'), cl = h.close.split(':');
     var nowM   = now.getHours()*60 + now.getMinutes();
     var openM  = (+op[0])*60 + (+op[1]);
     var closeM = (+cl[0])*60 + (+cl[1]);
-    return h.crossDay ? (nowM >= openM || nowM < closeM) : (nowM >= openM && nowM < closeM);
+    var open = h.crossDay ? (nowM >= openM || nowM < closeM) : (nowM >= openM && nowM < closeM);
+    return { open: open, state: open ? 'open' : 'closed', label: open ? '営業中' : '営業時間外' };
   }
-  function refresh() {
+
+  function refreshAsanoha() {
     var h = readHours();
-    var open = isOpen(new Date(), h);
-    badge.setAttribute('data-status', open ? 'open' : 'closed');
-    badgeTxt.textContent = open ? '営業中' : '営業時間外';
+    var d = readDisplay();
+    var seats = readSeats();
+    var open = TOTAL_SEATS - countTaken(seats);
+    var st = isOpenNow(new Date(), h);
+
+    var badge    = document.getElementById('card-status-asanoha');
+    var badgeTxt = badge ? badge.querySelector('.store-card__badge-text') : null;
+    var hoursEl  = document.getElementById('card-hours-asanoha');
+    if (!badge || !badgeTxt || !hoursEl) return;
+
+    // バッジ表示判定
+    var label = st.label;
+    var state = st.state;
+    if (st.open && open === 0) { state = 'full'; label = '満席'; }
+    else if (st.open && d.showSeats) {
+      if (d.showSeatsDetail) label += ' (空 ' + open + ')';
+      else                    label += ' (残 ' + open + ')';
+    }
+    if (!d.showBadge && st.open) {
+      badge.hidden = true;
+    } else {
+      badge.hidden = false;
+      badge.setAttribute('data-status', state);
+      badgeTxt.textContent = label;
+    }
     hoursEl.textContent = h.open + ' — ' + h.close;
   }
-  refresh();
-  setInterval(refresh, 60 * 1000);
+
+  refreshAsanoha();
+  setInterval(refreshAsanoha, 60 * 1000);
   window.addEventListener('storage', function (e) {
-    if (e.key === HOURS_KEY) refresh();
+    if (e.key === HOURS_KEY || e.key === DISPLAY_KEY || e.key === SEATS_KEY) refreshAsanoha();
+  });
+
+  // ===========================================
+  // 位置情報で距離計算
+  // ===========================================
+  function haversine(lat1, lon1, lat2, lon2) {
+    var R = 6371;  // km
+    var dLat = (lat2 - lat1) * Math.PI / 180;
+    var dLon = (lon2 - lon1) * Math.PI / 180;
+    var a = Math.sin(dLat/2) * Math.sin(dLat/2)
+          + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180)
+          * Math.sin(dLon/2) * Math.sin(dLon/2);
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+  }
+  function formatDist(km) {
+    if (km < 1) return Math.round(km * 1000) + ' m';
+    return km.toFixed(1) + ' km';
+  }
+
+  var locateBtn   = document.getElementById('locate-btn');
+  var locateLabel = document.getElementById('locate-label');
+
+  locateBtn.addEventListener('click', function () {
+    if (!navigator.geolocation) {
+      locateLabel.textContent = '位置情報非対応';
+      return;
+    }
+    locateBtn.setAttribute('data-state', 'locating');
+    locateLabel.textContent = '位置情報を取得中…';
+    navigator.geolocation.getCurrentPosition(
+      function (pos) {
+        var lat = pos.coords.latitude;
+        var lng = pos.coords.longitude;
+        STORES.forEach(function (s) {
+          var dist = haversine(lat, lng, s.lat, s.lng);
+          var distEl = document.getElementById('dist-' + s.id);
+          var wrap   = document.getElementById('card-distance-' + s.id);
+          if (distEl) distEl.textContent = formatDist(dist);
+          if (wrap) wrap.hidden = false;
+        });
+        // 1件なので並び替えは不要、将来用に sort placeholder
+        locateBtn.setAttribute('data-state', 'done');
+        locateLabel.textContent = '近い順 表示中';
+      },
+      function (err) {
+        locateBtn.removeAttribute('data-state');
+        locateLabel.textContent = (err.code === 1) ? '位置情報の許可が必要です' : '位置情報を取得できませんでした';
+        setTimeout(function () { locateLabel.textContent = '現在地から近い順'; }, 3000);
+      },
+      { timeout: 8000, enableHighAccuracy: false }
+    );
   });
 })();
 </script>

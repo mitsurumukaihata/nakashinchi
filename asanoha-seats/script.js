@@ -91,35 +91,42 @@
   }
   undoBtn.addEventListener('click', function () {
     if (!previousState) return;
+    var currentState = captureState();
     applyState(previousState);
+    // 「元に戻す」で各席が空→着 or 着→空 になった方向を判定して個別にフラッシュ
+    seats.forEach(function (el) {
+      var id = el.dataset.id;
+      if (previousState[id] !== currentState[id]) {
+        flashSeat(el, previousState[id] ? 'fill' : 'clear');
+      }
+    });
     updateCounter();
     persist();
-    flashAll();
     hideUndo();
   });
   undoClose.addEventListener('click', hideUndo);
 
-  // -------- flash --------
-  function flashAll() {
-    seats.forEach(function (el) {
-      el.classList.remove('is-flash');
-      void el.offsetWidth;
-      el.classList.add('is-flash');
-    });
+  // -------- flash (方向別: clear/fill) --------
+  function flashSeat(el, direction) {
+    el.classList.remove('is-flash', 'is-flash--clear', 'is-flash--fill');
+    void el.offsetWidth;
+    el.classList.add('is-flash', direction === 'clear' ? 'is-flash--clear' : 'is-flash--fill');
   }
-  function flashZone(zone) {
+  function flashAll(direction) {
+    seats.forEach(function (el) { flashSeat(el, direction); });
+  }
+  function flashZone(zone, direction) {
     seats.forEach(function (el) {
-      if (el.dataset.zone !== zone) return;
-      el.classList.remove('is-flash');
-      void el.offsetWidth;
-      el.classList.add('is-flash');
+      if (el.dataset.zone === zone) flashSeat(el, direction);
     });
   }
 
   // -------- individual toggle --------
   seats.forEach(function (el) {
     el.addEventListener('click', function () {
-      el.dataset.occupied = el.dataset.occupied === 'true' ? 'false' : 'true';
+      var wasOccupied = el.dataset.occupied === 'true';
+      el.dataset.occupied = wasOccupied ? 'false' : 'true';
+      flashSeat(el, wasOccupied ? 'clear' : 'fill');
       updateCounter();
       persist();
     });
@@ -132,7 +139,7 @@
       if (el.dataset.zone !== zone) return;
       el.dataset.occupied = occupied ? 'true' : 'false';
     });
-    flashZone(zone);
+    flashZone(zone, occupied ? 'fill' : 'clear');
     updateCounter();
     persist();
     showUndo((zone === 'box' ? 'BOX' : 'カウンター') + 'を一括' + (occupied ? '着席' : '空席') + 'にしました');
@@ -140,7 +147,7 @@
   function setAll(occupied) {
     previousState = captureState();
     seats.forEach(function (el) { el.dataset.occupied = occupied ? 'true' : 'false'; });
-    flashAll();
+    flashAll(occupied ? 'fill' : 'clear');
     updateCounter();
     persist();
     showUndo('全席を' + (occupied ? '着席' : '空席') + 'にしました');

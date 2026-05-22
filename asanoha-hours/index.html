@@ -81,6 +81,46 @@
   </section>
 
   <section class="card-form">
+    <p class="form-label">本日の受付状態</p>
+    <div class="radio-group">
+      <label class="radio-chip">
+        <input type="radio" name="reception" value="normal" checked>
+        <span class="radio-chip__txt">通常</span>
+      </label>
+      <label class="radio-chip">
+        <input type="radio" name="reception" value="stopped">
+        <span class="radio-chip__txt">新規受付停止</span>
+      </label>
+      <label class="radio-chip">
+        <input type="radio" name="reception" value="closed">
+        <span class="radio-chip__txt">本日終了</span>
+      </label>
+    </div>
+    <p class="hint-text">席が残っていても新規のご来店をお受けしたくない時に切り替えます。「停止」「終了」を選ぶと、トップページに「ただいま受付停止」「本日終了」と表示されます。日付が変わると自動で「通常」に戻ります。</p>
+  </section>
+
+  <section class="card-form">
+    <p class="form-label">公開ページでの空席表示</p>
+    <label class="check-row">
+      <input type="checkbox" id="show-badge" checked>
+      <span>営業中／営業時間外 のバッジを表示</span>
+    </label>
+    <label class="check-row">
+      <input type="checkbox" id="show-seats" checked>
+      <span>空席数を表示（例：残り 3 席）</span>
+    </label>
+    <label class="check-row">
+      <input type="checkbox" id="show-seats-detail">
+      <span>エリア別で詳しく表示（BOX ◯ / カウンター ◯）</span>
+    </label>
+    <label class="check-row">
+      <input type="checkbox" id="show-when-full">
+      <span>満席の時もはっきり「満席」と表示する</span>
+    </label>
+    <p class="hint-text">「あえて空席数を見せない」「ざっくりだけ」「詳しく」など、お店の運用方針に合わせて切り替えられます。</p>
+  </section>
+
+  <section class="card-form">
     <p class="form-label">現在の判定（プレビュー）</p>
     <div class="status-preview" id="status-preview" data-status="closed">
       <span class="status-preview__dot"></span>

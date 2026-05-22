@@ -14,7 +14,7 @@
   var NEWS_STORAGE_KEY  = 'manoha-news-v1';
   var THEME_STORAGE_KEY = 'manoha-theme';
   var TOTAL_SEATS = 11;
-  var DEFAULT_HOURS = { open: '17:00', close: '01:00', crossDay: true, closedDays: [] };
+  var DEFAULT_HOURS = { open: '17:00', close: '01:00', crossDay: true, closedDays: [], reception: 'normal', receptionDate: '' };
 
   // -------- THEME --------
   function applyTheme(theme) {
@@ -87,37 +87,49 @@
   }
 
   // ---------- 営業時間 設定読込 & 状態判定 ----------
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+  }
   function readHours() {
     try {
       var v = JSON.parse(localStorage.getItem(HOURS_STORAGE_KEY) || 'null');
-      return v || DEFAULT_HOURS;
-    } catch (_) { return DEFAULT_HOURS; }
+      var m = Object.assign({}, DEFAULT_HOURS, v || {});
+      // 日付変わったら受付状態を通常に戻す
+      if (m.reception !== 'normal' && m.receptionDate !== todayStr()) m.reception = 'normal';
+      return m;
+    } catch (_) { return Object.assign({}, DEFAULT_HOURS); }
   }
   function isOpenNow(d, hours) {
+    if (hours.reception === 'closed')  return { open: false, label: '本日終了' };
+    if (hours.reception === 'stopped') return { open: false, label: '受付停止中' };
     var dow = d.getDay();
-    if ((hours.closedDays || []).indexOf(dow) !== -1) return false;
+    if ((hours.closedDays || []).indexOf(dow) !== -1) return { open: false, label: '本日 定休日' };
     var op = hours.open.split(':'),  oh = +op[0], om = +op[1];
     var cl = hours.close.split(':'), ch = +cl[0], cm = +cl[1];
     var now = d.getHours() * 60 + d.getMinutes();
     var openM = oh * 60 + om;
     var closeM = ch * 60 + cm;
-    if (hours.crossDay) {
-      // 例: 17:00 - 01:00 = 17:00以降 OR 01:00未満
-      return now >= openM || now < closeM;
-    }
-    return now >= openM && now < closeM;
+    var open;
+    if (hours.crossDay) open = now >= openM || now < closeM;
+    else                open = now >= openM && now < closeM;
+    return { open: open, label: open ? '営業中' : '営業時間外' };
   }
 
   var openDot      = document.getElementById('open-dot');
   var openSt       = document.getElementById('open-status');
   var cardHoursInfo = document.getElementById('card-hours-info');
   function updateOpenStatus(d) {
-    var hours  = readHours();
-    var isOpen = isOpenNow(d, hours);
-    openSt.textContent = isOpen ? '営業中' : '営業時間外';
-    openDot.classList.toggle('is-open',   isOpen);
-    openDot.classList.toggle('is-closed', !isOpen);
-    if (cardHoursInfo) cardHoursInfo.textContent = hours.open + ' — ' + hours.close;
+    var hours = readHours();
+    var st    = isOpenNow(d, hours);
+    openSt.textContent = st.label;
+    openDot.classList.toggle('is-open',   st.open);
+    openDot.classList.toggle('is-closed', !st.open);
+    if (cardHoursInfo) {
+      cardHoursInfo.textContent = hours.reception !== 'normal'
+        ? (hours.reception === 'closed' ? '本日終了' : '受付停止中')
+        : hours.open + ' — ' + hours.close;
+    }
   }
 
   // ---------- お知らせ ----------
