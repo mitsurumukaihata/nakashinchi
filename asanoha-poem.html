@@ -1,0 +1,331 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>麻ノ葉 — 縁起の和歌</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;700;800&family=Yuji+Syuku&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'Shippori Mincho B1','Noto Serif JP',serif;
+  background:#0a0504;color:#fff;
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ============ BACKGROUND ============ */
+.bg-base{
+  position:absolute;inset:0;z-index:1;
+  background:
+    radial-gradient(ellipse at 70% 35%,rgba(180,30,40,0.16) 0%,transparent 55%),
+    radial-gradient(ellipse at 30% 70%,rgba(40,20,15,0.4) 0%,transparent 60%),
+    linear-gradient(140deg,#1a0c08 0%,#0a0504 60%,#040201 100%);
+}
+.bg-noise{
+  position:absolute;inset:0;z-index:2;pointer-events:none;opacity:0.4;
+  background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.1 0 0 0 0 0.05 0 0 0 0.15 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
+}
+.bg-sun{
+  position:absolute;width:65vmin;height:65vmin;
+  top:50%;left:50%;transform:translate(-50%,-50%);
+  border-radius:50%;z-index:1;
+  background:radial-gradient(circle,
+    rgba(232,48,64,0.18) 0%,
+    rgba(184,26,40,0.10) 40%,
+    rgba(140,16,28,0.04) 65%,
+    transparent 80%);
+  filter:blur(8px);
+  animation:sunBreathe 9s infinite ease-in-out;
+}
+@keyframes sunBreathe{
+  0%,100%{transform:translate(-50%,-50%) scale(1);opacity:0.85}
+  50%{transform:translate(-50%,-50%) scale(1.08);opacity:1}
+}
+
+/* ============ POEM ============ */
+.poem{
+  position:relative;z-index:10;
+  writing-mode:vertical-rl;
+  font-family:'Shippori Mincho B1',serif;font-weight:600;
+  font-size:clamp(20px,2.4vw,34px);
+  letter-spacing:0.28em;
+  line-height:2.0;
+  color:rgba(248,238,225,0.92);
+  text-shadow:0 2px 18px rgba(0,0,0,0.7),0 0 30px rgba(0,0,0,0.3);
+  padding:6vh 4vw;
+  max-height:88vh;
+}
+.line{display:block;opacity:0;animation:lineIn 2.2s cubic-bezier(.2,.7,.2,1) forwards}
+.line:nth-child(1){animation-delay:0.4s}
+.line:nth-child(2){animation-delay:0.8s}
+.line:nth-child(3){animation-delay:1.2s}
+.line:nth-child(4){animation-delay:1.6s}
+.line:nth-child(5){animation-delay:2.0s}
+.line:nth-child(6){animation-delay:2.4s}
+@keyframes lineIn{
+  0%{opacity:0;transform:translateY(-12px)}
+  100%{opacity:1;transform:translateY(0)}
+}
+
+/* ============ RED CHARACTERS (swimming) ============ */
+.r{
+  display:inline-block;position:relative;
+  color:#F03048;font-weight:800;
+  text-shadow:
+    0 0 14px rgba(240,48,72,0.65),
+    0 0 32px rgba(240,48,72,0.35),
+    0 0 60px rgba(240,48,72,0.18),
+    0 2px 4px rgba(0,0,0,0.6);
+  will-change:transform,filter;
+  transform-origin:center;
+}
+.r-asa{animation:swimA 8s 3.2s infinite cubic-bezier(.4,0,.4,1),glowA 5s infinite ease-in-out}
+.r-no{animation:swimB 10s 3.6s infinite cubic-bezier(.4,0,.4,1),glowB 4.5s 1s infinite ease-in-out}
+.r-ha{animation:swimC 9s 4.0s infinite cubic-bezier(.4,0,.4,1),glowC 5.5s 2s infinite ease-in-out}
+
+@keyframes swimA{
+  0%,100%{transform:translate(0,0) rotate(0deg)}
+  20%{transform:translate(-10px,14px) rotate(-3deg)}
+  45%{transform:translate(8px,-12px) rotate(4deg)}
+  70%{transform:translate(-6px,8px) rotate(-2deg)}
+  85%{transform:translate(4px,-4px) rotate(1deg)}
+}
+@keyframes swimB{
+  0%,100%{transform:translate(0,0) rotate(0deg) scale(1)}
+  25%{transform:translate(12px,-10px) rotate(5deg) scale(1.06)}
+  55%{transform:translate(-10px,12px) rotate(-4deg) scale(0.97)}
+  80%{transform:translate(6px,6px) rotate(2deg) scale(1.02)}
+}
+@keyframes swimC{
+  0%,100%{transform:translate(0,0) rotate(0deg)}
+  18%{transform:translate(9px,-12px) rotate(4deg)}
+  42%{transform:translate(-12px,8px) rotate(-5deg)}
+  68%{transform:translate(7px,10px) rotate(3deg)}
+  88%{transform:translate(-3px,-5px) rotate(-1deg)}
+}
+@keyframes glowA{
+  0%,100%{filter:drop-shadow(0 0 4px rgba(240,48,72,0.45))}
+  50%{filter:drop-shadow(0 0 16px rgba(240,48,72,0.95))}
+}
+@keyframes glowB{
+  0%,100%{filter:drop-shadow(0 0 6px rgba(240,48,72,0.5))}
+  50%{filter:drop-shadow(0 0 20px rgba(240,48,72,1))}
+}
+@keyframes glowC{
+  0%,100%{filter:drop-shadow(0 0 5px rgba(240,48,72,0.5))}
+  50%{filter:drop-shadow(0 0 18px rgba(240,48,72,0.9))}
+}
+
+/* hover delight */
+.r:hover{
+  animation-play-state:paused;
+  cursor:pointer;
+}
+.r::after{
+  content:'';position:absolute;inset:-20%;border-radius:50%;
+  background:radial-gradient(circle,rgba(240,48,72,0.25),transparent 70%);
+  opacity:0;transition:opacity 0.4s;pointer-events:none;
+  z-index:-1;
+}
+.r:hover::after{opacity:1}
+
+/* ============ BRAND CORNER ============ */
+.brand{
+  position:absolute;bottom:6vh;left:5vw;z-index:20;
+  opacity:0;animation:fadeIn 2s 3.5s ease forwards;
+}
+.brand .yomi{
+  font-size:10px;color:#a89888;letter-spacing:0.7em;
+  margin-bottom:14px;font-weight:400;
+}
+.brand h1{
+  font-family:'Yuji Syuku',serif;font-weight:400;
+  font-size:clamp(38px,4.5vw,68px);color:#fff;
+  letter-spacing:0.04em;line-height:1;
+  text-shadow:0 4px 20px rgba(0,0,0,0.7);
+}
+.brand h1 .accent{color:#F03048;text-shadow:0 0 16px rgba(240,48,72,0.6),0 2px 4px rgba(0,0,0,0.5)}
+
+/* ============ META RIGHT ============ */
+.meta{
+  position:absolute;bottom:6vh;right:5vw;z-index:20;text-align:right;
+  font-size:10px;color:#a89888;letter-spacing:0.5em;line-height:2.2;
+  opacity:0;animation:fadeIn 2s 4s ease forwards;
+}
+.meta .divider{
+  display:inline-block;width:24px;height:1px;background:#F03048;
+  vertical-align:middle;margin-right:10px;
+}
+
+/* ============ TOP MARK ============ */
+.top-mark{
+  position:absolute;top:5vh;left:50%;transform:translateX(-50%);z-index:20;
+  font-size:10px;color:#8a7868;letter-spacing:0.9em;
+  opacity:0;animation:fadeIn 2s 0.4s ease forwards;
+}
+
+/* ============ PETALS ============ */
+.petals{position:absolute;inset:0;pointer-events:none;z-index:4;overflow:hidden}
+.petals span{
+  position:absolute;top:-30px;width:11px;height:11px;
+  background:radial-gradient(circle at 30% 30%,#F47080 0%,#A8202C 80%);
+  border-radius:50% 0 50% 50%;
+  animation:petalFall 20s linear infinite;opacity:0;
+  filter:blur(0.4px);
+}
+.petals span:nth-child(1){left:6%;animation-duration:22s;animation-delay:1s;width:8px;height:8px}
+.petals span:nth-child(2){left:18%;animation-duration:17s;animation-delay:4s}
+.petals span:nth-child(3){left:32%;animation-duration:24s;animation-delay:8s;width:12px;height:12px}
+.petals span:nth-child(4){left:48%;animation-duration:19s;animation-delay:2s}
+.petals span:nth-child(5){left:62%;animation-duration:21s;animation-delay:6s;width:9px;height:9px}
+.petals span:nth-child(6){left:78%;animation-duration:18s;animation-delay:3s}
+.petals span:nth-child(7){left:92%;animation-duration:23s;animation-delay:9s;width:10px;height:10px}
+@keyframes petalFall{
+  0%{transform:translateY(-30px) translateX(0) rotate(45deg);opacity:0}
+  8%{opacity:0.75}
+  92%{opacity:0.75}
+  100%{transform:translateY(110vh) translateX(70px) rotate(720deg);opacity:0}
+}
+
+/* ============ SUBTLE BOAT SILHOUETTE BOTTOM ============ */
+.boat-silhouette{
+  position:absolute;bottom:0;left:50%;transform:translateX(-50%);
+  width:60vw;max-width:900px;height:auto;z-index:3;opacity:0.35;
+  pointer-events:none;
+}
+
+@keyframes fadeIn{to{opacity:1}}
+
+/* ============ THEME TOGGLE ============ */
+.theme-toggle{
+  position:absolute;top:5vh;right:5vw;z-index:30;
+  display:flex;gap:6px;
+  opacity:0;animation:fadeIn 2s 4.5s ease forwards;
+}
+.theme-toggle button{
+  width:28px;height:28px;border:1px solid rgba(255,255,255,0.15);
+  background:transparent;color:rgba(255,255,255,0.6);
+  font-size:11px;cursor:pointer;border-radius:50%;
+  transition:all 0.3s;font-family:inherit;
+}
+.theme-toggle button.active{background:#F03048;border-color:#F03048;color:#fff}
+.theme-toggle button:hover{border-color:rgba(255,255,255,0.5)}
+
+/* ============ LIGHT THEME ============ */
+body.light .bg-base{
+  background:
+    radial-gradient(ellipse at 70% 35%,rgba(232,48,64,0.10) 0%,transparent 55%),
+    radial-gradient(ellipse at 30% 70%,rgba(180,150,120,0.15) 0%,transparent 60%),
+    linear-gradient(140deg,#F8F2E6 0%,#F0E8D8 60%,#E8DEC8 100%);
+}
+body.light .bg-noise{opacity:0.25;mix-blend-mode:multiply}
+body.light .bg-sun{
+  background:radial-gradient(circle,
+    rgba(232,48,64,0.22) 0%,
+    rgba(184,26,40,0.12) 40%,
+    rgba(140,16,28,0.05) 65%,
+    transparent 80%);
+}
+body.light .poem{
+  color:rgba(30,18,12,0.88);
+  text-shadow:0 1px 2px rgba(0,0,0,0.05);
+}
+body.light .r{color:#C8102E;text-shadow:0 0 14px rgba(200,16,46,0.4),0 0 26px rgba(200,16,46,0.2)}
+body.light .brand h1{color:#1a0c08;text-shadow:none}
+body.light .brand h1 .accent{color:#C8102E}
+body.light .brand .yomi,body.light .meta,body.light .top-mark{color:#7a6858}
+body.light .theme-toggle button{border-color:rgba(0,0,0,0.15);color:rgba(0,0,0,0.6)}
+body.light .theme-toggle button.active{background:#C8102E;border-color:#C8102E;color:#fff}
+
+/* ============ RESPONSIVE ============ */
+@media(max-width:760px){
+  .poem{font-size:17px;letter-spacing:0.22em;line-height:1.85;padding:4vh 3vw}
+  .brand h1{font-size:38px}
+  .meta{font-size:9px;letter-spacing:0.35em}
+  .top-mark{font-size:9px;letter-spacing:0.7em}
+}
+</style>
+</head>
+<body>
+
+<div class="bg-base"></div>
+<div class="bg-noise"></div>
+<div class="bg-sun"></div>
+
+<div class="petals">
+  <span></span><span></span><span></span><span></span><span></span><span></span><span></span>
+</div>
+
+<div class="top-mark">M&nbsp;A&nbsp;N&nbsp;O&nbsp;H&nbsp;A</div>
+
+<div class="theme-toggle">
+  <button data-theme="dark" class="active" title="夜">●</button>
+  <button data-theme="light" title="昼">○</button>
+</div>
+
+<div class="poem" id="poem">
+  <div class="line"><span class="r r-asa">麻</span>の葉の文様に在る</div>
+  <div class="line">縁起の如く</div>
+  <div class="line">邪を祓い 希望<span class="r r-no">ノ</span>光が育つよう</div>
+  <div class="line">言の<span class="r r-ha">葉</span>を紡ぎ織り成し</div>
+  <div class="line">酌み交し 友よ 夢を</div>
+  <div class="line">語らい合おう</div>
+</div>
+
+<div class="brand">
+  <div class="yomi">ま の は</div>
+  <h1>麻<span class="accent">ノ</span>葉</h1>
+</div>
+
+<div class="meta">
+  <span class="divider"></span>HIROSHIMA · 中新地<br>
+  縁 起 の 席
+</div>
+
+<svg class="boat-silhouette" viewBox="0 0 900 120" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid meet">
+  <g fill="currentColor" style="color:#000">
+    <path d="M 60 70 Q 150 50, 320 55 L 620 62 Q 780 58, 850 82 Q 800 96, 720 92 L 320 88 Q 150 84, 60 80 Z"/>
+    <g transform="translate(290,0)">
+      <line x1="35" y1="-10" x2="78" y2="-110" stroke="currentColor" stroke-width="2.5"/>
+      <path d="M -2 -55 L -20 -32 L -25 6 L 10 8 L 22 -32 L 12 -55 Z"/>
+      <circle cx="5" cy="-70" r="11"/>
+      <g stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none">
+        <line x1="-6" y1="-82" x2="-10" y2="-100"/>
+        <line x1="-2" y1="-84" x2="-4" y2="-105"/>
+        <line x1="2" y1="-84" x2="2" y2="-108"/>
+        <line x1="6" y1="-84" x2="8" y2="-105"/>
+        <line x1="10" y1="-82" x2="14" y2="-100"/>
+      </g>
+    </g>
+    <g>
+      <path d="M 410 60 Q 412 44 422 47 Q 430 54 426 70 L 410 70 Z"/>
+      <path d="M 465 58 Q 467 42 477 45 Q 485 52 481 68 L 465 68 Z"/>
+      <path d="M 520 60 Q 522 44 532 47 Q 540 54 536 70 L 520 70 Z"/>
+      <path d="M 575 58 Q 577 42 587 45 Q 595 52 591 68 L 575 68 Z"/>
+    </g>
+    <g transform="translate(770,15)">
+      <rect x="-2" y="0" width="3" height="48" />
+      <rect x="-12" y="-12" width="24" height="16" fill="none" stroke="currentColor" stroke-width="2"/>
+    </g>
+  </g>
+</svg>
+
+<script>
+// theme toggle
+document.querySelectorAll('.theme-toggle button').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    document.querySelectorAll('.theme-toggle button').forEach(b=>b.classList.remove('active'));
+    btn.classList.add('active');
+    if(btn.dataset.theme==='light'){document.body.classList.add('light')}
+    else{document.body.classList.remove('light')}
+  });
+});
+</script>
+
+</body>
+</html>

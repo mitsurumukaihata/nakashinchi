@@ -1,0 +1,413 @@
+/* ===========================================
+   麻ノ葉 — Hero Section (中新地)
+   ----------------------------------------
+   変更しやすい変数を :root にまとめています。
+   - 画像パス     : --hero-img
+   - 配色         : --color-*
+   - 高さ         : --hero-h-desktop / --hero-h-mobile
+   - 画像フィルタ : --img-brightness / --img-contrast / --img-saturate
+   - 揺らぎの強さ : .floater のopacityと keyframes の数値を調整
+   =========================================== */
+
+:root {
+  /* === 画像パス（変更しやすいよう変数化） === */
+  --hero-img: url('public/images/hero-japanese.jpg');
+
+  /* === 配色（黒・生成り・朱色・深赤） === */
+  --color-bg:          #0a0604;
+  --color-ink:         #1a1410;
+  --color-paper:       #f5efe6;
+  --color-text:        #f5efe6;
+  --color-text-muted:  #c8bcae;
+  --color-accent:      #c8102e;  /* 朱色 */
+  --color-accent-deep: #8e0e1c;  /* 深赤 */
+  --color-accent-soft: #e85060;  /* 薄紅 */
+
+  /* === ヒーロー高さ === */
+  --hero-h-desktop: 90vh;
+  --hero-h-mobile:  82vh;
+
+  /* === 背景画像の見え方（微調整用） === */
+  --img-brightness: 0.82;
+  --img-contrast:   1.04;
+  --img-saturate:   0.95;
+
+  /* === タイポ === */
+  --font-jp:    'Shippori Mincho B1', 'Yu Mincho', 'Hiragino Mincho ProN', serif;
+  --font-brush: 'Yuji Syuku', 'Shippori Mincho B1', serif;
+  --font-en:    'Cormorant Garamond', 'Times New Roman', Georgia, serif;
+}
+
+/* === Reset === */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { background: var(--color-bg); }
+body {
+  font-family: var(--font-jp);
+  color: var(--color-text);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  line-height: 1.6;
+}
+a { color: inherit; text-decoration: none; }
+
+.sp-only { display: none; }
+@media (max-width: 600px) { .sp-only { display: inline; } }
+
+/* ===========================================
+   HERO
+   =========================================== */
+.hero {
+  position: relative;
+  width: 100%;
+  height: var(--hero-h-mobile);
+  min-height: 560px;
+  overflow: hidden;
+  background: var(--color-bg);
+  isolation: isolate; /* mix-blend-mode を hero 内に閉じ込める */
+}
+@media (min-width: 768px) {
+  .hero { height: var(--hero-h-desktop); min-height: 640px; }
+}
+
+/* 背景画像 */
+.hero__bg {
+  position: absolute; inset: 0; z-index: 1;
+  background-image: var(--hero-img);
+  background-size: cover;
+  background-position: center 30%;
+  background-repeat: no-repeat;
+  background-color: #1a0c08; /* 画像未配置時のフォールバック色 */
+  filter:
+    brightness(var(--img-brightness))
+    contrast(var(--img-contrast))
+    saturate(var(--img-saturate));
+}
+
+/* オーバーレイ（読みやすさのため） */
+.hero__overlay {
+  position: absolute; inset: 0; z-index: 2;
+  background:
+    linear-gradient(110deg,
+      rgba(8, 4, 2, 0.72) 0%,
+      rgba(8, 4, 2, 0.45) 35%,
+      rgba(10, 6, 4, 0.20) 55%,
+      rgba(40, 14, 8, 0.35) 100%),
+    linear-gradient(180deg,
+      rgba(0, 0, 0, 0.05) 0%,
+      rgba(0, 0, 0, 0.00) 30%,
+      rgba(0, 0, 0, 0.40) 100%);
+}
+
+/* ===========================================
+   赤い筆文字（風や水面のような揺らぎ）
+   - opacity は控えめ（0.16〜0.30）
+   - mix-blend-mode で背景になじませる
+   - blur を少し入れて主役にしない
+   =========================================== */
+.hero__floaters {
+  position: absolute; inset: 0; z-index: 3;
+  pointer-events: none;
+  overflow: hidden;
+}
+.floater {
+  position: absolute;
+  font-family: var(--font-brush);
+  font-weight: 700;
+  user-select: none;
+  filter: blur(0.6px);
+  mix-blend-mode: screen;
+  will-change: transform, opacity;
+  line-height: 1;
+}
+
+.floater--1 { /* 麻 */
+  top: 6%;   left: 8%;
+  font-size: clamp(90px, 16vw, 200px);
+  color: var(--color-accent-deep);
+  opacity: 0.24;
+  animation: drift1 14s ease-in-out infinite;
+}
+.floater--2 { /* 葉 */
+  top: 62%;  left: 4%;
+  font-size: clamp(60px, 11vw, 140px);
+  color: var(--color-accent);
+  opacity: 0.20;
+  animation: drift2 16s ease-in-out infinite;
+}
+.floater--3 { /* 縁 */
+  top: 14%;  right: 12%;
+  font-size: clamp(55px, 9vw, 110px);
+  color: var(--color-accent-soft);
+  opacity: 0.22;
+  animation: drift3 11s ease-in-out infinite;
+}
+.floater--4 { /* 光 */
+  top: 48%;  right: 30%;
+  font-size: clamp(38px, 6vw, 80px);
+  color: var(--color-accent);
+  opacity: 0.18;
+  animation: drift4 13s ease-in-out infinite;
+}
+.floater--5 { /* 夢 */
+  bottom: 12%; right: 6%;
+  font-size: clamp(75px, 13vw, 160px);
+  color: var(--color-accent-deep);
+  opacity: 0.22;
+  animation: drift5 17s ease-in-out infinite;
+}
+.floater--6 { /* 友 */
+  top: 38%;  left: 42%;
+  font-size: clamp(48px, 7vw, 90px);
+  color: var(--color-accent-soft);
+  opacity: 0.16;
+  animation: drift6 12s ease-in-out infinite;
+}
+
+@keyframes drift1 {
+  0%, 100% { transform: translate(0,0)   rotate(0deg)  scale(1); }
+  35%      { transform: translate(8px,12px)  rotate(2deg)  scale(1.02); }
+  70%      { transform: translate(-6px,6px)  rotate(-1deg) scale(0.98); }
+}
+@keyframes drift2 {
+  0%, 100% { transform: translate(0,0)    rotate(0deg)  scale(1); }
+  40%      { transform: translate(10px,-8px) rotate(-3deg) scale(1.03); }
+  75%      { transform: translate(-4px,10px) rotate(2deg)  scale(0.97); }
+}
+@keyframes drift3 {
+  0%, 100% { transform: translate(0,0)     rotate(0deg)  scale(1); }
+  30%      { transform: translate(-12px,8px) rotate(3deg)  scale(1.04); }
+  65%      { transform: translate(6px,-10px) rotate(-2deg) scale(0.98); }
+}
+@keyframes drift4 {
+  0%, 100% { transform: translate(0,0)    rotate(0deg)  scale(1); }
+  50%      { transform: translate(10px,14px) rotate(-3deg) scale(1.02); }
+}
+@keyframes drift5 {
+  0%, 100% { transform: translate(0,0)     rotate(0deg)  scale(1); }
+  28%      { transform: translate(-10px,-8px) rotate(2deg)  scale(1.02); }
+  62%      { transform: translate(8px,10px)   rotate(-2deg) scale(0.96); }
+}
+@keyframes drift6 {
+  0%, 100% { transform: translate(0,0)     rotate(0deg)  scale(1); }
+  45%      { transform: translate(-8px,-10px) rotate(-3deg) scale(1.03); }
+  80%      { transform: translate(6px,8px)    rotate(1deg)  scale(0.98); }
+}
+
+/* スマホでは揺らぎ要素を少し間引く（負荷軽減 + 視認性） */
+@media (max-width: 600px) {
+  .floater--4, .floater--6 { display: none; }
+  .floater--1 { font-size: 90px; opacity: 0.20; }
+  .floater--5 { font-size: 80px; opacity: 0.18; }
+}
+
+/* ===========================================
+   CONTENT
+   =========================================== */
+.hero__content {
+  position: relative; z-index: 5;
+  height: 100%;
+  display: flex; flex-direction: column; justify-content: center;
+  padding: 24px clamp(24px, 7vw, 96px);
+  max-width: 1320px;
+  margin: 0 auto;
+}
+
+.hero__mark {
+  display: flex; align-items: center; gap: 14px;
+  font-size: 11px;
+  letter-spacing: 0.4em;
+  color: var(--color-text-muted);
+  margin-bottom: clamp(24px, 4vh, 40px);
+  opacity: 0;
+  animation: fadeUp 1.4s 0.3s ease forwards;
+}
+.hero__mark-line {
+  display: inline-block;
+  width: 32px; height: 1px; background: var(--color-accent);
+}
+
+.hero__brand {
+  font-family: var(--font-brush);
+  font-weight: 400;
+  font-size: clamp(64px, 11vw, 140px);
+  line-height: 1.0;
+  letter-spacing: 0.04em;
+  color: var(--color-paper);
+  margin-bottom: 16px;
+  text-shadow: 0 4px 28px rgba(0, 0, 0, 0.6);
+  opacity: 0;
+  animation: fadeUp 1.6s 0.6s cubic-bezier(.2,.7,.2,1) forwards;
+}
+.hero__brand-accent {
+  color: var(--color-accent-soft);
+  text-shadow: 0 0 18px rgba(232, 80, 96, 0.5), 0 2px 4px rgba(0,0,0,0.5);
+}
+
+.hero__brand-jp {
+  font-family: var(--font-en);
+  font-size: clamp(10px, 1.2vw, 13px);
+  letter-spacing: 0.45em;
+  color: var(--color-text-muted);
+  margin-bottom: clamp(32px, 5vh, 52px);
+  opacity: 0;
+  animation: fadeUp 1.4s 0.9s ease forwards;
+}
+
+.hero__copy {
+  font-family: var(--font-jp);
+  font-weight: 500;
+  font-size: clamp(22px, 3.2vw, 36px);
+  line-height: 1.65;
+  letter-spacing: 0.10em;
+  color: var(--color-paper);
+  margin-bottom: clamp(20px, 3vh, 32px);
+  max-width: 22em;
+  text-shadow: 0 2px 18px rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  animation: fadeUp 1.6s 1.2s cubic-bezier(.2,.7,.2,1) forwards;
+}
+
+.hero__sub {
+  font-family: var(--font-jp);
+  font-size: clamp(13px, 1.5vw, 16px);
+  line-height: 2;
+  letter-spacing: 0.1em;
+  color: var(--color-text-muted);
+  margin-bottom: clamp(32px, 5vh, 48px);
+  max-width: 36em;
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.55);
+  opacity: 0;
+  animation: fadeUp 1.4s 1.5s ease forwards;
+}
+
+.hero__actions {
+  display: flex; gap: 12px; flex-wrap: wrap;
+  opacity: 0;
+  animation: fadeUp 1.4s 1.8s ease forwards;
+}
+
+.btn {
+  display: inline-block;
+  padding: 16px 36px;
+  font-family: var(--font-jp);
+  font-size: 13px;
+  letter-spacing: 0.3em;
+  font-weight: 500;
+  cursor: pointer;
+  border: 1px solid;
+  transition: transform 0.3s ease, background-color 0.3s ease, border-color 0.3s ease;
+  text-align: center;
+  min-width: 200px;
+  white-space: nowrap;
+}
+.btn:focus-visible { outline: 2px solid var(--color-accent-soft); outline-offset: 3px; }
+
+.btn--primary {
+  background: var(--color-accent);
+  color: var(--color-paper);
+  border-color: var(--color-accent);
+}
+.btn--primary:hover { background: var(--color-accent-deep); border-color: var(--color-accent-deep); transform: translateY(-2px); }
+
+.btn--ghost {
+  background: rgba(0, 0, 0, 0.18);
+  color: var(--color-paper);
+  border-color: rgba(245, 239, 230, 0.45);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+.btn--ghost:hover { background: rgba(245, 239, 230, 0.08); border-color: var(--color-paper); transform: translateY(-2px); }
+
+/* スクロール示唆 */
+.hero__scroll {
+  position: absolute; left: 50%; bottom: 24px;
+  transform: translateX(-50%);
+  z-index: 5;
+  display: flex; flex-direction: column; align-items: center; gap: 10px;
+  font-size: 9px;
+  letter-spacing: 0.5em;
+  color: var(--color-text-muted);
+  opacity: 0;
+  animation: fadeUp 1.4s 2.4s ease forwards;
+}
+.hero__scroll-line {
+  display: block; width: 1px; height: 28px;
+  background: var(--color-text-muted);
+  transform-origin: top;
+  animation: scrollLine 2.4s 3.6s ease-in-out infinite;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(18px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+@keyframes scrollLine {
+  0%, 100% { transform: scaleY(0.3); }
+  50%      { transform: scaleY(1); }
+}
+
+/* ===========================================
+   MOBILE 調整
+   - 壁画を contain で「全体」見せる（和歌・日の丸・侍すべて切らない）
+   - その下にテキスト領域を積む（暗く落として可読性確保）
+   =========================================== */
+@media (max-width: 600px) {
+  .hero {
+    height: auto;
+    min-height: 700px;
+    min-height: 100dvh;
+  }
+
+  /* contain で画像全体を上端に表示。下の余白は背景色で暗く埋める */
+  .hero__bg {
+    background-size: contain;
+    background-position: top center;
+    background-color: var(--color-bg);
+  }
+
+  /* 上 0〜40% は完全透過（壁画を見せる）、下半分はがっつり暗く（テキスト用） */
+  .hero__overlay {
+    background:
+      linear-gradient(180deg,
+        rgba(8, 4, 2, 0)    0%,
+        rgba(8, 4, 2, 0)   40%,
+        rgba(8, 4, 2, 0.45) 50%,
+        rgba(8, 4, 2, 0.92) 62%,
+        rgba(8, 4, 2, 1)  100%);
+  }
+
+  /* テキスト群を下半分に寄せる */
+  .hero__content {
+    justify-content: flex-end;
+    padding: 32px 24px 60px;
+  }
+
+  .hero__mark { font-size: 10px; letter-spacing: 0.35em; margin-bottom: 20px; }
+  .hero__brand-jp { letter-spacing: 0.3em; font-size: 10px; }
+  .hero__copy { letter-spacing: 0.06em; line-height: 1.55; }
+  .hero__sub { line-height: 1.95; }
+  .hero__actions { width: 100%; gap: 10px; }
+  .btn { flex: 1 1 calc(50% - 5px); min-width: 0; padding: 14px 12px; font-size: 12px; letter-spacing: 0.2em; }
+  .hero__scroll { display: none; }
+}
+
+/* ===========================================
+   prefers-reduced-motion 対応
+   - アクセシビリティ設定でアニメOFFのユーザー向け
+   =========================================== */
+@media (prefers-reduced-motion: reduce) {
+  .floater,
+  .hero__mark,
+  .hero__brand,
+  .hero__brand-jp,
+  .hero__copy,
+  .hero__sub,
+  .hero__actions,
+  .hero__scroll,
+  .hero__scroll-line {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+  .btn { transition: none; }
+}
