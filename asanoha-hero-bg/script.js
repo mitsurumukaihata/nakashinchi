@@ -25,17 +25,32 @@
   var floaters    = document.querySelectorAll('.floater');
 
   // ---- お知らせ ----
-  function refreshNews() {
+  function showNews(data) {
     if (!newsEl || !newsTxtEl) return;
+    if (data && data.message && data.message.trim()) {
+      newsTxtEl.textContent = data.message;
+      newsEl.hidden = false;
+    } else {
+      newsEl.hidden = true;
+    }
+  }
+  function refreshNewsLocal() {
+    // 旧localStorage (manoha-news-v1) または APIキャッシュ (manoha-cache:news) のどちらでも読める
     try {
-      var data = JSON.parse(localStorage.getItem(NEWS_KEY) || 'null');
-      if (data && data.message && data.message.trim()) {
-        newsTxtEl.textContent = data.message;
-        newsEl.hidden = false;
-      } else {
-        newsEl.hidden = true;
-      }
-    } catch (_) { newsEl.hidden = true; }
+      var c = JSON.parse(localStorage.getItem('manoha-cache:news') || 'null');
+      if (c && c.value) { showNews(c.value); return; }
+      var legacy = JSON.parse(localStorage.getItem(NEWS_KEY) || 'null');
+      if (legacy) { showNews(legacy); return; }
+      showNews(null);
+    } catch (_) { showNews(null); }
+  }
+  async function refreshNewsFromApi() {
+    if (!window.nakashinchiApi) return;
+    try {
+      var res = await window.nakashinchiApi.fetchKey('news');
+      if (res && res.value) showNews(res.value);
+      else if (res === null) showNews(null);
+    } catch (_) {}
   }
 
   // ---- データ読込 ----
@@ -157,12 +172,14 @@
 
   // ---- 同じ端末の別タブ更新を反映 ----
   window.addEventListener('storage', function (e) {
-    if (e.key === NEWS_KEY) refreshNews();
+    if (e.key === NEWS_KEY || e.key === 'manoha-cache:news') refreshNewsLocal();
     if (e.key === HOURS_KEY || e.key === DISPLAY_KEY || e.key === SEATS_KEY) refresh();
   });
 
   // ---- INIT ----
-  refreshNews();
+  refreshNewsLocal();              // キャッシュ即時表示
+  refreshNewsFromApi();             // 裏で API から最新取得
   refresh();
   setInterval(refresh, 60 * 1000);  // 1分ごと営業判定更新
+  setInterval(refreshNewsFromApi, 60 * 1000);  // 1分ごとお知らせも再取得
 })();

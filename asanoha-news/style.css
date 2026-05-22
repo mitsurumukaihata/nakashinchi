@@ -267,6 +267,72 @@ body[data-theme="dark"] .theme-toggle__sun  { display: block; }
   to   { transform: translate(-50%, 0);     opacity: 1; }
 }
 
+/* ===== PIN MODAL ===== */
+.pin-modal {
+  position: fixed; inset: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+}
+.pin-modal[hidden] { display: none; }
+.pin-modal__backdrop {
+  position: absolute; inset: 0;
+  background: rgba(10, 6, 4, 0.6);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  animation: fadeIn 0.2s ease;
+}
+.pin-modal__panel {
+  position: relative;
+  background: var(--color-paper);
+  border: 1px solid var(--color-paper-line);
+  padding: 28px 26px 24px;
+  max-width: 360px; width: calc(100% - 32px);
+  border-radius: 8px;
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.3);
+  animation: modalSlide 0.3s cubic-bezier(.2,.7,.2,1);
+}
+.pin-modal__title {
+  font-size: 18px; font-weight: 600;
+  letter-spacing: 0.06em; margin-bottom: 10px;
+  color: var(--color-ink);
+}
+.pin-modal__desc {
+  font-size: 12px; line-height: 1.85;
+  color: var(--color-text-muted);
+  letter-spacing: 0.04em;
+  margin-bottom: 20px;
+}
+.pin-modal__input {
+  width: 100%;
+  padding: 14px 16px;
+  background: var(--color-input-bg);
+  border: 1px solid var(--color-paper-line);
+  border-radius: 4px;
+  font-family: var(--font-num);
+  font-size: 26px;
+  letter-spacing: 0.4em;
+  text-align: center;
+  color: var(--color-ink);
+  transition: border-color 0.2s, box-shadow 0.2s;
+}
+.pin-modal__input:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(200,16,46,0.12);
+}
+.pin-modal__error {
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--color-accent);
+  text-align: center;
+  letter-spacing: 0.05em;
+}
+.pin-modal__actions {
+  margin-top: 18px;
+  display: flex; gap: 10px;
+}
+@keyframes fadeIn   { from { opacity: 0; } to { opacity: 1; } }
+@keyframes modalSlide { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
 @media (max-width: 600px) {
   .topbar { padding: 12px 12px 10px; }
   .topbar__back { padding: 6px 10px; font-size: 9px; }

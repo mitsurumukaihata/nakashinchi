@@ -1,0 +1,11 @@
+name = "nakashinchi-api"
+main = "src/index.js"
+compatibility_date = "2024-12-01"
+
+# Cloudflare D1 database binding
+# database_id は `wrangler d1 create nakashinchi` 実行後に表示される ID をここに貼り付ける
+[[d1_databases]]
+binding = "DB"
+database_name = "nakashinchi"
+database_id = "REPLACE_AFTER_D1_CREATE"
+migrations_dir = "migrations"

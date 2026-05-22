@@ -1,0 +1,20 @@
+{
+  "name": "nakashinchi-api",
+  "version": "0.1.0",
+  "type": "module",
+  "private": true,
+  "description": "中新地 飲食店ガイド の店舗データ同期 API (Cloudflare Workers + D1)",
+  "scripts": {
+    "dev":             "wrangler dev",
+    "deploy":          "wrangler deploy",
+    "tail":            "wrangler tail",
+    "db:create":       "wrangler d1 create nakashinchi",
+    "db:schema":       "wrangler d1 execute nakashinchi --remote --file=schema.sql",
+    "db:schema:local": "wrangler d1 execute nakashinchi --local  --file=schema.sql",
+    "db:list":         "wrangler d1 list",
+    "set-pin":         "node scripts/set-pin.mjs"
+  },
+  "devDependencies": {
+    "wrangler": "^3.86.0"
+  }
+}
