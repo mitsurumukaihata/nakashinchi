@@ -8,23 +8,26 @@
 
 ```
 nakashinchi/
-├── asanoha-hero-bg/          # 【麻ノ葉】壁画背景のヒーロー（公開トップ）
-│   ├── index.html
-│   ├── style.css
-│   ├── script.js
-│   ├── public/images/
-│   └── 席配置図/
-├── asanoha-admin/             # 【麻ノ葉】管理ダッシュボード（店主向け）
-│   ├── index.html
-│   ├── style.css
-│   └── script.js
-└── asanoha-seats/             # 【麻ノ葉】席管理 UI
-    ├── index.html
-    ├── style.css
-    └── script.js
+├── index.html                  # 中新地 飲食店ガイド（店一覧のランディング）
+├── asanoha-hero-bg/            # 【麻ノ葉】壁画背景のヒーロー（公開トップ）
+├── asanoha-admin/              # 【麻ノ葉】管理ダッシュボード（店主向け）
+├── asanoha-seats/              # 【麻ノ葉】席管理 UI
+├── asanoha-news/               # 【麻ノ葉】お知らせ・今日の一言（編集）
+└── asanoha-hours/              # 【麻ノ葉】営業時間・定休日（編集）
 ```
 
-公開ヒーロー右下の「管理」から管理ダッシュボードへ。そこから席管理・お品書き・お知らせなどへ展開していく構成。
+## 画面遷移
+
+```
+[中新地 ランディング] ─→ [麻ノ葉 公開ヒーロー]
+                              │  ↑ 右下「管理 →」
+                              ↓
+                         [管理ダッシュボード]
+                              ├─ 席の状況   (asanoha-seats)
+                              ├─ 営業時間   (asanoha-hours) ← 公開ページの営業バッジに連動
+                              ├─ お知らせ   (asanoha-news)   ← 公開ページの一言バナーに連動
+                              └─ 他 (準備中、モーダルで対応予定を表示)
+```
 
 将来、別の店舗が加わる際は `(店名)-hero-bg/` `(店名)-admin/` `(店名)-seats/` のように店ごとに分けて追加していく方針。
 

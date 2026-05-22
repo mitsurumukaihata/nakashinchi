@@ -33,7 +33,19 @@
   </div>
 
   <div class="hero__content">
-    <p class="hero__mark"><span class="hero__mark-line"></span>HIROSHIMA · 中新地 · 縁起の席</p>
+    <div class="hero__top-line">
+      <p class="hero__mark"><span class="hero__mark-line"></span>HIROSHIMA · 中新地 · 縁起の席</p>
+      <div class="hero__status" id="hero-status" data-status="loading">
+        <span class="hero__status-dot"></span>
+        <span class="hero__status-text">確認中…</span>
+      </div>
+    </div>
+
+    <!-- お知らせ（管理画面で設定された場合のみ表示） -->
+    <div class="hero__news" id="hero-news" hidden>
+      <span class="hero__news-tag">お知らせ</span>
+      <span class="hero__news-text" id="hero-news-text"></span>
+    </div>
 
     <h1 class="hero__brand">麻<span class="hero__brand-accent">ノ</span>葉</h1>
     <p class="hero__brand-jp">M A N O H A &nbsp;/&nbsp; ま の は</p>

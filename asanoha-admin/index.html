@@ -93,18 +93,18 @@
       </div>
     </a>
 
-    <button type="button" class="card card--coming" data-feature="hours">
+    <a href="../asanoha-hours/" class="card card--active">
       <div class="card__head">
         <span class="card__num">02</span>
-        <span class="card__badge">準備中</span>
+        <span class="card__badge card__badge--live">稼働中</span>
       </div>
       <h3 class="card__title">営業時間・定休日</h3>
-      <p class="card__desc">通常営業時間、特別営業、貸切日の登録</p>
+      <p class="card__desc">営業中／時間外バッジに自動連動</p>
       <div class="card__foot">
-        <span class="card__live">現在: 17:00 — 25:00</span>
+        <span class="card__live" id="card-hours-info">17:00 — 25:00</span>
         <span class="card__arrow">→</span>
       </div>
-    </button>
+    </a>
 
     <button type="button" class="card card--coming" data-feature="reservation">
       <div class="card__head">
@@ -137,18 +137,18 @@
       </div>
     </button>
 
-    <button type="button" class="card card--coming" data-feature="news">
+    <a href="../asanoha-news/" class="card card--active">
       <div class="card__head">
         <span class="card__num">05</span>
-        <span class="card__badge">準備中</span>
+        <span class="card__badge card__badge--live">稼働中</span>
       </div>
       <h3 class="card__title">お知らせ・今日の一言</h3>
-      <p class="card__desc">トップ画面に表示する告知の編集</p>
+      <p class="card__desc">トップに出る短いメッセージを編集</p>
       <div class="card__foot">
-        <span class="card__live">未投稿</span>
+        <span class="card__live" id="card-news-info">未投稿</span>
         <span class="card__arrow">→</span>
       </div>
-    </button>
+    </a>
 
     <button type="button" class="card card--coming" data-feature="photos">
       <div class="card__head">

@@ -8,12 +8,13 @@
 (function () {
   'use strict';
 
-  // 営業時間（後で設定画面と連動予定）
-  var OPEN_HOUR  = 17;
-  var CLOSE_HOUR = 25;  // 翌日 1:00 まで
+  // ストレージキー
   var SEATS_STORAGE_KEY = 'manoha-seats-v1';
+  var HOURS_STORAGE_KEY = 'manoha-hours-v1';
+  var NEWS_STORAGE_KEY  = 'manoha-news-v1';
   var THEME_STORAGE_KEY = 'manoha-theme';
   var TOTAL_SEATS = 11;
+  var DEFAULT_HOURS = { open: '17:00', close: '01:00', crossDay: true, closedDays: [] };
 
   // -------- THEME --------
   function applyTheme(theme) {
@@ -38,47 +39,37 @@
   }
   applyTheme(loadTheme());
 
-  // 各「準備中」カードのモーダル内容
+  // 各「準備中」カードのモーダル内容（店主向けの言葉で）
   var FEATURE_PLANS = {
-    hours: {
-      title: '営業時間・定休日',
-      desc:  '通常の営業時間、定休日、貸切日、特別営業時間（GW・年末年始）を登録できる画面。設定値は公開ページのヒーロー・営業バッジに自動連動します。',
-      plan:  'Phase 2: 簡易フォーム + localStorage で開始 → Cloudflare D1 に移行'
-    },
     reservation: {
       title: '予約・お問い合わせ',
-      desc:  '電話・LINE・公式サイトのフォームから入った予約を一元管理。日付・人数・テーブル指定・備考まで一覧で確認。前日リマインド送信も視野に。',
-      plan:  'Phase 3: フォーム + Cloudflare D1 + LINE Messaging API 連携'
+      desc:  '電話やLINEで入った予約を、ひとつの画面で一覧管理できる画面です。',
+      plan:  '日付・時間・人数・席・備考をまとめて管理でき、当日の予定が一目でわかるようになります。前日にお客様へリマインドを自動でお送りする機能や、ホームページから直接ご予約をいただける窓口もご用意する予定です。'
     },
     menu: {
       title: 'お品書き',
-      desc:  '料理・お酒のメニュー登録。カテゴリー分け、写真添付、価格、品切れフラグ、ランチ／ディナーの出し分け。公開ページに自動反映。',
-      plan:  'Phase 2: 構造化JSON + localStorage → Cloudflare R2 で画像保存'
-    },
-    news: {
-      title: 'お知らせ・今日の一言',
-      desc:  '本日の特別メニュー、貸切のお知らせ、店主の一言など、公開ページのトップに表示する短文の編集。一発で「今日のおすすめ」を変えられる軽さを目指す。',
-      plan:  'Phase 2: 簡易テキストエディタ + 公開反映'
+      desc:  'お料理・お酒のメニューを写真付きで登録・編集できる画面です。',
+      plan:  'カテゴリー（前菜・お酒・〆 など）ごとに料理を登録でき、写真・価格・「本日 品切れ」「期間限定」といったタグも付けられます。トップページのお品書き欄に、書き換えたその場で反映されます。'
     },
     photos: {
       title: '写真ギャラリー',
-      desc:  '店内・料理・季節の演出など写真の追加・差替え・並び替え。トップヒーローの背景候補も含めて管理。',
-      plan:  'Phase 2: アップロード UI + Cloudflare R2 (画像ストレージ)'
+      desc:  '店内・お料理・季節の装飾の写真を、いつでも追加・差し替えできる画面です。',
+      plan:  'スマホで撮った写真をそのままアップロードでき、並び順も自由に変えられます。トップページの背景画像も、季節や雰囲気に合わせて切り替えられるようになります。'
     },
     info: {
       title: '店舗情報',
-      desc:  '住所・電話番号・アクセス・地図・SNS リンクの編集。公開ページのフッター・問い合わせ画面に自動反映。',
-      plan:  'Phase 2: フォーム編集 + 公開反映'
+      desc:  '住所・電話番号・地図・SNSリンクなど、お店の基本情報を編集できる画面です。',
+      plan:  '電話番号や定休日を変えるとき、ここを書き換えるだけでトップページ・お問い合わせ画面の全部に自動で反映されます。Instagram・LINE・食べログ などの外部リンクも一括管理できます。'
     },
     stats: {
-      title: '統計・分析',
-      desc:  '着席タイムスタンプから滞在時間・回転率・曜日別ピーク時間を可視化。月次レポートも自動生成。',
-      plan:  'Phase 3: D1 にイベントログ蓄積 → グラフ可視化'
+      title: 'お店の数字',
+      desc:  '来店動向・席の使われ方を「見える化」する画面です。',
+      plan:  '曜日ごとのピーク時間、月ごとの来店数、よく出る席や残りやすい席などを、自動で記録してグラフにします。仕入れの量や、人手の入れ方を判断する材料、調子の良い日と悪い日の比較に使えます。'
     },
     settings: {
       title: '設定',
-      desc:  'スタッフのアカウント追加、パスワード変更、通知設定（LINE/メール）、テーマ切替（昼/夜モード）、データのエクスポート。',
-      plan:  'Phase 3: 認証 + マルチ端末同期 (Cloudflare D1 + KV)'
+      desc:  'スタッフ・通知・画面表示などの細かい設定を行う画面です。',
+      plan:  'スタッフのアカウント追加（誰がどの画面まで触れるか）、お知らせの通知方法（LINE・メール）、お店が暗いときの夜モードなど、お店ごとの運用に合わせた設定ができます。'
     }
   };
 
@@ -95,16 +86,53 @@
     updateOpenStatus(d);
   }
 
-  // ---------- 営業状態 ----------
-  var openDot = document.getElementById('open-dot');
-  var openSt  = document.getElementById('open-status');
+  // ---------- 営業時間 設定読込 & 状態判定 ----------
+  function readHours() {
+    try {
+      var v = JSON.parse(localStorage.getItem(HOURS_STORAGE_KEY) || 'null');
+      return v || DEFAULT_HOURS;
+    } catch (_) { return DEFAULT_HOURS; }
+  }
+  function isOpenNow(d, hours) {
+    var dow = d.getDay();
+    if ((hours.closedDays || []).indexOf(dow) !== -1) return false;
+    var op = hours.open.split(':'),  oh = +op[0], om = +op[1];
+    var cl = hours.close.split(':'), ch = +cl[0], cm = +cl[1];
+    var now = d.getHours() * 60 + d.getMinutes();
+    var openM = oh * 60 + om;
+    var closeM = ch * 60 + cm;
+    if (hours.crossDay) {
+      // 例: 17:00 - 01:00 = 17:00以降 OR 01:00未満
+      return now >= openM || now < closeM;
+    }
+    return now >= openM && now < closeM;
+  }
+
+  var openDot      = document.getElementById('open-dot');
+  var openSt       = document.getElementById('open-status');
+  var cardHoursInfo = document.getElementById('card-hours-info');
   function updateOpenStatus(d) {
-    var h = d.getHours();
-    // 営業時間: 17:00 〜 翌1:00 (CLOSE_HOUR=25)
-    var isOpen = (h >= OPEN_HOUR && h < 24) || (CLOSE_HOUR > 24 && h < (CLOSE_HOUR - 24));
-    openSt.textContent  = isOpen ? '営業中' : '営業時間外';
+    var hours  = readHours();
+    var isOpen = isOpenNow(d, hours);
+    openSt.textContent = isOpen ? '営業中' : '営業時間外';
     openDot.classList.toggle('is-open',   isOpen);
     openDot.classList.toggle('is-closed', !isOpen);
+    if (cardHoursInfo) cardHoursInfo.textContent = hours.open + ' — ' + hours.close;
+  }
+
+  // ---------- お知らせ ----------
+  var cardNewsInfo = document.getElementById('card-news-info');
+  function refreshNews() {
+    if (!cardNewsInfo) return;
+    try {
+      var data = JSON.parse(localStorage.getItem(NEWS_STORAGE_KEY) || 'null');
+      if (data && data.message) {
+        var t = data.message;
+        cardNewsInfo.textContent = t.length > 18 ? t.substring(0, 18) + '…' : t;
+      } else {
+        cardNewsInfo.textContent = '未投稿';
+      }
+    } catch (_) { cardNewsInfo.textContent = '未投稿'; }
   }
 
   // ---------- 席管理の状態を読込 ----------
@@ -160,12 +188,15 @@
   // ---------- 初期化 ----------
   tickTime();
   refreshSeats();
+  refreshNews();
   setInterval(tickTime,   30 * 1000);
   setInterval(refreshSeats, 5 * 1000);
 
-  // 別タブで席 / テーマ を更新したら反映
+  // 別タブ更新の同期
   window.addEventListener('storage', function (e) {
-    if (e.key === SEATS_STORAGE_KEY) refreshSeats();
+    if (e.key === SEATS_STORAGE_KEY)      refreshSeats();
+    else if (e.key === HOURS_STORAGE_KEY) tickTime();
+    else if (e.key === NEWS_STORAGE_KEY)  refreshNews();
     else if (e.key === THEME_STORAGE_KEY) applyTheme(e.newValue || 'light');
   });
 })();
