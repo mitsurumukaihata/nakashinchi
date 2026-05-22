@@ -12,7 +12,31 @@
   var OPEN_HOUR  = 17;
   var CLOSE_HOUR = 25;  // 翌日 1:00 まで
   var SEATS_STORAGE_KEY = 'manoha-seats-v1';
+  var THEME_STORAGE_KEY = 'manoha-theme';
   var TOTAL_SEATS = 11;
+
+  // -------- THEME --------
+  function applyTheme(theme) {
+    document.body.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
+  }
+  function loadTheme() {
+    try { return localStorage.getItem(THEME_STORAGE_KEY) || 'light'; }
+    catch (_) { return 'light'; }
+  }
+  function saveTheme(theme) {
+    try { localStorage.setItem(THEME_STORAGE_KEY, theme); }
+    catch (_) {}
+  }
+  var themeToggle = document.getElementById('theme-toggle');
+  if (themeToggle) {
+    themeToggle.addEventListener('click', function () {
+      var current = document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
+      var next    = current === 'dark' ? 'light' : 'dark';
+      applyTheme(next);
+      saveTheme(next);
+    });
+  }
+  applyTheme(loadTheme());
 
   // 各「準備中」カードのモーダル内容
   var FEATURE_PLANS = {
@@ -139,8 +163,9 @@
   setInterval(tickTime,   30 * 1000);
   setInterval(refreshSeats, 5 * 1000);
 
-  // 別タブで席を更新したら反映
+  // 別タブで席 / テーマ を更新したら反映
   window.addEventListener('storage', function (e) {
     if (e.key === SEATS_STORAGE_KEY) refreshSeats();
+    else if (e.key === THEME_STORAGE_KEY) applyTheme(e.newValue || 'light');
   });
 })();

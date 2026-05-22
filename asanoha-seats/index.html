@@ -3,11 +3,11 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0a0604">
+<meta name="theme-color" content="#1a0c08">
 <title>麻ノ葉 — 席の状況</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;700&family=Yuji+Syuku&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;700&family=Yuji+Syuku&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -15,90 +15,124 @@
 <header class="topbar">
   <div class="topbar__inner">
     <a href="../asanoha-admin/" class="topbar__back" title="管理画面へ戻る">← 管理</a>
+
     <div class="topbar__brand">
       <span class="topbar__brand-yomi">M A N O H A</span>
       <h1 class="topbar__brand-name">麻<span class="ja-accent">ノ</span>葉</h1>
     </div>
-    <div class="topbar__stats" aria-live="polite">
-      <div class="stat stat--open">
-        <span class="stat__num" id="cnt-open">11</span>
-        <span class="stat__label">空</span>
+
+    <div class="topbar__right">
+      <div class="topbar__stats" aria-live="polite">
+        <div class="stat stat--open">
+          <span class="stat__num" id="cnt-open">11</span>
+          <span class="stat__label">空</span>
+        </div>
+        <div class="stat stat--taken">
+          <span class="stat__num" id="cnt-taken">0</span>
+          <span class="stat__label">着</span>
+        </div>
+        <div class="stat stat--total">
+          <span class="stat__num">11</span>
+          <span class="stat__label">計</span>
+        </div>
       </div>
-      <div class="stat stat--taken">
-        <span class="stat__num" id="cnt-taken">0</span>
-        <span class="stat__label">着</span>
-      </div>
-      <div class="stat stat--total">
-        <span class="stat__num">11</span>
-        <span class="stat__label">計</span>
-      </div>
+      <button class="theme-toggle" id="theme-toggle" type="button" aria-label="昼夜 テーマ切替">
+        <svg class="theme-toggle__moon" viewBox="0 0 24 24" width="18" height="18" fill="currentColor" aria-hidden="true">
+          <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.5 5.5 0 0 1-7.54-7.54A9.05 9.05 0 0 0 12 3z"/>
+        </svg>
+        <svg class="theme-toggle__sun" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true">
+          <circle cx="12" cy="12" r="4" fill="currentColor"/>
+          <g stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none">
+            <line x1="12" y1="2"    x2="12"    y2="5"/>
+            <line x1="12" y1="19"   x2="12"    y2="22"/>
+            <line x1="2"  y1="12"   x2="5"     y2="12"/>
+            <line x1="19" y1="12"   x2="22"    y2="12"/>
+            <line x1="4.93"  y1="4.93"  x2="7.05"  y2="7.05"/>
+            <line x1="16.95" y1="16.95" x2="19.07" y2="19.07"/>
+            <line x1="4.93"  y1="19.07" x2="7.05"  y2="16.95"/>
+            <line x1="16.95" y1="7.05"  x2="19.07" y2="4.93"/>
+          </g>
+        </svg>
+      </button>
     </div>
   </div>
   <div class="topbar__time" id="time">--:--</div>
 </header>
 
+<!-- 上部に出すアンドゥ通知（下のボタンを邪魔しない） -->
+<div class="undo-bar" id="undo-bar" hidden>
+  <span class="undo-bar__text" id="undo-text">変更しました</span>
+  <button class="undo-bar__btn" id="undo-btn" type="button">元に戻す</button>
+  <button class="undo-bar__close" id="undo-close" type="button" aria-label="閉じる">✕</button>
+</div>
+
 <main class="floor-wrap">
   <div class="floor" id="floor" aria-label="店内配置図">
+
     <!-- 入口 -->
     <span class="label label--entry">入&nbsp;口</span>
 
-    <!-- BOX テーブル -->
+    <!-- BOX エリア -->
     <div class="zone-tag zone-tag--box">BOX 席</div>
-    <div class="table table--box" aria-hidden="true"></div>
-
-    <!-- BOX 席 (5) -->
-    <button class="seat" data-id="B1" data-zone="box" style="--x:32%; --y:18%;"><span>B1</span></button>
-    <button class="seat" data-id="B2" data-zone="box" style="--x:46%; --y:18%;"><span>B2</span></button>
-    <button class="seat" data-id="B3" data-zone="box" style="--x:60%; --y:18%;"><span>B3</span></button>
-    <button class="seat" data-id="B4" data-zone="box" style="--x:20%; --y:30%;"><span>B4</span></button>
-    <button class="seat" data-id="B5" data-zone="box" style="--x:72%; --y:30%;"><span>B5</span></button>
-
-    <!-- スタッフ -->
-    <div class="zone-tag zone-tag--counter">カウンター</div>
-    <div class="table table--staff" aria-hidden="true">
-      <span class="staff-label">ス&nbsp;タ&nbsp;ッ&nbsp;フ</span>
+    <div class="table table--box" aria-hidden="true">
+      <span class="table__inner-label">テーブル</span>
     </div>
 
-    <!-- カウンター 席 (6) -->
-    <button class="seat" data-id="C1" data-zone="counter" style="--x:36%; --y:48%;"><span>C1</span></button>
-    <button class="seat" data-id="C2" data-zone="counter" style="--x:50%; --y:48%;"><span>C2</span></button>
-    <button class="seat" data-id="C3" data-zone="counter" style="--x:62%; --y:58%;"><span>C3</span></button>
-    <button class="seat" data-id="C4" data-zone="counter" style="--x:62%; --y:68%;"><span>C4</span></button>
-    <button class="seat" data-id="C5" data-zone="counter" style="--x:62%; --y:78%;"><span>C5</span></button>
-    <button class="seat" data-id="C6" data-zone="counter" style="--x:62%; --y:88%;"><span>C6</span></button>
+    <!-- BOX 席 5 -->
+    <button class="seat" data-id="B1" data-zone="box" style="--x:36%; --y:14%;"><span>B1</span></button>
+    <button class="seat" data-id="B2" data-zone="box" style="--x:50%; --y:14%;"><span>B2</span></button>
+    <button class="seat" data-id="B3" data-zone="box" style="--x:64%; --y:14%;"><span>B3</span></button>
+    <button class="seat" data-id="B4" data-zone="box" style="--x:22%; --y:28%;"><span>B4</span></button>
+    <button class="seat" data-id="B5" data-zone="box" style="--x:78%; --y:28%;"><span>B5</span></button>
+
+    <!-- カウンター エリア -->
+    <div class="zone-tag zone-tag--counter">カウンター</div>
+
+    <!-- マリー (ママ) の立ち位置：カウンター対面 -->
+    <div class="position-marker position-marker--mary" aria-hidden="true">
+      <span class="position-marker__name">マ<br>リ<br>ー</span>
+      <span class="position-marker__role">ママ</span>
+    </div>
+
+    <!-- カウンターテーブル -->
+    <div class="table table--counter" aria-hidden="true">
+      <span class="table__inner-label">カウンターテーブル</span>
+    </div>
+
+    <!-- カウンター 席 6 -->
+    <button class="seat" data-id="C1" data-zone="counter" style="--x:34%; --y:48%;"><span>C1</span></button>
+    <button class="seat" data-id="C2" data-zone="counter" style="--x:48%; --y:48%;"><span>C2</span></button>
+    <button class="seat" data-id="C3" data-zone="counter" style="--x:64%; --y:58%;"><span>C3</span></button>
+    <button class="seat" data-id="C4" data-zone="counter" style="--x:64%; --y:68%;"><span>C4</span></button>
+    <button class="seat" data-id="C5" data-zone="counter" style="--x:64%; --y:78%;"><span>C5</span></button>
+    <button class="seat" data-id="C6" data-zone="counter" style="--x:64%; --y:88%;"><span>C6</span></button>
   </div>
 
   <p class="floor-hint">タップで <strong>空席</strong> ↔ <strong>着席</strong> を切替</p>
 </main>
 
-<!-- 元に戻す（直前操作 1 回分） -->
-<div class="undo-bar" id="undo-bar" hidden>
-  <span class="undo-bar__text" id="undo-text">変更しました</span>
-  <button class="undo-bar__btn" id="undo-btn">元に戻す</button>
-</div>
-
 <footer class="actions">
   <div class="action-group">
-    <p class="action-group__title">BOX 5席</p>
+    <p class="action-group__title">BOX 5 席</p>
     <div class="action-group__btns">
-      <button class="btn btn--open"  data-action="zone-clear" data-zone="box">空にする</button>
-      <button class="btn btn--taken" data-action="zone-fill"  data-zone="box">満にする</button>
+      <button class="btn btn--open"  type="button" data-action="zone-clear" data-zone="box">空にする</button>
+      <button class="btn btn--taken" type="button" data-action="zone-fill"  data-zone="box">満にする</button>
     </div>
   </div>
 
   <div class="action-group">
-    <p class="action-group__title">カウンター 6席</p>
+    <p class="action-group__title">カウンター 6 席</p>
     <div class="action-group__btns">
-      <button class="btn btn--open"  data-action="zone-clear" data-zone="counter">空にする</button>
-      <button class="btn btn--taken" data-action="zone-fill"  data-zone="counter">満にする</button>
+      <button class="btn btn--open"  type="button" data-action="zone-clear" data-zone="counter">空にする</button>
+      <button class="btn btn--taken" type="button" data-action="zone-fill"  data-zone="counter">満にする</button>
     </div>
   </div>
 
   <div class="action-group action-group--global">
-    <p class="action-group__title">全体 11席</p>
+    <p class="action-group__title">全体 11 席</p>
     <div class="action-group__btns">
-      <button class="btn btn--ghost"  data-action="all-clear">全部 空席</button>
-      <button class="btn btn--danger" data-action="all-fill">全部 着席</button>
+      <button class="btn btn--ghost"  type="button" data-action="all-clear">全部 空席</button>
+      <button class="btn btn--danger" type="button" data-action="all-fill">全部 着席</button>
     </div>
   </div>
 </footer>
