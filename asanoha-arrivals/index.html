@@ -655,8 +655,24 @@ body {
     }
   });
 
+  // defer 読み込みの api-client / pin-modal を待つ
+  function waitForDeps() {
+    return new Promise(function (resolve) {
+      var tries = 0;
+      var iv = setInterval(function () {
+        if (window.nakashinchiApi && window.promptPin) {
+          clearInterval(iv); resolve(true);
+        } else if (++tries > 100) {
+          clearInterval(iv); resolve(false);
+        }
+      }, 30);
+    });
+  }
+
   // 初期化
   (async function init() {
+    var ok = await waitForDeps();
+    if (!ok) { alert('スクリプトの読み込みに失敗しました'); return; }
     var t = await ensureAuth();
     if (!t) return;
     await refresh(true);

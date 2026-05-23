@@ -21,6 +21,35 @@ const ALLOWED_KEYS = ['news', 'hours', 'display', 'seats'];
 const LINE_TOKEN_URL   = 'https://api.line.me/oauth2/v2.1/token';
 const LINE_PROFILE_URL = 'https://api.line.me/v2/profile';
 
+// LINE Messaging API (push 通知用 — Worker secrets で設定)
+//   env.LINE_BOT_TOKEN           = Messaging API のチャネルアクセストークン
+//   env.STORE_ADMIN_LINE_IDS_JSON = '{"asanoha":["U...","U..."], "ivory":[...]}' のJSON
+const LINE_PUSH_URL = 'https://api.line.me/v2/bot/message/push';
+
+async function pushLineNotification(env, storeId, text) {
+  if (!env.LINE_BOT_TOKEN) return;            // 未設定なら何もしない
+  let ids = [];
+  try {
+    const map = JSON.parse(env.STORE_ADMIN_LINE_IDS_JSON || '{}');
+    ids = map[storeId] || [];
+  } catch (_) { return; }
+  if (ids.length === 0) return;
+
+  await Promise.all(ids.map(uid =>
+    fetch(LINE_PUSH_URL, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + env.LINE_BOT_TOKEN
+      },
+      body: JSON.stringify({
+        to: uid,
+        messages: [{ type: 'text', text: text.slice(0, 1000) }]
+      })
+    }).catch(() => {})
+  ));
+}
+
 // ---------- CORS ----------
 function corsHeaders(origin) {
   const allowed = origin && ALLOWED_ORIGINS.some(o => origin === o || origin.startsWith(o));
@@ -163,7 +192,7 @@ function decodeJwtPayload(jwt) {
 
 // ---------- ルーティング ----------
 export default {
-  async fetch(request, env) {
+  async fetch(request, env, ctx) {
     const url = new URL(request.url);
     const origin = request.headers.get('Origin') || '';
     const cors = corsHeaders(origin);
@@ -524,6 +553,18 @@ export default {
         const cust = await env.DB
           .prepare('SELECT display_name, picture_url FROM customers WHERE id = ?')
           .bind(userId).first();
+
+        // 店舗管理者の LINE に push 通知 (設定されていれば)
+        const storeRow = await env.DB.prepare('SELECT name FROM stores WHERE id = ?').bind(storeId).first();
+        const storeName = (storeRow && storeRow.name) || storeId;
+        const custName  = (cust && cust.display_name) || 'お客様';
+        const arrHHMM   = new Date(arrAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Tokyo' });
+        const msg = '【' + storeName + '】来店通知\n'
+                  + custName + ' さんが向かっています\n'
+                  + '到着予定: ' + arrHHMM + '（あと ' + eta + ' 分）'
+                  + (note ? '\nメモ: ' + note : '');
+        // fire-and-forget (失敗してもAPIレスポンスは返す)
+        try { ctx.waitUntil(pushLineNotification(env, storeId, msg)); } catch (_) {}
         return json({
           arrival: {
             id, storeId, customerId: userId,

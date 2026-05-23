@@ -8,7 +8,47 @@
 (function () {
   'use strict';
 
-  // ---------- 来店通知 待機数を取得 ----------
+  // ---------- 来店通知 待機数 + 新着検出 ----------
+  var _arrPrevCount = -1;
+  var _arrAudio = null;
+  function ensureAudio() {
+    if (!_arrAudio) {
+      try { _arrAudio = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) {}
+    }
+    return _arrAudio;
+  }
+  document.addEventListener('click', function () {
+    var a = ensureAudio(); if (a && a.state === 'suspended') a.resume();
+  }, { once: true });
+  function dingAdmin() {
+    var ac = ensureAudio(); if (!ac) return;
+    var now = ac.currentTime;
+    [880, 1320].forEach(function (freq, i) {
+      var osc = ac.createOscillator();
+      var gain = ac.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      osc.connect(gain).connect(ac.destination);
+      var start = now + i * 0.12;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.18, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.55);
+      osc.start(start);
+      osc.stop(start + 0.6);
+    });
+  }
+  function flashArrivalsCard(n) {
+    var card = document.querySelector('a[href="../asanoha-arrivals/"]');
+    if (!card) return;
+    card.style.boxShadow = '0 0 0 0 rgba(200,16,46,0.6)';
+    card.animate(
+      [
+        { boxShadow: '0 0 0 0 rgba(200,16,46,0.55)' },
+        { boxShadow: '0 0 0 18px rgba(200,16,46,0)' }
+      ],
+      { duration: 1400, iterations: 2, easing: 'ease-out' }
+    );
+  }
   async function updateArrivalsCount() {
     var info = document.getElementById('card-arrivals-info');
     if (!info || !window.nakashinchiApi || !window.nakashinchiApi.isOnline()) return;
@@ -21,12 +61,36 @@
       if (!r.ok) return;
       var data = await r.json();
       var n = (data.arrivals || []).length;
+      // 新着検出 (初回ロード時は通知しない)
+      if (_arrPrevCount >= 0 && n > _arrPrevCount) {
+        dingAdmin();
+        flashArrivalsCard(n);
+        try {
+          if ('Notification' in window && Notification.permission === 'granted') {
+            new Notification('麻ノ葉 — 来店通知', {
+              body: 'あと ' + (n - _arrPrevCount) + ' 件のお客様が向かっています',
+              icon: '../icons/icon-192.png'
+            });
+          }
+        } catch (_) {}
+      }
+      _arrPrevCount = n;
       info.textContent = n === 0 ? '待機 0 件' : n + ' 件 待機中';
+      if (n > 0) info.style.color = 'var(--accent)';
+      else       info.style.color = '';
     } catch (_) {}
   }
-  // api-client.js は defer なので少し遅らせる
-  setTimeout(updateArrivalsCount, 300);
-  setInterval(updateArrivalsCount, 10000);
+  // ブラウザ通知の許可を最初の操作で要求
+  document.addEventListener('click', function () {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission().catch(function(){});
+    }
+  }, { once: true });
+  setTimeout(updateArrivalsCount, 500);
+  setInterval(updateArrivalsCount, 5000);
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) updateArrivalsCount();
+  });
 
   // ストレージキー
   var SEATS_STORAGE_KEY = 'manoha-seats-v1';
