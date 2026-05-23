@@ -213,14 +213,11 @@ export default {
         return json({ storeId, data: result }, 200, cors);
       }
 
-      // GET / PUT /api/store/:storeId/:key
+      // GET / PUT /api/store/:storeId/:key  (news/hours/display/seats のみ)
+      // それ以外の key (arrivals 等) は下流のハンドラに任せる
       const kvMatch = path.match(/^\/api\/store\/([^\/]+)\/([^\/]+)$/);
-      if (kvMatch) {
+      if (kvMatch && ALLOWED_KEYS.includes(kvMatch[2])) {
         const [, storeId, key] = kvMatch;
-
-        if (!ALLOWED_KEYS.includes(key)) {
-          return json({ error: '許可されていない key です' }, 400, cors);
-        }
 
         if (request.method === 'GET') {
           const row = await env.DB
