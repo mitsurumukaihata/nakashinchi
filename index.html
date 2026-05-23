@@ -518,6 +518,202 @@ img { display: block; max-width: 100%; height: auto; }
   .store-card__name { font-size: 36px; }
 }
 
+/* ============ 「今から向かう」ボタン (カード内) ============ */
+.eta-btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  margin-top: 14px;
+  padding: 11px 16px;
+  background: var(--color-ink);
+  color: var(--color-paper);
+  border: none;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+  width: 100%;
+}
+.eta-btn:hover { background: var(--color-accent); transform: translateY(-1px); }
+.eta-btn[data-active="true"] {
+  background: var(--color-accent);
+}
+.eta-btn__icon {
+  width: 14px; height: 14px;
+}
+.eta-status {
+  display: none;
+  margin-top: 10px;
+  padding: 8px 12px;
+  background: rgba(200,16,46,0.08);
+  border: 1px solid rgba(200,16,46,0.25);
+  border-radius: 8px;
+  font-size: 11px;
+  color: var(--color-ink);
+  letter-spacing: 0.08em;
+  text-align: center;
+  line-height: 1.7;
+}
+.eta-status[data-show="true"] { display: block; }
+.eta-status strong {
+  display: block;
+  color: var(--color-accent);
+  font-family: var(--font-num);
+  font-size: 16px;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+}
+
+/* ============ ETA モーダル ============ */
+.eta-modal {
+  position: fixed; inset: 0;
+  z-index: 100;
+  display: none;
+  align-items: center; justify-content: center;
+  padding: 24px;
+}
+.eta-modal[data-open="true"] { display: flex; }
+.eta-modal__backdrop {
+  position: absolute; inset: 0;
+  background: rgba(10,5,3,0.75);
+  backdrop-filter: blur(8px);
+}
+.eta-modal__panel {
+  position: relative;
+  background: #fff;
+  color: var(--color-ink);
+  border-radius: 14px;
+  padding: 28px 24px 26px;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+  animation: etaPop 0.3s cubic-bezier(.2,.7,.2,1);
+}
+@keyframes etaPop {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+.eta-modal__close {
+  position: absolute; top: 12px; right: 12px;
+  width: 32px; height: 32px;
+  border: none; background: transparent;
+  font-size: 18px; color: var(--color-text-soft);
+  cursor: pointer; border-radius: 50%;
+  transition: background 0.2s;
+}
+.eta-modal__close:hover { background: rgba(0,0,0,0.05); }
+.eta-modal__crumb {
+  font-size: 10px;
+  font-family: var(--font-num);
+  letter-spacing: 0.5em;
+  color: var(--color-accent);
+  margin-bottom: 6px;
+  text-indent: 0.5em;
+}
+.eta-modal__title {
+  font-family: var(--font-brush);
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+.eta-modal__store {
+  font-size: 12px;
+  color: var(--color-text-soft);
+  letter-spacing: 0.1em;
+  margin-bottom: 22px;
+}
+.eta-modal__store strong { color: var(--color-ink); font-weight: 600; }
+.eta-modal__label {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--color-text-soft);
+  margin-bottom: 10px;
+}
+.eta-options {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin-bottom: 22px;
+}
+.eta-option {
+  padding: 13px 4px;
+  background: #fff;
+  border: 1px solid rgba(180,160,140,0.4);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  transition: all 0.18s;
+}
+.eta-option strong {
+  display: block;
+  font-family: var(--font-num);
+  font-size: 22px;
+  color: var(--color-ink);
+  font-weight: 600;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.eta-option small {
+  font-size: 10px;
+  color: var(--color-text-soft);
+  letter-spacing: 0.1em;
+}
+.eta-option:hover { border-color: var(--color-ink); }
+.eta-option[aria-pressed="true"] {
+  background: var(--color-ink);
+  border-color: var(--color-ink);
+}
+.eta-option[aria-pressed="true"] strong,
+.eta-option[aria-pressed="true"] small { color: #fff; }
+.eta-modal__note {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(180,160,140,0.4);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--color-ink);
+  background: #fff;
+  resize: none;
+  margin-bottom: 18px;
+}
+.eta-modal__note:focus { outline: none; border-color: var(--color-ink); }
+.eta-modal__submit {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background: var(--color-accent);
+  color: #fff;
+  border: none;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.18s;
+}
+.eta-modal__submit:hover { background: var(--color-accent-deep); transform: translateY(-1px); }
+.eta-modal__submit:disabled { opacity: 0.45; cursor: default; transform: none; }
+.eta-modal__login-prompt {
+  margin-top: 14px;
+  padding: 12px;
+  background: rgba(6,199,85,0.08);
+  border-radius: 8px;
+  font-size: 11px;
+  color: var(--color-text-soft);
+  text-align: center;
+  line-height: 1.8;
+}
+.eta-modal__login-prompt a {
+  color: var(--color-accent);
+  font-weight: 600;
+  text-decoration: underline;
+}
+
 /* ============ AUTH PILL (右上ログイン導線) ============ */
 .auth-pill {
   position: absolute;
@@ -759,6 +955,14 @@ img { display: block; max-width: 100%; height: auto; }
           </div>
         </div>
         <div class="store-card__cta">店ページを見る →</div>
+        <button type="button" class="eta-btn" data-eta-for="__STORE_ID__">
+          <svg class="eta-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 7v5l3 2"/>
+          </svg>
+          今 から 向 か う
+        </button>
+        <div class="eta-status" data-eta-status="__STORE_ID__"></div>
       </div>
     </a>
 
@@ -795,6 +999,14 @@ img { display: block; max-width: 100%; height: auto; }
           </div>
         </div>
         <div class="store-card__cta">店ページを見る →</div>
+        <button type="button" class="eta-btn" data-eta-for="__STORE_ID__">
+          <svg class="eta-btn__icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+            <circle cx="12" cy="12" r="9"/>
+            <path d="M12 7v5l3 2"/>
+          </svg>
+          今 から 向 か う
+        </button>
+        <div class="eta-status" data-eta-status="__STORE_ID__"></div>
       </div>
     </a>
 
@@ -827,6 +1039,35 @@ img { display: block; max-width: 100%; height: auto; }
     <a href="mailto:info@tiremanager-foo.com" class="cta__link">問い合わせる</a>
   </div>
 </section>
+
+<!-- ============ 「今から向かう」モーダル ============ -->
+<div class="eta-modal" id="eta-modal" data-open="false" aria-hidden="true">
+  <div class="eta-modal__backdrop" data-eta-close></div>
+  <div class="eta-modal__panel" role="dialog" aria-modal="true" aria-labelledby="eta-modal-title">
+    <button type="button" class="eta-modal__close" data-eta-close aria-label="閉じる">✕</button>
+    <p class="eta-modal__crumb">A R R I V I N G &nbsp; S O O N</p>
+    <h3 class="eta-modal__title" id="eta-modal-title">今から向かう</h3>
+    <p class="eta-modal__store"><strong id="eta-modal-store">—</strong> に向かいます</p>
+
+    <p class="eta-modal__label">到 着 ま で</p>
+    <div class="eta-options" id="eta-options">
+      <button type="button" class="eta-option" data-eta="10" aria-pressed="false"><strong>10</strong><small>分</small></button>
+      <button type="button" class="eta-option" data-eta="20" aria-pressed="true"><strong>20</strong><small>分</small></button>
+      <button type="button" class="eta-option" data-eta="30" aria-pressed="false"><strong>30</strong><small>分</small></button>
+      <button type="button" class="eta-option" data-eta="60" aria-pressed="false"><strong>60</strong><small>分</small></button>
+    </div>
+
+    <textarea class="eta-modal__note" id="eta-modal-note" rows="2"
+              placeholder="人数・席の希望など（任意）"></textarea>
+
+    <button type="button" class="eta-modal__submit" id="eta-modal-submit">店に知らせる</button>
+
+    <p class="eta-modal__login-prompt" id="eta-modal-login" hidden>
+      LINE でログインすると お店に名前と顔がわかる形で通知されます。<br>
+      <a href="#" id="eta-modal-login-link">LINE でつながる →</a>
+    </p>
+  </div>
+</div>
 
 <!-- ============ FOOTER ============ -->
 <footer class="footer">
@@ -1207,6 +1448,149 @@ img { display: block; max-width: 100%; height: auto; }
 
   var locateBtn   = document.getElementById('locate-btn');
   var locateLabel = document.getElementById('locate-label');
+
+  // ===========================================
+  // 「今から向かう」モーダル + arrivals API
+  // ===========================================
+  var ETA_STORAGE = 'nakashinchi-recent-arrivals';
+  function getRecentArrivals() {
+    try { return JSON.parse(localStorage.getItem(ETA_STORAGE) || '{}'); } catch (_) { return {}; }
+  }
+  function setRecentArrivals(obj) {
+    try { localStorage.setItem(ETA_STORAGE, JSON.stringify(obj)); } catch (_) {}
+  }
+
+  // 各カード内ボタンの data-eta-for / data-eta-status を、親 store-card の data-store-id で埋める
+  document.querySelectorAll('.store-card[data-store-id]').forEach(function (card) {
+    var sid = card.dataset.storeId;
+    card.querySelectorAll('[data-eta-for="__STORE_ID__"]').forEach(function (el) {
+      el.setAttribute('data-eta-for', sid);
+    });
+    card.querySelectorAll('[data-eta-status="__STORE_ID__"]').forEach(function (el) {
+      el.setAttribute('data-eta-status', sid);
+    });
+  });
+
+  var etaModal      = document.getElementById('eta-modal');
+  var etaModalStore = document.getElementById('eta-modal-store');
+  var etaModalNote  = document.getElementById('eta-modal-note');
+  var etaModalSubmit= document.getElementById('eta-modal-submit');
+  var etaModalLogin = document.getElementById('eta-modal-login');
+  var etaModalLoginLink = document.getElementById('eta-modal-login-link');
+  var etaOptionsWrap= document.getElementById('eta-options');
+  var etaCurrentStoreId = null;
+  var etaSelected = 20;
+
+  function openEtaModal(storeId) {
+    etaCurrentStoreId = storeId;
+    var s = STORE_BY_ID[storeId];
+    if (etaModalStore) etaModalStore.textContent = (s && s.name) || storeId;
+    etaSelected = 20;
+    etaOptionsWrap.querySelectorAll('.eta-option').forEach(function (b) {
+      b.setAttribute('aria-pressed', b.dataset.eta === '20' ? 'true' : 'false');
+    });
+    etaModalNote.value = '';
+    // ログイン状態でメッセージ切替
+    var loggedIn = window.nakashinchiLineAuth && window.nakashinchiLineAuth.isLoggedIn();
+    etaModalLogin.hidden = !!loggedIn;
+    etaModal.setAttribute('data-open', 'true');
+    etaModal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeEtaModal() {
+    etaModal.setAttribute('data-open', 'false');
+    etaModal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  etaModal.addEventListener('click', function (e) {
+    if (e.target.hasAttribute && e.target.hasAttribute('data-eta-close')) {
+      closeEtaModal();
+    }
+  });
+  etaOptionsWrap.addEventListener('click', function (e) {
+    var btn = e.target.closest('.eta-option');
+    if (!btn) return;
+    etaSelected = parseInt(btn.dataset.eta, 10);
+    etaOptionsWrap.querySelectorAll('.eta-option').forEach(function (b) {
+      b.setAttribute('aria-pressed', b === btn ? 'true' : 'false');
+    });
+  });
+
+  if (etaModalLoginLink) {
+    etaModalLoginLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (window.nakashinchiLineAuth) window.nakashinchiLineAuth.login(location.pathname + location.search);
+    });
+  }
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest && e.target.closest('.eta-btn[data-eta-for]');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    openEtaModal(btn.getAttribute('data-eta-for'));
+  });
+
+  etaModalSubmit.addEventListener('click', async function () {
+    if (!etaCurrentStoreId) return;
+    var auth = window.nakashinchiLineAuth;
+    if (!auth || !auth.isLoggedIn()) {
+      // 未ログインの場合、LINE ログインへ
+      etaModalLogin.hidden = false;
+      etaModalLogin.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      return;
+    }
+    etaModalSubmit.disabled = true;
+    etaModalSubmit.textContent = '送信中…';
+    try {
+      var r = await fetch(window.NAKASHINCHI_API + '/api/store/' + encodeURIComponent(etaCurrentStoreId) + '/arrivals', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer ' + auth.getToken()
+        },
+        body: JSON.stringify({ etaMinutes: etaSelected, note: etaModalNote.value || null })
+      });
+      if (!r.ok) throw new Error('http_' + r.status);
+      var data = await r.json();
+      // 直近通知をローカルに保存して、ステータス表示
+      var rec = getRecentArrivals();
+      rec[etaCurrentStoreId] = data.arrival;
+      setRecentArrivals(rec);
+      showEtaStatus(etaCurrentStoreId, data.arrival);
+      closeEtaModal();
+    } catch (e) {
+      alert('送信に失敗しました: ' + (e && e.message || e));
+    } finally {
+      etaModalSubmit.disabled = false;
+      etaModalSubmit.textContent = '店に知らせる';
+    }
+  });
+
+  function showEtaStatus(storeId, arrival) {
+    var el = document.querySelector('[data-eta-status="' + storeId + '"]');
+    if (!el) return;
+    var arrTime = new Date(arrival.arrivingAt);
+    var hh = String(arrTime.getHours()).padStart(2, '0');
+    var mm = String(arrTime.getMinutes()).padStart(2, '0');
+    var label;
+    if (arrival.status === 'arrived')   label = '来店完了 ✓';
+    else if (arrival.status === 'cancelled') label = 'キャンセル済';
+    else                                 label = 'お店に通知しました';
+    el.innerHTML = '<strong>' + hh + ':' + mm + '</strong>' + label + ' (' + arrival.etaMinutes + '分後)';
+    el.setAttribute('data-show', 'true');
+  }
+
+  // 起動時に直近通知があれば表示
+  Object.keys(getRecentArrivals()).forEach(function (sid) {
+    var a = getRecentArrivals()[sid];
+    if (!a) return;
+    // 24時間以内のみ
+    if (Date.now() - new Date(a.createdAt).getTime() < 24 * 3600 * 1000) {
+      showEtaStatus(sid, a);
+    }
+  });
 
   // ===========================================
   // ログイン導線 (auth-pill) + お気に入り

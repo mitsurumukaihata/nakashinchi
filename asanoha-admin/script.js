@@ -8,6 +8,26 @@
 (function () {
   'use strict';
 
+  // ---------- 来店通知 待機数を取得 ----------
+  async function updateArrivalsCount() {
+    var info = document.getElementById('card-arrivals-info');
+    if (!info || !window.nakashinchiApi || !window.nakashinchiApi.isOnline()) return;
+    var token = window.nakashinchiApi.getToken();
+    if (!token) return;
+    try {
+      var r = await fetch(window.NAKASHINCHI_API + '/api/store/asanoha/arrivals?status=pending', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!r.ok) return;
+      var data = await r.json();
+      var n = (data.arrivals || []).length;
+      info.textContent = n === 0 ? '待機 0 件' : n + ' 件 待機中';
+    } catch (_) {}
+  }
+  // api-client.js は defer なので少し遅らせる
+  setTimeout(updateArrivalsCount, 300);
+  setInterval(updateArrivalsCount, 10000);
+
   // ストレージキー
   var SEATS_STORAGE_KEY = 'manoha-seats-v1';
   var HOURS_STORAGE_KEY = 'manoha-hours-v1';

@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1a0c08">
+<title>麻ノ葉 — 来店通知</title>
+
+<link rel="icon"             href="../icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable"          content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;700&family=Yuji+Syuku&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../pin-modal.css">
+
+<script src="../config.js"></script>
+<script src="../api-client.js" defer></script>
+<script src="../pin-modal.js" defer></script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg-1: #1a0c08;
+  --bg-2: #0a0604;
+  --paper:#f5efe6;
+  --paper-soft: rgba(245,239,230,0.78);
+  --paper-dim:  rgba(245,239,230,0.42);
+  --paper-faint:rgba(245,239,230,0.16);
+  --ink:  #1a1410;
+  --accent: #c8102e;
+  --accent-soft: #e85060;
+  --green:  #06c755;
+  --amber:  #ffb648;
+  --font-jp:    'Shippori Mincho B1', 'Yu Mincho', serif;
+  --font-brush: 'Yuji Syuku', serif;
+  --font-num:   'Cormorant Garamond', Georgia, serif;
+}
+html, body { background: var(--bg-2); min-height: 100%; }
+body {
+  font-family: var(--font-jp);
+  color: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(200,16,46,0.10) 0%, transparent 55%),
+    linear-gradient(180deg, #1a0c08 0%, #0a0604 60%, #050201 100%);
+}
+
+/* topbar */
+.topbar {
+  position: sticky; top: 0;
+  z-index: 10;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 20px 14px;
+  background: rgba(15,8,5,0.85);
+  border-bottom: 1px solid var(--paper-faint);
+  backdrop-filter: blur(10px);
+  display: flex; align-items: center; gap: 18px;
+}
+.topbar__back {
+  color: var(--paper-soft);
+  text-decoration: none;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  padding: 8px 14px;
+  border: 1px solid var(--paper-faint);
+  border-radius: 999px;
+  transition: all 0.18s;
+}
+.topbar__back:hover { color: var(--paper); border-color: var(--paper); }
+.topbar__center { flex: 1; text-align: center; }
+.topbar__crumb {
+  font-family: var(--font-num);
+  font-size: 10px;
+  letter-spacing: 0.45em;
+  color: var(--paper-dim);
+}
+.topbar__brand {
+  font-family: var(--font-brush);
+  font-weight: 400;
+  font-size: 22px;
+  letter-spacing: 0.06em;
+  line-height: 1.2;
+}
+.topbar__brand .ac { color: var(--accent); }
+.topbar__pulse {
+  display: inline-flex; align-items: center; gap: 8px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--paper-soft);
+}
+.topbar__pulse .dot {
+  width: 8px; height: 8px;
+  background: var(--green);
+  border-radius: 50%;
+  box-shadow: 0 0 12px rgba(6,199,85,0.55);
+  animation: pulse 1.4s ease-in-out infinite;
+}
+@keyframes pulse {
+  0%,100% { opacity: 0.4; transform: scale(0.85); }
+  50%     { opacity: 1;   transform: scale(1.15); }
+}
+
+/* summary */
+.summary {
+  max-width: 920px;
+  margin: 24px auto 0;
+  padding: 0 20px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+}
+.summary__cell {
+  background: rgba(245,239,230,0.045);
+  border: 1px solid var(--paper-faint);
+  border-radius: 12px;
+  padding: 16px 18px;
+  text-align: center;
+}
+.summary__label {
+  font-size: 10px;
+  letter-spacing: 0.3em;
+  color: var(--paper-dim);
+  font-family: var(--font-num);
+}
+.summary__value {
+  display: block;
+  font-family: var(--font-num);
+  font-size: 38px;
+  line-height: 1.1;
+  font-weight: 500;
+  margin: 4px 0 2px;
+}
+.summary__value--accent { color: var(--accent); }
+.summary__value--green  { color: var(--green); }
+.summary__sub {
+  font-size: 10px;
+  color: var(--paper-dim);
+  letter-spacing: 0.15em;
+}
+
+/* list */
+.list-wrap {
+  max-width: 920px;
+  margin: 28px auto;
+  padding: 0 20px 80px;
+}
+.list-heading {
+  display: flex; align-items: baseline; gap: 14px;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.list-heading h2 {
+  font-family: var(--font-brush);
+  font-weight: 400;
+  font-size: 22px;
+  letter-spacing: 0.06em;
+}
+.list-heading .ct {
+  font-family: var(--font-num);
+  font-size: 12px;
+  letter-spacing: 0.25em;
+  color: var(--paper-dim);
+}
+.list-heading .mute {
+  margin-left: auto;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--paper-dim);
+}
+
+.arr {
+  position: relative;
+  background: rgba(245,239,230,0.05);
+  border: 1px solid var(--paper-faint);
+  border-radius: 14px;
+  padding: 18px 18px 16px;
+  margin-bottom: 14px;
+  display: grid;
+  grid-template-columns: 56px 1fr auto;
+  gap: 18px;
+  align-items: start;
+  transition: border-color 0.3s, background 0.3s;
+}
+.arr--new {
+  border-color: rgba(200,16,46,0.55);
+  background: rgba(200,16,46,0.10);
+  animation: arrFlash 1.4s ease-out;
+}
+@keyframes arrFlash {
+  0%   { box-shadow: 0 0 0 0 rgba(200,16,46,0.55); }
+  100% { box-shadow: 0 0 0 18px rgba(200,16,46,0); }
+}
+.arr--done   { opacity: 0.55; }
+.arr--cancel { opacity: 0.4; }
+
+.arr__avatar {
+  width: 56px; height: 56px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(245,239,230,0.10);
+  border: 1px solid var(--paper-faint);
+  display: flex; align-items: center; justify-content: center;
+  color: var(--paper-dim);
+  font-family: var(--font-num);
+  font-size: 22px;
+}
+.arr__avatar img { width: 100%; height: 100%; object-fit: cover; }
+
+.arr__body { min-width: 0; }
+.arr__name {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: var(--paper);
+  margin-bottom: 6px;
+  word-break: break-all;
+}
+.arr__meta {
+  display: flex; gap: 16px; flex-wrap: wrap;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  color: var(--paper-soft);
+  margin-bottom: 8px;
+}
+.arr__meta strong {
+  font-family: var(--font-num);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--paper);
+  margin-left: 6px;
+}
+.arr__note {
+  font-size: 12px;
+  color: var(--paper-soft);
+  line-height: 1.7;
+  letter-spacing: 0.05em;
+  padding: 8px 12px;
+  background: rgba(245,239,230,0.04);
+  border-left: 2px solid var(--accent);
+  border-radius: 4px;
+  word-break: break-all;
+}
+.arr__since {
+  position: absolute;
+  top: 14px; right: 16px;
+  font-family: var(--font-num);
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--paper-dim);
+}
+
+.arr__actions {
+  display: flex; flex-direction: column; gap: 8px;
+  align-self: center;
+}
+.arr-btn {
+  min-width: 110px;
+  padding: 9px 14px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: background 0.2s, transform 0.18s;
+}
+.arr-btn--accept {
+  background: var(--green); color: #fff;
+}
+.arr-btn--accept:hover { background: #04a045; transform: translateY(-1px); }
+.arr-btn--cancel {
+  background: transparent;
+  color: var(--paper-soft);
+  border-color: var(--paper-faint);
+}
+.arr-btn--cancel:hover { color: var(--accent-soft); border-color: var(--accent-soft); }
+
+.arr__status-tag {
+  display: inline-block;
+  margin-top: 6px;
+  padding: 4px 10px;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  border-radius: 999px;
+  background: rgba(245,239,230,0.08);
+  color: var(--paper-dim);
+}
+.arr--done .arr__status-tag   { background: rgba(6,199,85,0.18);   color: var(--green); }
+.arr--cancel .arr__status-tag { background: rgba(232,80,96,0.18);  color: var(--accent-soft); }
+
+.empty {
+  text-align: center;
+  padding: 60px 20px 30px;
+  color: var(--paper-dim);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  line-height: 2;
+}
+.empty .ic {
+  display: block;
+  font-family: var(--font-num);
+  font-size: 38px;
+  color: var(--paper-faint);
+  margin-bottom: 8px;
+}
+
+/* responsive */
+@media (max-width: 600px) {
+  .summary { grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+  .summary__value { font-size: 30px; }
+  .arr { grid-template-columns: 44px 1fr; gap: 12px; }
+  .arr__avatar { width: 44px; height: 44px; font-size: 18px; }
+  .arr__actions {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    gap: 6px;
+    margin-top: 6px;
+    align-self: stretch;
+  }
+  .arr-btn { flex: 1; min-width: 0; }
+  .arr__since { top: 12px; right: 14px; font-size: 9px; }
+}
+
+/* sound toggle */
+.sound-toggle {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 10px;
+  letter-spacing: 0.2em;
+  color: var(--paper-dim);
+  padding: 7px 12px;
+  border: 1px solid var(--paper-faint);
+  border-radius: 999px;
+  cursor: pointer;
+  background: transparent;
+  font-family: inherit;
+}
+.sound-toggle:hover { color: var(--paper); border-color: var(--paper); }
+.sound-toggle[data-on="false"] { opacity: 0.55; }
+
+.history-link {
+  display: inline-block;
+  margin-top: 18px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  color: var(--paper-soft);
+  text-decoration: none;
+  border-bottom: 1px solid var(--paper-faint);
+  padding-bottom: 2px;
+  cursor: pointer;
+}
+.history-link:hover { color: var(--paper); }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="topbar__back" href="../asanoha-admin/">← 管理</a>
+  <div class="topbar__center">
+    <div class="topbar__crumb">A R R I V I N G &nbsp; N O T I C E</div>
+    <h1 class="topbar__brand">麻<span class="ac">ノ</span>葉 — 来店通知</h1>
+  </div>
+  <div class="topbar__pulse"><span class="dot"></span><span id="poll-tag">受信中</span></div>
+</header>
+
+<section class="summary">
+  <div class="summary__cell">
+    <div class="summary__label">待 機 中</div>
+    <span class="summary__value summary__value--accent" id="sum-pending">0</span>
+    <div class="summary__sub">PENDING</div>
+  </div>
+  <div class="summary__cell">
+    <div class="summary__label">本 日 受 入</div>
+    <span class="summary__value summary__value--green" id="sum-arrived">0</span>
+    <div class="summary__sub">ARRIVED TODAY</div>
+  </div>
+  <div class="summary__cell">
+    <div class="summary__label">本 日 合 計</div>
+    <span class="summary__value" id="sum-total">0</span>
+    <div class="summary__sub">TOTAL TODAY</div>
+  </div>
+</section>
+
+<section class="list-wrap">
+  <div class="list-heading">
+    <h2>受信中の通知</h2>
+    <span class="ct" id="list-count">— 件</span>
+    <button class="sound-toggle" id="sound-toggle" type="button" data-on="true">
+      <span id="sound-icon">♪</span>&nbsp;<span id="sound-label">通知音 ON</span>
+    </button>
+  </div>
+  <div id="arr-list"></div>
+  <a class="history-link" id="history-link">過去 24h の履歴も表示 →</a>
+</section>
+
+<!-- PIN モーダル -->
+<div id="pin-modal" class="pin-modal" hidden>
+  <div class="pin-modal__backdrop"></div>
+  <div class="pin-modal__panel" role="dialog" aria-modal="true">
+    <h3 class="pin-modal__title">店舗 PIN を入力</h3>
+    <p class="pin-modal__sub">麻ノ葉 管理者用</p>
+    <input id="pin-input" type="password" inputmode="numeric" autocomplete="off" class="pin-modal__input" placeholder="••••">
+    <p id="pin-error" class="pin-modal__error" hidden></p>
+    <div class="pin-modal__actions">
+      <button id="pin-cancel" type="button" class="pin-modal__btn pin-modal__btn--ghost">キャンセル</button>
+      <button id="pin-submit" type="button" class="pin-modal__btn">認証</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var API = window.NAKASHINCHI_API;
+  var STORE_ID = 'asanoha';
+
+  var listEl       = document.getElementById('arr-list');
+  var sumPending   = document.getElementById('sum-pending');
+  var sumArrived   = document.getElementById('sum-arrived');
+  var sumTotal     = document.getElementById('sum-total');
+  var listCount    = document.getElementById('list-count');
+  var pollTag      = document.getElementById('poll-tag');
+  var soundToggle  = document.getElementById('sound-toggle');
+  var soundLabel   = document.getElementById('sound-label');
+  var historyLink  = document.getElementById('history-link');
+
+  // 通知音 設定
+  var SOUND_KEY = 'arrivals-sound-on';
+  var soundOn = true;
+  try { soundOn = localStorage.getItem(SOUND_KEY) !== '0'; } catch (_) {}
+  function setSound(on) {
+    soundOn = on;
+    soundToggle.setAttribute('data-on', on ? 'true' : 'false');
+    soundLabel.textContent = on ? '通知音 ON' : '通知音 OFF';
+    try { localStorage.setItem(SOUND_KEY, on ? '1' : '0'); } catch (_) {}
+  }
+  setSound(soundOn);
+  soundToggle.addEventListener('click', function () { setSound(!soundOn); });
+
+  // 通知音 (WebAudio で和音 2音)
+  var _ac = null;
+  function ensureAudio() {
+    if (!_ac) { try { _ac = new (window.AudioContext || window.webkitAudioContext)(); } catch (_) {} }
+    return _ac;
+  }
+  // ユーザー操作で audio context を起こす (autoplay対策)
+  document.addEventListener('click', function () {
+    var a = ensureAudio();
+    if (a && a.state === 'suspended') a.resume();
+  }, { once: true });
+  function ding() {
+    if (!soundOn) return;
+    var ac = ensureAudio(); if (!ac) return;
+    var now = ac.currentTime;
+    [880, 1320].forEach(function (freq, i) {
+      var osc = ac.createOscillator();
+      var gain = ac.createGain();
+      osc.type = 'sine';
+      osc.frequency.value = freq;
+      osc.connect(gain).connect(ac.destination);
+      var start = now + i * 0.12;
+      gain.gain.setValueAtTime(0, start);
+      gain.gain.linearRampToValueAtTime(0.16, start + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, start + 0.5);
+      osc.start(start);
+      osc.stop(start + 0.55);
+    });
+  }
+
+  // 認証
+  async function ensureAuth() {
+    if (!window.nakashinchiApi.isOnline()) {
+      alert('API が設定されていません');
+      return null;
+    }
+    var token = window.nakashinchiApi.getToken();
+    if (token) return token;
+    var got = await window.promptPin();
+    return got || null;
+  }
+
+  // arrivals 取得
+  var includeHistory = false;
+  historyLink.addEventListener('click', function (e) {
+    e.preventDefault();
+    includeHistory = !includeHistory;
+    historyLink.textContent = includeHistory ? '待機中のみ表示 →' : '過去 24h の履歴も表示 →';
+    refresh(true);
+  });
+
+  var prevPendingIds = new Set();
+  async function fetchArrivals() {
+    var token = window.nakashinchiApi.getToken();
+    if (!token) return null;
+    var statusParam = includeHistory ? 'all' : 'pending';
+    try {
+      var r = await fetch(API + '/api/store/' + STORE_ID + '/arrivals?status=' + statusParam, {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (r.status === 401) {
+        window.nakashinchiApi.clearToken();
+        return 'auth-needed';
+      }
+      if (!r.ok) return null;
+      var data = await r.json();
+      return data.arrivals || [];
+    } catch (_) { return null; }
+  }
+
+  function fmtSince(iso) {
+    var diffMs = Date.now() - new Date(iso).getTime();
+    var m = Math.floor(diffMs / 60000);
+    if (m < 1)  return 'たった今';
+    if (m < 60) return m + ' 分前';
+    var h = Math.floor(m / 60);
+    return h + ' 時間前';
+  }
+  function fmtHm(iso) {
+    var d = new Date(iso);
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function renderItem(a) {
+    var cls = 'arr';
+    if (a.status === 'arrived')   cls += ' arr--done';
+    if (a.status === 'cancelled' || a.status === 'timeout') cls += ' arr--cancel';
+    if (!prevPendingIds.has(a.id) && a.status === 'pending') cls += ' arr--new';
+
+    var picture = a.customerPicture
+      ? '<img src="' + escapeHtml(a.customerPicture) + '" referrerpolicy="no-referrer" alt="">'
+      : escapeHtml((a.customerName || '？').slice(0,1));
+    var name = a.customerName || '匿名';
+
+    var statusTag = '';
+    if (a.status === 'arrived')   statusTag = '<span class="arr__status-tag">来 店 済</span>';
+    else if (a.status === 'cancelled') statusTag = '<span class="arr__status-tag">キャンセル</span>';
+    else if (a.status === 'timeout')   statusTag = '<span class="arr__status-tag">タイムアウト</span>';
+
+    var actions = '';
+    if (a.status === 'pending') {
+      actions =
+        '<div class="arr__actions">' +
+          '<button class="arr-btn arr-btn--accept" data-act="arrived" data-id="' + escapeHtml(a.id) + '">来店確認</button>' +
+          '<button class="arr-btn arr-btn--cancel" data-act="cancelled" data-id="' + escapeHtml(a.id) + '">キャンセル</button>' +
+        '</div>';
+    }
+
+    return '' +
+      '<div class="' + cls + '" data-arr-id="' + escapeHtml(a.id) + '">' +
+        '<div class="arr__avatar">' + picture + '</div>' +
+        '<div class="arr__body">' +
+          '<div class="arr__name">' + escapeHtml(name) + '</div>' +
+          '<div class="arr__meta">' +
+            '<span>到着予定<strong>' + fmtHm(a.arrivingAt) + '</strong></span>' +
+            '<span>あと<strong>' + a.etaMinutes + '</strong> 分</span>' +
+          '</div>' +
+          (a.note ? '<div class="arr__note">' + escapeHtml(a.note) + '</div>' : '') +
+          statusTag +
+        '</div>' +
+        actions +
+        '<span class="arr__since">' + fmtSince(a.createdAt) + '</span>' +
+      '</div>';
+  }
+
+  function todayStr() {
+    var d = new Date();
+    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  }
+
+  function render(arrivals) {
+    if (!arrivals.length) {
+      listEl.innerHTML = '<div class="empty"><span class="ic">·</span>来店通知はまだありません</div>';
+      listCount.textContent = '0 件';
+      sumPending.textContent = '0';
+      sumArrived.textContent = '0';
+      sumTotal.textContent = '0';
+      return;
+    }
+    // 新規 pending を検出して音
+    var currentPendingIds = new Set();
+    arrivals.forEach(function (a) { if (a.status === 'pending') currentPendingIds.add(a.id); });
+    var hasNew = false;
+    currentPendingIds.forEach(function (id) { if (!prevPendingIds.has(id)) hasNew = true; });
+    if (hasNew && prevPendingIds.size > 0) ding();
+
+    listEl.innerHTML = arrivals.map(renderItem).join('');
+    listCount.textContent = arrivals.length + ' 件';
+
+    // サマリ集計
+    var today = todayStr();
+    var p = 0, ar = 0, tot = 0;
+    arrivals.forEach(function (a) {
+      var d = (a.createdAt || '').slice(0, 10);
+      if (a.status === 'pending') p++;
+      if (d === today) {
+        tot++;
+        if (a.status === 'arrived') ar++;
+      }
+    });
+    sumPending.textContent = p;
+    sumArrived.textContent = ar;
+    sumTotal.textContent   = tot;
+
+    prevPendingIds = currentPendingIds;
+  }
+
+  async function refresh(force) {
+    var data = await fetchArrivals();
+    if (data === 'auth-needed') {
+      var t = await ensureAuth();
+      if (t) refresh(true);
+      return;
+    }
+    if (data == null) {
+      pollTag.textContent = '接続待ち';
+      return;
+    }
+    pollTag.textContent = '受信中';
+    render(data);
+  }
+
+  // アクション (来店確認/キャンセル)
+  listEl.addEventListener('click', async function (e) {
+    var btn = e.target.closest('.arr-btn');
+    if (!btn) return;
+    var id = btn.dataset.id;
+    var act = btn.dataset.act;
+    if (!id || !act) return;
+
+    if (act === 'cancelled' && !confirm('この通知をキャンセル扱いにしますか？')) return;
+
+    var token = window.nakashinchiApi.getToken();
+    if (!token) { token = await ensureAuth(); if (!token) return; }
+
+    btn.disabled = true;
+    try {
+      var r = await fetch(API + '/api/store/' + STORE_ID + '/arrivals/' + encodeURIComponent(id), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify({ status: act })
+      });
+      if (!r.ok) throw new Error('http_' + r.status);
+      await refresh(true);
+    } catch (err) {
+      alert('更新に失敗しました: ' + (err && err.message || err));
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  // 初期化
+  (async function init() {
+    var t = await ensureAuth();
+    if (!t) return;
+    await refresh(true);
+    setInterval(refresh, 5000);
+  })();
+
+  // visibility change で即時取得
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) refresh(true);
+  });
+})();
+</script>
+
+</body>
+</html>

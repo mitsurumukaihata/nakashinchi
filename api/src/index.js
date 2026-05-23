@@ -490,6 +490,141 @@ export default {
         }, 200, cors);
       }
 
+      // ===== 来店通知 (arrivals) =====
+
+      // POST /api/store/:storeId/arrivals  ── 客が「今から向かう」を作成
+      //   要 customer Bearer
+      //   Body: { etaMinutes: number, note?: string }
+      const arrCreateMatch = path.match(/^\/api\/store\/([^\/]+)\/arrivals$/);
+      if (arrCreateMatch && request.method === 'POST') {
+        const [, storeId] = arrCreateMatch;
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        const userId = await verifyCustomerToken(token, env.JWT_SECRET);
+        if (!userId) return json({ error: 'ログインが必要です' }, 401, cors);
+
+        const store = await env.DB.prepare('SELECT id FROM stores WHERE id = ?').bind(storeId).first();
+        if (!store) return json({ error: '店舗が見つかりません' }, 404, cors);
+
+        const body = await request.json().catch(() => ({}));
+        const eta = Number(body.etaMinutes);
+        if (!Number.isFinite(eta) || eta < 0 || eta > 240) {
+          return json({ error: 'etaMinutes は 0〜240 の数値で指定してください' }, 400, cors);
+        }
+        const note = (typeof body.note === 'string') ? body.note.slice(0, 200) : null;
+        const now  = new Date();
+        const arrAt = new Date(now.getTime() + eta * 60 * 1000).toISOString();
+        const idBytes = new Uint8Array(12);
+        crypto.getRandomValues(idBytes);
+        const id = 'arr-' + Array.from(idBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+
+        await env.DB.prepare(`
+          INSERT INTO arrivals (id, store_id, customer_id, eta_minutes, arriving_at, note, status, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+        `).bind(id, storeId, userId, eta, arrAt, note, now.toISOString(), now.toISOString()).run();
+
+        // 客側に返す
+        const cust = await env.DB
+          .prepare('SELECT display_name, picture_url FROM customers WHERE id = ?')
+          .bind(userId).first();
+        return json({
+          arrival: {
+            id, storeId, customerId: userId,
+            customerName: cust ? cust.display_name : null,
+            customerPicture: cust ? cust.picture_url : null,
+            etaMinutes: eta, arrivingAt: arrAt, note, status: 'pending',
+            createdAt: now.toISOString(), updatedAt: now.toISOString()
+          }
+        }, 200, cors);
+      }
+
+      // GET /api/store/:storeId/arrivals?status=pending|all  ── 店側ダッシュボード
+      //   要 store PIN Bearer
+      if (arrCreateMatch && request.method === 'GET') {
+        const [, storeId] = arrCreateMatch;
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        const verifiedStoreId = await verifyToken(token, env.JWT_SECRET);
+        if (!verifiedStoreId || verifiedStoreId !== storeId) {
+          return json({ error: '認証が必要です' }, 401, cors);
+        }
+        const statusParam = (url.searchParams.get('status') || 'pending').toLowerCase();
+        let q = `
+          SELECT a.id, a.store_id, a.customer_id, a.eta_minutes, a.arriving_at,
+                 a.note, a.seat_id, a.status, a.created_at, a.updated_at,
+                 c.display_name AS customer_name, c.picture_url AS customer_picture
+          FROM arrivals a
+          LEFT JOIN customers c ON c.id = a.customer_id
+          WHERE a.store_id = ?
+        `;
+        const args = [storeId];
+        if (statusParam === 'pending') {
+          q += ' AND a.status = ? ';
+          args.push('pending');
+        }
+        // 今日以降のものを優先 (古い完了済みは載せない)
+        q += ' ORDER BY a.created_at DESC LIMIT 50';
+        const rows = await env.DB.prepare(q).bind(...args).all();
+        return json({
+          arrivals: (rows.results || []).map(r => ({
+            id: r.id, storeId: r.store_id, customerId: r.customer_id,
+            customerName: r.customer_name, customerPicture: r.customer_picture,
+            etaMinutes: r.eta_minutes, arrivingAt: r.arriving_at,
+            note: r.note, seatId: r.seat_id, status: r.status,
+            createdAt: r.created_at, updatedAt: r.updated_at
+          }))
+        }, 200, cors);
+      }
+
+      // PATCH /api/store/:storeId/arrivals/:id  ── 店側: ステータス変更
+      //   要 store PIN Bearer
+      //   Body: { status: 'arrived'|'cancelled'|'timeout', seatId?: string }
+      const arrUpdMatch = path.match(/^\/api\/store\/([^\/]+)\/arrivals\/([^\/]+)$/);
+      if (arrUpdMatch && (request.method === 'PATCH' || request.method === 'PUT')) {
+        const [, storeId, arrId] = arrUpdMatch;
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        const verifiedStoreId = await verifyToken(token, env.JWT_SECRET);
+        if (!verifiedStoreId || verifiedStoreId !== storeId) {
+          return json({ error: '認証が必要です' }, 401, cors);
+        }
+        const body = await request.json().catch(() => ({}));
+        const allowed = ['pending', 'arrived', 'cancelled', 'timeout'];
+        const newStatus = String(body.status || '');
+        if (!allowed.includes(newStatus)) {
+          return json({ error: 'status が不正です' }, 400, cors);
+        }
+        const seatId = (typeof body.seatId === 'string') ? body.seatId : null;
+        const now = new Date().toISOString();
+        const r = await env.DB.prepare(`
+          UPDATE arrivals
+             SET status = ?, seat_id = COALESCE(?, seat_id), updated_at = ?
+           WHERE id = ? AND store_id = ?
+        `).bind(newStatus, seatId, now, arrId, storeId).run();
+        return json({ ok: true, changes: r.meta && r.meta.changes }, 200, cors);
+      }
+
+      // GET /api/customer/arrivals  ── 客自身の最近の通知一覧
+      if (path === '/api/customer/arrivals' && request.method === 'GET') {
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        const userId = await verifyCustomerToken(token, env.JWT_SECRET);
+        if (!userId) return json({ error: '認証されていません' }, 401, cors);
+        const rows = await env.DB.prepare(`
+          SELECT id, store_id, eta_minutes, arriving_at, note, seat_id, status, created_at, updated_at
+            FROM arrivals
+           WHERE customer_id = ?
+           ORDER BY created_at DESC LIMIT 20
+        `).bind(userId).all();
+        return json({
+          arrivals: (rows.results || []).map(r => ({
+            id: r.id, storeId: r.store_id, etaMinutes: r.eta_minutes,
+            arrivingAt: r.arriving_at, note: r.note, seatId: r.seat_id,
+            status: r.status, createdAt: r.created_at, updatedAt: r.updated_at
+          }))
+        }, 200, cors);
+      }
+
       // ===== お気に入り =====
 
       // GET /api/customer/favorites — 自分のお気に入り店舗 ID 一覧
