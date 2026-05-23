@@ -22,8 +22,7 @@
 
   var TOKEN_KEY    = 'customer-token';
   var CUSTOMER_KEY = 'customer-info';
-  var STATE_KEY    = 'line-auth-state';      // CSRF 対策 (sessionStorage)
-  var RETURN_KEY   = 'line-auth-return';     // ログイン後の戻り先
+  // ※ state/returnTo はサーバが HMAC 署名する方式に変わったので、ローカル保存は廃止
 
   function getToken()    { try { return localStorage.getItem(TOKEN_KEY); } catch (_) { return null; } }
   function setToken(t)   { try { localStorage.setItem(TOKEN_KEY, t); } catch (_) {} }
@@ -37,40 +36,25 @@
 
   function isLoggedIn() { return !!getToken() && !!getCustomer(); }
 
-  function randomState() {
-    var bytes = new Uint8Array(16);
-    crypto.getRandomValues(bytes);
-    return Array.from(bytes).map(function (b) { return b.toString(16).padStart(2, '0'); }).join('');
-  }
-
-  function login(returnTo) {
-    if (!LINE_CHANNEL_ID) {
-      alert('LINE 認証が設定されていません。');
+  async function login(returnTo) {
+    if (!API_BASE) {
+      alert('API URL が設定されていません。');
       return;
     }
-    var state = randomState();
-    var ret   = returnTo || (location.pathname + location.search + location.hash);
-    // スマホ (特に iOS Safari + LINEアプリ経由) では sessionStorage が
-    // コンテキスト切替で消えるため localStorage を使う。コールバック側で即削除する。
+    var ret = returnTo || (location.pathname + location.search + location.hash);
     try {
-      localStorage.setItem(STATE_KEY, state);
-      localStorage.setItem(RETURN_KEY, ret);
-      // 古い sessionStorage 値が残っていたら掃除
-      sessionStorage.removeItem(STATE_KEY);
-      sessionStorage.removeItem(RETURN_KEY);
-    } catch (_) {}
-    var params = new URLSearchParams({
-      response_type: 'code',
-      client_id:     LINE_CHANNEL_ID,
-      redirect_uri:  LINE_CALLBACK,
-      state:         state,
-      scope:         'profile openid',
-      nonce:         state,
-      // iOS で LINE アプリが起動して別ブラウザに戻ってくると localStorage が
-      // 引き継げず state mismatch になるため、同一ブラウザ内の Web ログインに固定
-      disable_ios_app_login: 'true'
-    });
-    window.location.href = 'https://access.line.me/oauth2/v2.1/authorize?' + params.toString();
+      var r = await fetch(API_BASE + '/api/auth/line/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ returnTo: ret, redirectUri: LINE_CALLBACK })
+      });
+      if (!r.ok) throw new Error('start_failed_' + r.status);
+      var data = await r.json();
+      if (!data.authUrl) throw new Error('no_auth_url');
+      window.location.href = data.authUrl;
+    } catch (e) {
+      alert('LINE ログインを開始できませんでした: ' + (e && e.message || e));
+    }
   }
 
   function logout() {
@@ -97,13 +81,18 @@
   }
 
   // コールバックページから呼ぶ用ヘルパー (内部)
-  async function exchange(code, redirectUri) {
+  // 新方式: state を Worker に渡して検証 (redirectUri/returnTo は state に含まれる)
+  async function exchange(code, state) {
     var r = await fetch(API_BASE + '/api/auth/line/exchange', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code: code, redirectUri: redirectUri })
+      body: JSON.stringify({ code: code, state: state })
     });
-    if (!r.ok) throw new Error('exchange_failed');
+    if (!r.ok) {
+      var errText = '';
+      try { errText = (await r.json()).error || ''; } catch (_) {}
+      throw new Error('exchange_failed' + (errText ? ': ' + errText : ''));
+    }
     var data = await r.json();
     if (data && data.token && data.customer) {
       setToken(data.token);
@@ -122,8 +111,6 @@
     isLoggedIn:      isLoggedIn,
     refreshCustomer: refreshCustomer,
     _exchange:       exchange,        // コールバックページ内部用
-    _stateKey:       STATE_KEY,
-    _returnKey:      RETURN_KEY,
     _callbackUrl:    LINE_CALLBACK
   };
 })();

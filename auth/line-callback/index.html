@@ -125,23 +125,10 @@ body {
   }
 
   var auth = window.nakashinchiLineAuth;
-  // localStorage を優先。古いセッションの sessionStorage にも対応 (フォールバック)
-  var expectedState = localStorage.getItem(auth._stateKey)
-                   || sessionStorage.getItem(auth._stateKey);
-  if (!expectedState || expectedState !== state) {
-    fail('セキュリティ検証に失敗しました', 'state mismatch');
-    return;
-  }
-
+  // 新方式: state は Worker が HMAC 署名済み。クライアント側ストレージ不要。
   try {
-    var result   = await auth._exchange(code, auth._callbackUrl);
-    var returnTo = localStorage.getItem(auth._returnKey)
-                || sessionStorage.getItem(auth._returnKey)
-                || '../../';
-    localStorage.removeItem(auth._stateKey);
-    localStorage.removeItem(auth._returnKey);
-    sessionStorage.removeItem(auth._stateKey);
-    sessionStorage.removeItem(auth._returnKey);
+    var result   = await auth._exchange(code, state);
+    var returnTo = (result && result.returnTo) || '../../';
     success(result.customer && result.customer.name, returnTo);
   } catch (e) {
     fail('ログイン処理でエラーが発生しました', String(e && e.message || e));

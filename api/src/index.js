@@ -110,6 +110,42 @@ async function verifyCustomerToken(token, secret) {
   return expected === sig ? userId : null;
 }
 
+// base64url helpers
+function b64urlEncode(str) {
+  // str は UTF-8 文字列。バイト列に変換してから base64 化。
+  const bytes = new TextEncoder().encode(str);
+  let bin = '';
+  for (let i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+  return btoa(bin).replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '');
+}
+function b64urlDecodeToString(b64) {
+  const pad = b64.length % 4 ? '='.repeat(4 - (b64.length % 4)) : '';
+  const bin = atob(b64.replace(/-/g, '+').replace(/_/g, '/') + pad);
+  const bytes = Uint8Array.from(bin, c => c.charCodeAt(0));
+  return new TextDecoder('utf-8').decode(bytes);
+}
+
+// state を HMAC で署名 (クライアントは触らないので tamper 不可。10分 TTL)
+async function signState(payload, secret) {
+  const b64 = b64urlEncode(JSON.stringify(payload));
+  const sig = await hmacSign(b64, secret);
+  return b64 + '.' + sig;
+}
+async function verifyState(state, secret) {
+  if (!state) return null;
+  const dot = state.lastIndexOf('.');
+  if (dot < 0) return null;
+  const b64 = state.substring(0, dot);
+  const sig = state.substring(dot + 1);
+  const expected = await hmacSign(b64, secret);
+  if (expected !== sig) return null;
+  try {
+    const data = JSON.parse(b64urlDecodeToString(b64));
+    if (typeof data.exp !== 'number' || data.exp * 1000 < Date.now()) return null;
+    return data;
+  } catch (_) { return null; }
+}
+
 // base64url を JSON にデコード (LINE の id_token 解析用)
 function decodeJwtPayload(jwt) {
   try {
@@ -260,17 +296,63 @@ export default {
         }, 200, cors);
       }
 
+      // POST /api/auth/line/start — 署名済み state + LINE 認可 URL を返す
+      //   Body: { returnTo, redirectUri }
+      //   Response: { authUrl, expiresIn }
+      if (path === '/api/auth/line/start' && request.method === 'POST') {
+        if (!env.LINE_CHANNEL_ID || !env.LINE_CHANNEL_SECRET) {
+          return json({ error: 'LINE 認証が設定されていません' }, 503, cors);
+        }
+        const body = await request.json().catch(() => ({}));
+        const returnTo    = typeof body.returnTo === 'string'    ? body.returnTo    : '/';
+        const redirectUri = typeof body.redirectUri === 'string' ? body.redirectUri : '';
+        if (!redirectUri) return json({ error: 'redirectUri は必須です' }, 400, cors);
+
+        const exp = Math.floor(Date.now() / 1000) + 600;  // 10分
+        const nonceBytes = new Uint8Array(8);
+        crypto.getRandomValues(nonceBytes);
+        const nonce = Array.from(nonceBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+
+        const state = await signState({ ret: returnTo, rd: redirectUri, n: nonce, exp }, env.JWT_SECRET);
+        const params = new URLSearchParams({
+          response_type:         'code',
+          client_id:             env.LINE_CHANNEL_ID,
+          redirect_uri:          redirectUri,
+          state:                 state,
+          scope:                 'profile openid',
+          nonce:                 nonce,
+          disable_ios_app_login: 'true'
+        });
+        return json({
+          authUrl: 'https://access.line.me/oauth2/v2.1/authorize?' + params.toString(),
+          expiresIn: 600
+        }, 200, cors);
+      }
+
       // POST /api/auth/line/exchange — LINE から受け取った code を access_token + id_token に交換
-      //   Body: { code, redirectUri }
-      //   Response: { token, customer: { id, name, picture } }
+      //   Body: { code, state }     ← 新: state を Worker で検証
+      //   旧: { code, redirectUri }  ← 後方互換のため残す
+      //   Response: { token, customer, returnTo }
       if (path === '/api/auth/line/exchange' && request.method === 'POST') {
         if (!env.LINE_CHANNEL_ID || !env.LINE_CHANNEL_SECRET) {
           return json({ error: 'LINE 認証が設定されていません' }, 503, cors);
         }
         const body = await request.json().catch(() => ({}));
-        const { code, redirectUri } = body;
+        let { code, state, redirectUri } = body;
+        let returnTo = '/';
+
+        // 新方式: state を verify して redirectUri / returnTo を取り出す
+        if (state) {
+          const parsed = await verifyState(state, env.JWT_SECRET);
+          if (!parsed) {
+            return json({ error: 'state が不正または期限切れです' }, 401, cors);
+          }
+          redirectUri = parsed.rd;
+          returnTo    = parsed.ret || '/';
+        }
+
         if (!code || !redirectUri) {
-          return json({ error: 'code と redirectUri は必須です' }, 400, cors);
+          return json({ error: 'code と state (または redirectUri) は必須です' }, 400, cors);
         }
 
         // LINE のトークンエンドポイントに code を渡してトークン取得
@@ -337,6 +419,7 @@ export default {
         return json({
           token: appToken,
           customer: { id: userId, name: displayName, picture: pictureUrl },
+          returnTo: returnTo,
           expiresIn: CUSTOMER_TOKEN_TTL_SECONDS
         }, 200, cors);
       }
