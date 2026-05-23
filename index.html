@@ -1255,6 +1255,57 @@ img { display: block; max-width: 100%; height: auto; }
     }
   });
 
+  // PWA で Safari ログインから戻ってきたとき (pickup 完了) に再描画
+  window.addEventListener('nakashinchi:login-resumed', function () {
+    renderAuthPill();
+    if (window.nakashinchiFavorites) window.nakashinchiFavorites.refresh();
+    showPickupBanner('done');
+  });
+  window.addEventListener('nakashinchi:pickup-started', function () {
+    showPickupBanner('waiting');
+  });
+
+  // PWA で Safari ログイン待ちを伝える小さなバナー
+  function showPickupBanner(stateName) {
+    var id = 'pickup-banner';
+    var el = document.getElementById(id);
+    if (!el) {
+      el = document.createElement('div');
+      el.id = id;
+      el.style.cssText =
+        'position:fixed;left:50%;bottom:24px;transform:translateX(-50%);' +
+        'z-index:50;padding:12px 20px;border-radius:999px;' +
+        'background:rgba(20,10,6,0.95);color:#f5efe6;' +
+        'font-family:inherit;font-size:12px;letter-spacing:0.16em;' +
+        'box-shadow:0 12px 32px rgba(0,0,0,0.45);' +
+        'border:1px solid rgba(245,239,230,0.22);' +
+        'backdrop-filter:blur(8px);' +
+        'transition:opacity .4s ease,transform .4s ease;opacity:0;';
+      document.body.appendChild(el);
+    }
+    if (stateName === 'waiting') {
+      el.innerHTML = '<span style="color:#06c755">●</span>&nbsp;&nbsp;Safari でログインを完了してください';
+    } else {
+      el.innerHTML = '<span style="color:#06c755">✓</span>&nbsp;&nbsp;ログインしました';
+    }
+    requestAnimationFrame(function () { el.style.opacity = '1'; });
+    if (stateName === 'done') {
+      setTimeout(function () {
+        el.style.opacity = '0';
+        setTimeout(function () { if (el && el.parentNode) el.parentNode.removeChild(el); }, 500);
+      }, 2200);
+    }
+  }
+
+  // ページロード時、未回収の pickup があれば即バナー表示
+  waitAuth(function () {
+    var pending = window.nakashinchiLineAuth.getPendingPickup &&
+                  window.nakashinchiLineAuth.getPendingPickup();
+    if (pending && pending.id && !window.nakashinchiLineAuth.isLoggedIn()) {
+      showPickupBanner('waiting');
+    }
+  });
+
   if (authPill) {
     authPill.addEventListener('click', function (e) {
       e.stopPropagation();

@@ -67,6 +67,15 @@ CREATE TABLE IF NOT EXISTS favorites (
 CREATE INDEX IF NOT EXISTS idx_favorites_customer ON favorites(customer_id);
 CREATE INDEX IF NOT EXISTS idx_favorites_store    ON favorites(store_id);
 
+-- iOS PWA / 別ブラウザ間でログイン結果を受け渡すための一時テーブル (10分TTL)
+CREATE TABLE IF NOT EXISTS auth_pickups (
+  id            TEXT PRIMARY KEY,
+  token         TEXT NOT NULL,
+  customer_json TEXT NOT NULL,
+  expires_at    TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_auth_pickups_exp ON auth_pickups(expires_at);
+
 -- 初期登録：麻ノ葉（PINは scripts/set-pin.mjs で別途設定）
 INSERT OR IGNORE INTO stores (id, name) VALUES ('asanoha', '麻ノ葉');
 -- 初期登録：Ivory

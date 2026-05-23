@@ -297,8 +297,8 @@ export default {
       }
 
       // POST /api/auth/line/start — 署名済み state + LINE 認可 URL を返す
-      //   Body: { returnTo, redirectUri }
-      //   Response: { authUrl, expiresIn }
+      //   Body: { returnTo, redirectUri, pickup?: boolean }
+      //   Response: { authUrl, pickupId?, expiresIn }
       if (path === '/api/auth/line/start' && request.method === 'POST') {
         if (!env.LINE_CHANNEL_ID || !env.LINE_CHANNEL_SECRET) {
           return json({ error: 'LINE 認証が設定されていません' }, 503, cors);
@@ -306,6 +306,7 @@ export default {
         const body = await request.json().catch(() => ({}));
         const returnTo    = typeof body.returnTo === 'string'    ? body.returnTo    : '/';
         const redirectUri = typeof body.redirectUri === 'string' ? body.redirectUri : '';
+        const usePickup   = !!body.pickup;
         if (!redirectUri) return json({ error: 'redirectUri は必須です' }, 400, cors);
 
         const exp = Math.floor(Date.now() / 1000) + 600;  // 10分
@@ -313,7 +314,18 @@ export default {
         crypto.getRandomValues(nonceBytes);
         const nonce = Array.from(nonceBytes).map(b => b.toString(16).padStart(2, '0')).join('');
 
-        const state = await signState({ ret: returnTo, rd: redirectUri, n: nonce, exp }, env.JWT_SECRET);
+        // pickup_id: PWA とブラウザ間でセッションを受け渡すための一時 ID
+        let pickupId = null;
+        if (usePickup) {
+          const pickupBytes = new Uint8Array(18);
+          crypto.getRandomValues(pickupBytes);
+          pickupId = Array.from(pickupBytes).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        const state = await signState({
+          ret: returnTo, rd: redirectUri, n: nonce, exp,
+          pu: pickupId || undefined
+        }, env.JWT_SECRET);
         const params = new URLSearchParams({
           response_type:         'code',
           client_id:             env.LINE_CHANNEL_ID,
@@ -325,6 +337,7 @@ export default {
         });
         return json({
           authUrl: 'https://access.line.me/oauth2/v2.1/authorize?' + params.toString(),
+          pickupId: pickupId,
           expiresIn: 600
         }, 200, cors);
       }
@@ -341,7 +354,8 @@ export default {
         let { code, state, redirectUri } = body;
         let returnTo = '/';
 
-        // 新方式: state を verify して redirectUri / returnTo を取り出す
+        // 新方式: state を verify して redirectUri / returnTo / pickup_id を取り出す
+        let pickupId = null;
         if (state) {
           const parsed = await verifyState(state, env.JWT_SECRET);
           if (!parsed) {
@@ -349,6 +363,7 @@ export default {
           }
           redirectUri = parsed.rd;
           returnTo    = parsed.ret || '/';
+          pickupId    = parsed.pu || null;
         }
 
         if (!code || !redirectUri) {
@@ -416,12 +431,48 @@ export default {
 
         // アプリ独自のトークン発行 (30日有効)
         const appToken = await issueCustomerToken(userId, env.JWT_SECRET);
+        const customer = { id: userId, name: displayName, picture: pictureUrl };
+
+        // pickup_id が指定されていた場合は、PWA 側が引き取りに来るための一時保管
+        if (pickupId) {
+          const pickupExp = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+          await env.DB.prepare(`
+            INSERT INTO auth_pickups (id, token, customer_json, expires_at)
+            VALUES (?, ?, ?, ?)
+            ON CONFLICT(id) DO UPDATE SET
+              token         = excluded.token,
+              customer_json = excluded.customer_json,
+              expires_at    = excluded.expires_at
+          `).bind(pickupId, appToken, JSON.stringify(customer), pickupExp).run();
+        }
+
         return json({
           token: appToken,
-          customer: { id: userId, name: displayName, picture: pictureUrl },
+          customer: customer,
           returnTo: returnTo,
+          pickup: !!pickupId,
           expiresIn: CUSTOMER_TOKEN_TTL_SECONDS
         }, 200, cors);
+      }
+
+      // GET /api/auth/line/pickup/:id — 受け渡し用 (取得後は削除)
+      const pickupMatch = path.match(/^\/api\/auth\/line\/pickup\/([0-9a-f]{8,64})$/);
+      if (pickupMatch && request.method === 'GET') {
+        const [, pid] = pickupMatch;
+        // 期限切れの一括掃除 (低頻度なのでここでまとめて)
+        await env.DB.prepare(`DELETE FROM auth_pickups WHERE expires_at < ?`)
+          .bind(new Date().toISOString()).run();
+
+        const row = await env.DB
+          .prepare('SELECT token, customer_json, expires_at FROM auth_pickups WHERE id = ?')
+          .bind(pid).first();
+        if (!row) return json({ pending: true }, 200, cors);  // まだ届いてない (or 期限切れ)
+
+        // 取得したら即削除 (one-shot)
+        await env.DB.prepare('DELETE FROM auth_pickups WHERE id = ?').bind(pid).run();
+        let customer = null;
+        try { customer = JSON.parse(row.customer_json); } catch (_) {}
+        return json({ token: row.token, customer: customer }, 200, cors);
       }
 
       // GET /api/auth/me — 自分の客プロフィールを返す (要 Bearer)
