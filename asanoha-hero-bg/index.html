@@ -403,25 +403,25 @@ body[data-theme="dark"] .info-section {
   display: flex; flex-direction: column;
   border-top: 1px solid var(--info-line);
 }
-.info-list, .info-list * { margin: 0; padding: 0; }   /* <dd> のUAデフォルト margin-left:40px を確実に消す */
+.info-list { margin: 0; padding: 0; }
 .info-row {
-  display: grid;
-  grid-template-columns: 100px 1fr;
-  gap: 18px;
-  padding: 18px 4px;
+  padding: 20px 4px 22px;
   border-bottom: 1px solid var(--info-line);
-  align-items: start;
+  margin: 0;
 }
 .info-row dt {
+  display: block;
   font-family: 'Cormorant Garamond', Georgia, serif;
-  font-size: 11px;
-  letter-spacing: 0.35em;
+  font-size: 10px;
+  letter-spacing: 0.45em;
   color: var(--info-text-dim);
   text-transform: uppercase;
-  padding-top: 3px;
   text-align: left;
+  margin: 0 0 8px;
+  padding: 0;
 }
 .info-row dd {
+  display: block;
   font-size: 14px;
   letter-spacing: 0.06em;
   line-height: 2;
@@ -429,6 +429,7 @@ body[data-theme="dark"] .info-section {
   white-space: pre-wrap;
   text-align: left;
   margin: 0;
+  padding: 0;
   word-break: break-word;
 }
 .info-row dd a {
@@ -444,8 +445,9 @@ body[data-theme="dark"] .info-section {
 .info-row dd a:hover { color: var(--info-text); border-color: var(--info-text); }
 .info-row #info-zip { display: inline-block; margin-right: 8px; color: var(--info-text-dim); }
 @media (max-width: 600px) {
-  .info-row { grid-template-columns: 80px 1fr; gap: 12px; }
-  .info-row dt { font-size: 10px; letter-spacing: 0.25em; }
+  .info-row { padding: 16px 4px 18px; }
+  .info-row dt { font-size: 9px; letter-spacing: 0.4em; margin-bottom: 6px; }
+  .info-row dd { font-size: 14px; }
 }
 </style>
 
