@@ -422,8 +422,9 @@ a { color: inherit; text-decoration: none; }
 }
 
 .hero__brand {
-  /* 旧版に揃え、明朝の重量で「麻ノ葉」を強く立ち上げる */
-  font-family: 'Shippori Mincho B1', 'Yu Mincho', 'Hiragino Mincho ProN', serif;
+  /* 明朝の重量で「麻ノ葉」を強く立ち上げる
+     Noto Serif JP は variable font で全 weight 確実に出る (デバイス差を防ぐ) */
+  font-family: 'Noto Serif JP', 'Shippori Mincho B1', 'Yu Mincho', 'Hiragino Mincho ProN', serif;
   font-weight: 800;
   font-size: clamp(64px, 11vw, 140px);
   line-height: 1.05;
