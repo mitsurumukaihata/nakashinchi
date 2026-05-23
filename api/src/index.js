@@ -28,11 +28,23 @@ const LINE_PUSH_URL = 'https://api.line.me/v2/bot/message/push';
 
 async function pushLineNotification(env, storeId, text) {
   if (!env.LINE_BOT_TOKEN) return;            // 未設定なら何もしない
+
+  // D1 の subscribers を最優先で取得
   let ids = [];
   try {
-    const map = JSON.parse(env.STORE_ADMIN_LINE_IDS_JSON || '{}');
-    ids = map[storeId] || [];
-  } catch (_) { return; }
+    const rows = await env.DB
+      .prepare('SELECT customer_id FROM store_notify_subscribers WHERE store_id = ?')
+      .bind(storeId).all();
+    ids = (rows.results || []).map(r => r.customer_id);
+  } catch (_) {}
+
+  // フォールバック: env の JSON map (古い設定)
+  if (ids.length === 0) {
+    try {
+      const map = JSON.parse(env.STORE_ADMIN_LINE_IDS_JSON || '{}');
+      ids = map[storeId] || [];
+    } catch (_) {}
+  }
   if (ids.length === 0) return;
 
   await Promise.all(ids.map(uid =>
@@ -661,6 +673,112 @@ export default {
             status: r.status, createdAt: r.created_at, updatedAt: r.updated_at
           }))
         }, 200, cors);
+      }
+
+      // ===== 通知購読 (店舗スタッフの自己登録) =====
+
+      // POST /api/store/:storeId/notify-subscribers
+      //   要 customer Bearer (LINEログイン済) + body.pin で店舗認証
+      //   Body: { pin: "1234", label?: "麻ノ葉 店主" }
+      const subMatch = path.match(/^\/api\/store\/([^\/]+)\/notify-subscribers$/);
+      if (subMatch && request.method === 'POST') {
+        const [, storeId] = subMatch;
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        const userId = await verifyCustomerToken(token, env.JWT_SECRET);
+        if (!userId) return json({ error: 'LINE ログインが必要です' }, 401, cors);
+
+        const storeRow = await env.DB
+          .prepare('SELECT pin_hash FROM stores WHERE id = ?')
+          .bind(storeId).first();
+        if (!storeRow) return json({ error: '店舗が見つかりません' }, 404, cors);
+
+        const body = await request.json().catch(() => ({}));
+        const pin = String(body.pin || '');
+        if (!pin) return json({ error: 'PIN は必須です' }, 400, cors);
+        if (storeRow.pin_hash === 'CHANGE_ME') return json({ error: 'PIN 未設定の店舗です' }, 503, cors);
+        const ok = await verifyPin(storeRow.pin_hash, pin);
+        if (!ok) return json({ error: 'PIN が違います' }, 401, cors);
+
+        const label = (typeof body.label === 'string') ? body.label.slice(0, 100) : null;
+        const now = new Date().toISOString();
+        await env.DB.prepare(`
+          INSERT INTO store_notify_subscribers (store_id, customer_id, label, created_at)
+          VALUES (?, ?, ?, ?)
+          ON CONFLICT(store_id, customer_id) DO UPDATE SET
+            label = excluded.label
+        `).bind(storeId, userId, label, now).run();
+        return json({ ok: true, storeId, customerId: userId }, 200, cors);
+      }
+
+      // GET /api/store/:storeId/notify-subscribers — 店側のリスト
+      if (subMatch && request.method === 'GET') {
+        const [, storeId] = subMatch;
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        const verifiedStoreId = await verifyToken(token, env.JWT_SECRET);
+        if (!verifiedStoreId || verifiedStoreId !== storeId) {
+          return json({ error: '認証が必要です' }, 401, cors);
+        }
+        const rows = await env.DB.prepare(`
+          SELECT s.customer_id, s.label, s.created_at,
+                 c.display_name, c.picture_url
+            FROM store_notify_subscribers s
+            LEFT JOIN customers c ON c.id = s.customer_id
+           WHERE s.store_id = ?
+           ORDER BY s.created_at ASC
+        `).bind(storeId).all();
+        return json({
+          subscribers: (rows.results || []).map(r => ({
+            customerId: r.customer_id,
+            label: r.label,
+            name: r.display_name,
+            picture: r.picture_url,
+            createdAt: r.created_at
+          }))
+        }, 200, cors);
+      }
+
+      // GET /api/customer/notify-subscribers  ── 客側: 自分が購読中の店一覧
+      if (path === '/api/customer/notify-subscribers' && request.method === 'GET') {
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        const userId = await verifyCustomerToken(token, env.JWT_SECRET);
+        if (!userId) return json({ error: '認証されていません' }, 401, cors);
+        const rows = await env.DB.prepare(`
+          SELECT s.store_id, s.label, s.created_at, st.name AS store_name
+            FROM store_notify_subscribers s
+            LEFT JOIN stores st ON st.id = s.store_id
+           WHERE s.customer_id = ?
+           ORDER BY s.created_at ASC
+        `).bind(userId).all();
+        return json({
+          subscriptions: (rows.results || []).map(r => ({
+            storeId: r.store_id, storeName: r.store_name,
+            label: r.label, createdAt: r.created_at
+          }))
+        }, 200, cors);
+      }
+
+      // DELETE /api/store/:storeId/notify-subscribers/:customerId
+      //   要 store PIN Bearer  (店主が他のスタッフを削除) または
+      //   要 customer Bearer (自分自身を削除)
+      const subDelMatch = path.match(/^\/api\/store\/([^\/]+)\/notify-subscribers\/([^\/]+)$/);
+      if (subDelMatch && request.method === 'DELETE') {
+        const [, storeId, customerId] = subDelMatch;
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        const verifiedStoreId = await verifyToken(token, env.JWT_SECRET);
+        const verifiedUserId  = await verifyCustomerToken(token, env.JWT_SECRET);
+        const isStoreAdmin = verifiedStoreId === storeId;
+        const isSelf       = verifiedUserId === customerId;
+        if (!isStoreAdmin && !isSelf) {
+          return json({ error: '権限がありません' }, 401, cors);
+        }
+        await env.DB
+          .prepare('DELETE FROM store_notify_subscribers WHERE store_id = ? AND customer_id = ?')
+          .bind(storeId, customerId).run();
+        return json({ ok: true }, 200, cors);
       }
 
       // ===== お気に入り =====

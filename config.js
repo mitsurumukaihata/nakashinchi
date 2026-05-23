@@ -14,6 +14,11 @@ window.NAKASHINCHI_LINE_CHANNEL_ID = '2010172690';
 // LINE OAuth コールバック URL (LINE Developer Console と一致させる)
 window.NAKASHINCHI_LINE_CALLBACK = window.location.origin + '/nakashinchi/auth/line-callback/';
 
+// LINE 通知ボットの Basic ID (@xxxxxxx 形式)
+// LINE Official Account Manager → アカウント設定 → 基本情報 → ベーシックID
+// (友だち追加 QR 用。設定しなくても登録は可能、QR だけ手動案内になる)
+window.NAKASHINCHI_BOT_BASIC_ID = '';  // 例: '@123abcde'
+
 // 店舗マスタ（landing 等から参照可能）
 window.NAKASHINCHI_STORES = [
   {

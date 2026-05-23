@@ -67,6 +67,18 @@ CREATE TABLE IF NOT EXISTS favorites (
 CREATE INDEX IF NOT EXISTS idx_favorites_customer ON favorites(customer_id);
 CREATE INDEX IF NOT EXISTS idx_favorites_store    ON favorites(store_id);
 
+-- 店舗ごとの通知受信者 (LINE Bot push 先)
+CREATE TABLE IF NOT EXISTS store_notify_subscribers (
+  store_id    TEXT NOT NULL,
+  customer_id TEXT NOT NULL,
+  label       TEXT,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (store_id, customer_id),
+  FOREIGN KEY (store_id)    REFERENCES stores(id),
+  FOREIGN KEY (customer_id) REFERENCES customers(id)
+);
+CREATE INDEX IF NOT EXISTS idx_store_notify_store ON store_notify_subscribers(store_id);
+
 -- iOS PWA / 別ブラウザ間でログイン結果を受け渡すための一時テーブル (10分TTL)
 CREATE TABLE IF NOT EXISTS auth_pickups (
   id            TEXT PRIMARY KEY,

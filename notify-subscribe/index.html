@@ -1,0 +1,524 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0604">
+<meta name="robots" content="noindex">
+<title>来店通知 受信登録 — 中新地</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600&family=Yuji+Syuku&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="../config.js"></script>
+<script src="../line-auth.js" defer></script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg-1:#1a0c08; --bg-2:#0a0604; --bg-3:#050201;
+  --paper:#f5efe6;
+  --paper-soft:rgba(245,239,230,0.78);
+  --paper-dim:rgba(245,239,230,0.45);
+  --paper-faint:rgba(245,239,230,0.16);
+  --ink:#1a1410;
+  --accent:#c8102e;
+  --green:#06c755;
+  --font-jp:'Shippori Mincho B1','Yu Mincho',serif;
+  --font-brush:'Yuji Syuku',serif;
+  --font-num:'Cormorant Garamond',Georgia,serif;
+}
+html,body{height:100%;background:var(--bg-2);}
+body{
+  font-family:var(--font-jp);
+  color:var(--paper);
+  padding:calc(24px + env(safe-area-inset-top,0px)) 20px calc(36px + env(safe-area-inset-bottom,0px));
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(0,200,80,0.10) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 100%, rgba(40,20,15,0.5) 0%, transparent 65%),
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 60%, var(--bg-3) 100%);
+  -webkit-font-smoothing:antialiased;
+}
+.wrap{ max-width:440px; margin:0 auto; }
+
+.crumb{
+  text-align:center;
+  font-family:var(--font-num);
+  font-size:10px;
+  letter-spacing:0.5em;
+  color:var(--paper-dim);
+  text-indent:0.5em;
+  margin-bottom:6px;
+}
+.crumb::before, .crumb::after{ content:'·'; color:var(--accent); margin:0 8px; }
+.brand{
+  font-family:var(--font-brush);
+  font-weight:400;
+  font-size:34px;
+  text-align:center;
+  letter-spacing:0.08em;
+  line-height:1;
+  margin-bottom:6px;
+}
+.brand .ac{ color:var(--accent); }
+.lead{
+  text-align:center;
+  font-size:11px;
+  letter-spacing:0.2em;
+  color:var(--paper-dim);
+  margin-bottom:30px;
+}
+
+.card{
+  background:rgba(245,239,230,0.045);
+  border:1px solid var(--paper-faint);
+  border-radius:14px;
+  padding:22px 22px 24px;
+  margin-bottom:14px;
+}
+.card__num{
+  font-family:var(--font-num);
+  font-size:22px;
+  color:var(--accent);
+  letter-spacing:0.1em;
+  margin-bottom:4px;
+}
+.card__title{
+  font-size:14px;
+  font-weight:600;
+  letter-spacing:0.12em;
+  margin-bottom:14px;
+}
+.card__desc{
+  font-size:12px;
+  color:var(--paper-soft);
+  letter-spacing:0.06em;
+  line-height:2;
+  margin-bottom:14px;
+}
+.card[data-done="true"]{
+  border-color:rgba(6,199,85,0.35);
+  background:rgba(6,199,85,0.07);
+}
+.card[data-done="true"] .card__num{ color:var(--green); }
+.card[data-done="true"]::after{
+  content:'✓';
+  float:right;
+  color:var(--green);
+  font-size:20px;
+  font-weight:600;
+  margin-top:-44px;
+}
+
+.btn{
+  display:inline-flex; align-items:center; justify-content:center; gap:8px;
+  padding:12px 22px;
+  border:none;
+  border-radius:999px;
+  font-family:inherit;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:0.22em;
+  cursor:pointer;
+  width:100%;
+  transition:all 0.2s;
+}
+.btn--line{ background:var(--green); color:#fff; box-shadow:0 4px 18px rgba(6,199,85,0.32); }
+.btn--line:hover{ background:#05a647; transform:translateY(-1px); }
+.btn--ghost{
+  background:transparent;
+  color:var(--paper-soft);
+  border:1px solid var(--paper-faint);
+}
+.btn--ghost:hover{ color:var(--paper); border-color:var(--paper); }
+.btn--accent{ background:var(--accent); color:#fff; }
+.btn--accent:hover{ background:#8e0e1c; transform:translateY(-1px); }
+.btn:disabled{ opacity:0.5; cursor:default; transform:none; }
+
+.profile{
+  display:flex; align-items:center; gap:12px;
+  margin-bottom:8px;
+}
+.profile img{
+  width:44px; height:44px;
+  border-radius:50%;
+  border:1px solid var(--paper-faint);
+}
+.profile__name{ font-size:14px; font-weight:600; letter-spacing:0.05em; }
+.profile__id{ font-size:9px; color:var(--paper-dim); letter-spacing:0.04em; word-break:break-all; }
+
+.qr-wrap{
+  text-align:center;
+  background:#fff;
+  padding:14px;
+  border-radius:10px;
+  margin:10px auto 14px;
+  max-width:220px;
+}
+.qr-wrap img{ width:100%; height:auto; display:block; }
+.qr-tip{
+  text-align:center;
+  font-size:10px;
+  color:var(--paper-dim);
+  letter-spacing:0.12em;
+  line-height:1.8;
+}
+
+label.field{
+  display:block;
+  margin-bottom:14px;
+}
+.field__label{
+  font-size:10px;
+  color:var(--paper-dim);
+  letter-spacing:0.25em;
+  margin-bottom:6px;
+}
+.field input{
+  width:100%;
+  padding:11px 14px;
+  background:rgba(0,0,0,0.25);
+  border:1px solid var(--paper-faint);
+  border-radius:8px;
+  color:var(--paper);
+  font-family:inherit;
+  font-size:14px;
+  letter-spacing:0.1em;
+}
+.field input:focus{ outline:none; border-color:var(--paper); }
+
+.error{
+  margin-top:10px;
+  font-size:11px;
+  color:#ff9aa2;
+  letter-spacing:0.06em;
+}
+.success{
+  text-align:center;
+  padding:24px 18px;
+  background:rgba(6,199,85,0.10);
+  border:1px solid rgba(6,199,85,0.35);
+  border-radius:14px;
+  margin-top:18px;
+}
+.success__title{
+  font-family:var(--font-brush);
+  font-size:24px;
+  color:var(--paper);
+  margin-bottom:6px;
+}
+.success__sub{
+  font-size:11px;
+  color:var(--paper-soft);
+  letter-spacing:0.1em;
+  line-height:2;
+}
+
+.store-pick{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:8px;
+  margin-bottom:6px;
+}
+.store-pick button{
+  padding:14px 8px;
+  background:transparent;
+  border:1px solid var(--paper-faint);
+  border-radius:8px;
+  color:var(--paper-soft);
+  font-family:inherit;
+  font-size:13px;
+  letter-spacing:0.1em;
+  cursor:pointer;
+}
+.store-pick button[aria-pressed="true"]{
+  background:var(--paper);
+  color:var(--ink);
+  border-color:var(--paper);
+}
+
+.muted{ font-size:10px; color:var(--paper-dim); letter-spacing:0.06em; text-align:center; margin-top:18px; line-height:2; }
+.muted a{ color:var(--paper-soft); text-decoration:underline; }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <p class="crumb">N O T I F I C A T I O N &nbsp; S E T U P</p>
+  <h1 class="brand">中<span class="ac">新</span>地</h1>
+  <p class="lead">来店通知 受信登録 (店舗スタッフ用)</p>
+
+  <!-- 店舗選択 (?store= 指定なしの場合) -->
+  <div class="card" id="card-store">
+    <div class="card__num">0 1</div>
+    <div class="card__title">店舗を選択</div>
+    <div class="store-pick" id="store-pick"></div>
+    <p class="card__desc">受信したい店舗を選んでください。</p>
+  </div>
+
+  <!-- STEP 1: LINE Login -->
+  <div class="card" id="card-login">
+    <div class="card__num">0 2</div>
+    <div class="card__title">LINE でログイン</div>
+    <p class="card__desc">あなたの LINE と紐付けます。通知はこの LINE アカウントに届きます。</p>
+    <button class="btn btn--line" id="btn-login" type="button">
+      LINE で ログイン
+    </button>
+    <div id="profile-wrap" hidden>
+      <div class="profile">
+        <img id="prof-img" src="" referrerpolicy="no-referrer" alt="">
+        <div>
+          <div class="profile__name" id="prof-name">—</div>
+          <div class="profile__id" id="prof-id">—</div>
+        </div>
+      </div>
+      <button class="btn btn--ghost" id="btn-logout" type="button">別の LINE に切替</button>
+    </div>
+  </div>
+
+  <!-- STEP 2: ボット友だち追加 -->
+  <div class="card" id="card-bot">
+    <div class="card__num">0 3</div>
+    <div class="card__title">通知ボットを友だち追加</div>
+    <p class="card__desc">「広島 飲み屋街 ボット」を LINE で友だち追加してください。<br>追加していないと通知が届きません。</p>
+    <div class="qr-wrap" id="qr-wrap">
+      <img id="qr-img" src="" alt="LINE QR コード">
+    </div>
+    <p class="qr-tip" id="bot-link-tip">スマホで開いている場合は<br><a id="bot-add-link" href="#" style="color:var(--green); text-decoration:underline;">こちらをタップ</a> で友だち追加</p>
+  </div>
+
+  <!-- STEP 3: PIN -->
+  <div class="card" id="card-pin">
+    <div class="card__num">0 4</div>
+    <div class="card__title">店舗 PIN で承認</div>
+    <p class="card__desc">あなたが <strong id="pin-store-name">—</strong> のスタッフであることを店舗 PIN で証明します。</p>
+    <label class="field">
+      <div class="field__label">P I N</div>
+      <input type="password" inputmode="numeric" id="pin-input" placeholder="••••" autocomplete="off">
+    </label>
+    <label class="field">
+      <div class="field__label">あなたの名前 (任意・店主が一覧で見ます)</div>
+      <input type="text" id="label-input" placeholder="例: 麻ノ葉 店主 / 中川">
+    </label>
+    <button class="btn btn--accent" id="btn-register" type="button">通知 受信 を 開 始</button>
+    <p class="error" id="err" hidden></p>
+  </div>
+
+  <!-- 完了表示 -->
+  <div class="success" id="success" hidden>
+    <p class="crumb">D O N E</p>
+    <h3 class="success__title">登録完了</h3>
+    <p class="success__sub">
+      以降、お客様の「今から向かう」通知が<br>
+      あなたの LINE に届きます。<br><br>
+      お試しに、別端末・別ブラウザから<br>
+      通知を送信して確認してみてください。
+    </p>
+    <button class="btn btn--ghost" id="btn-unsub" type="button" style="margin-top:18px;">通知を停止する</button>
+  </div>
+
+  <p class="muted">
+    店舗 PIN を知っている人だけが登録できます。<br>
+    複数のスタッフが同じ手順で登録すると、全員に同時に届きます。
+  </p>
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  var API_BASE = (window.NAKASHINCHI_API || '').replace(/\/$/, '');
+  // LINE ボットの友だち追加URL (LINE Official Account Manager の Basic ID から)
+  // 例: '@123abcde' なら 'https://line.me/R/ti/p/@123abcde'
+  // Basic ID は LINE Official Account Manager → アカウント設定 → 基本設定 で確認
+  var BOT_BASIC_ID = window.NAKASHINCHI_BOT_BASIC_ID || ''; // 設定済みなら使う
+  var BOT_ADD_URL  = BOT_BASIC_ID ? ('https://line.me/R/ti/p/' + encodeURIComponent(BOT_BASIC_ID)) : null;
+
+  // 店舗一覧
+  var STORES = (window.NAKASHINCHI_STORES || []).filter(function (s) {
+    // 通知が有効な店舗のみ (現状は asanoha)
+    return s.id === 'asanoha';
+  });
+
+  var picked = (new URLSearchParams(location.search)).get('store') || (STORES[0] && STORES[0].id) || null;
+
+  // 各要素
+  var cardStore  = document.getElementById('card-store');
+  var cardLogin  = document.getElementById('card-login');
+  var cardBot    = document.getElementById('card-bot');
+  var cardPin    = document.getElementById('card-pin');
+  var successEl  = document.getElementById('success');
+
+  var btnLogin   = document.getElementById('btn-login');
+  var btnLogout  = document.getElementById('btn-logout');
+  var btnReg     = document.getElementById('btn-register');
+  var btnUnsub   = document.getElementById('btn-unsub');
+  var profWrap   = document.getElementById('profile-wrap');
+  var profImg    = document.getElementById('prof-img');
+  var profName   = document.getElementById('prof-name');
+  var profId     = document.getElementById('prof-id');
+  var pinInput   = document.getElementById('pin-input');
+  var labelInput = document.getElementById('label-input');
+  var errEl      = document.getElementById('err');
+  var pinStoreName = document.getElementById('pin-store-name');
+  var storePickEl  = document.getElementById('store-pick');
+  var qrImg        = document.getElementById('qr-img');
+  var botAddLink   = document.getElementById('bot-add-link');
+  var botLinkTip   = document.getElementById('bot-link-tip');
+
+  // 店舗選択 UI
+  function renderStorePicker() {
+    storePickEl.innerHTML = '';
+    STORES.forEach(function (s) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.textContent = s.name;
+      b.setAttribute('aria-pressed', s.id === picked ? 'true' : 'false');
+      b.addEventListener('click', function () {
+        picked = s.id;
+        renderStorePicker();
+        updateUI();
+      });
+      storePickEl.appendChild(b);
+    });
+    if (STORES.length <= 1) cardStore.style.display = 'none';
+  }
+
+  // QR
+  function setupQR() {
+    if (BOT_ADD_URL) {
+      botAddLink.href = BOT_ADD_URL;
+      // 簡易 QR (Google Chart 後継の qrserver)
+      qrImg.src = 'https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=' + encodeURIComponent(BOT_ADD_URL);
+    } else {
+      // URL 未設定: LINE Developers Console の QR を案内
+      qrImg.alt = 'QR は LINE Official Account Manager から取得して、ここに表示します';
+      qrImg.src = '';
+      qrImg.parentElement.style.background = 'transparent';
+      botLinkTip.innerHTML = 'ボット QR の URL がまだ設定されていません。<br>(config.js に NAKASHINCHI_BOT_BASIC_ID を設定してください)';
+    }
+  }
+
+  function updateUI() {
+    var loggedIn = window.nakashinchiLineAuth && window.nakashinchiLineAuth.isLoggedIn();
+    // LINE login card
+    if (loggedIn) {
+      var c = window.nakashinchiLineAuth.getCustomer();
+      profWrap.hidden = false;
+      btnLogin.hidden = true;
+      cardLogin.setAttribute('data-done', 'true');
+      profName.textContent = c.name || '—';
+      profId.textContent   = c.id || '';
+      if (c.picture) { profImg.src = c.picture; profImg.style.display = ''; }
+      else { profImg.style.display = 'none'; }
+    } else {
+      profWrap.hidden = true;
+      btnLogin.hidden = false;
+      cardLogin.removeAttribute('data-done');
+    }
+    // store name
+    var s = STORES.find(function (x) { return x.id === picked; });
+    pinStoreName.textContent = (s && s.name) || '—';
+    // 既に subscribed か確認
+    checkSubscription();
+  }
+
+  async function checkSubscription() {
+    if (!window.nakashinchiLineAuth || !window.nakashinchiLineAuth.isLoggedIn() || !picked) {
+      successEl.hidden = true;
+      cardPin.style.display = '';
+      return;
+    }
+    try {
+      var r = await fetch(API_BASE + '/api/customer/notify-subscribers', {
+        headers: { 'Authorization': 'Bearer ' + window.nakashinchiLineAuth.getToken() }
+      });
+      if (!r.ok) return;
+      var data = await r.json();
+      var isSub = (data.subscriptions || []).some(function (x) { return x.storeId === picked; });
+      if (isSub) {
+        successEl.hidden = false;
+        cardPin.style.display = 'none';
+        cardPin.setAttribute('data-done', 'true');
+      } else {
+        successEl.hidden = true;
+        cardPin.style.display = '';
+        cardPin.removeAttribute('data-done');
+      }
+    } catch (_) {}
+  }
+
+  btnLogin.addEventListener('click', function () {
+    if (window.nakashinchiLineAuth) window.nakashinchiLineAuth.login(location.pathname + location.search);
+  });
+  btnLogout.addEventListener('click', function () {
+    if (window.nakashinchiLineAuth) window.nakashinchiLineAuth.logout();
+    updateUI();
+  });
+
+  btnReg.addEventListener('click', async function () {
+    errEl.hidden = true;
+    var auth = window.nakashinchiLineAuth;
+    if (!auth || !auth.isLoggedIn()) {
+      errEl.textContent = 'まず LINE ログインしてください';
+      errEl.hidden = false; return;
+    }
+    var pin = pinInput.value.trim();
+    if (!pin) { errEl.textContent = 'PIN を入力してください'; errEl.hidden = false; return; }
+    btnReg.disabled = true; btnReg.textContent = '登録中…';
+    try {
+      var r = await fetch(API_BASE + '/api/store/' + encodeURIComponent(picked) + '/notify-subscribers', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + auth.getToken() },
+        body: JSON.stringify({ pin: pin, label: labelInput.value || null })
+      });
+      var data = await r.json();
+      if (!r.ok) throw new Error(data.error || ('HTTP ' + r.status));
+      successEl.hidden = false;
+      cardPin.style.display = 'none';
+      cardPin.setAttribute('data-done', 'true');
+    } catch (e) {
+      errEl.textContent = String(e.message || e);
+      errEl.hidden = false;
+    } finally {
+      btnReg.disabled = false; btnReg.textContent = '通知 受信 を 開 始';
+    }
+  });
+
+  btnUnsub.addEventListener('click', async function () {
+    if (!confirm('この店舗の通知を停止しますか？')) return;
+    var auth = window.nakashinchiLineAuth;
+    if (!auth || !auth.isLoggedIn()) return;
+    var c = auth.getCustomer();
+    try {
+      var r = await fetch(API_BASE + '/api/store/' + encodeURIComponent(picked) + '/notify-subscribers/' + encodeURIComponent(c.id), {
+        method: 'DELETE',
+        headers: { 'Authorization': 'Bearer ' + auth.getToken() }
+      });
+      if (!r.ok) throw new Error('http_' + r.status);
+      successEl.hidden = true;
+      cardPin.style.display = '';
+      cardPin.removeAttribute('data-done');
+    } catch (e) {
+      alert('停止に失敗しました: ' + (e && e.message || e));
+    }
+  });
+
+  // 起動
+  function waitAuth(cb) {
+    if (window.nakashinchiLineAuth) cb();
+    else setTimeout(function () { waitAuth(cb); }, 50);
+  }
+  waitAuth(function () {
+    renderStorePicker();
+    setupQR();
+    updateUI();
+    if (window.nakashinchiLineAuth.isLoggedIn()) {
+      window.nakashinchiLineAuth.refreshCustomer().then(updateUI);
+    }
+  });
+})();
+</script>
+
+</body>
+</html>
