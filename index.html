@@ -1061,6 +1061,10 @@ img { display: block; max-width: 100%; height: auto; }
               placeholder="人数・席の希望など（任意）"></textarea>
 
     <button type="button" class="eta-modal__submit" id="eta-modal-submit">店に知らせる</button>
+    <button type="button" id="eta-modal-cancel-existing" hidden
+            style="display:block;width:100%;margin-top:10px;padding:12px;background:transparent;color:var(--color-text-soft);border:1px solid rgba(180,160,140,0.4);border-radius:999px;font-family:inherit;font-size:11px;letter-spacing:0.25em;cursor:pointer;">
+      この通知をキャンセル
+    </button>
 
     <p class="eta-modal__login-prompt" id="eta-modal-login" hidden>
       LINE でログインすると お店に名前と顔がわかる形で通知されます。<br>
@@ -1478,6 +1482,7 @@ img { display: block; max-width: 100%; height: auto; }
   var etaModalLogin = document.getElementById('eta-modal-login');
   var etaModalLoginLink = document.getElementById('eta-modal-login-link');
   var etaOptionsWrap= document.getElementById('eta-options');
+  var etaModalCancelExisting = document.getElementById('eta-modal-cancel-existing');
   var etaCurrentStoreId = null;
   var etaSelected = 20;
 
@@ -1493,6 +1498,16 @@ img { display: block; max-width: 100%; height: auto; }
     // ログイン状態でメッセージ切替
     var loggedIn = window.nakashinchiLineAuth && window.nakashinchiLineAuth.isLoggedIn();
     etaModalLogin.hidden = !!loggedIn;
+    // 既存 pending 通知があればキャンセルボタン表示
+    var rec = getRecentArrivals()[storeId];
+    if (rec && rec.id && rec.status === 'pending'
+        && Date.now() - new Date(rec.createdAt).getTime() < 4 * 3600 * 1000) {
+      etaModalCancelExisting.hidden = false;
+      etaModalSubmit.textContent = '別の時刻で 再 通 知';
+    } else {
+      etaModalCancelExisting.hidden = true;
+      etaModalSubmit.textContent = '店に知らせる';
+    }
     etaModal.setAttribute('data-open', 'true');
     etaModal.setAttribute('aria-hidden', 'false');
     document.body.style.overflow = 'hidden';
@@ -1565,6 +1580,32 @@ img { display: block; max-width: 100%; height: auto; }
     } finally {
       etaModalSubmit.disabled = false;
       etaModalSubmit.textContent = '店に知らせる';
+    }
+  });
+
+  etaModalCancelExisting.addEventListener('click', async function () {
+    var auth = window.nakashinchiLineAuth;
+    if (!auth || !auth.isLoggedIn() || !etaCurrentStoreId) return;
+    var rec = getRecentArrivals()[etaCurrentStoreId];
+    if (!rec || !rec.id) return;
+    if (!confirm('この通知をキャンセルしますか？')) return;
+    etaModalCancelExisting.disabled = true;
+    try {
+      var r = await fetch(window.NAKASHINCHI_API + '/api/store/' + encodeURIComponent(etaCurrentStoreId) + '/arrivals/' + encodeURIComponent(rec.id), {
+        method:'PATCH',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer ' + auth.getToken()},
+        body: JSON.stringify({ status: 'cancelled' })
+      });
+      if (!r.ok) throw new Error('http_' + r.status);
+      var all = getRecentArrivals();
+      if (all[etaCurrentStoreId]) { all[etaCurrentStoreId].status = 'cancelled'; setRecentArrivals(all); }
+      var el = document.querySelector('[data-eta-status="' + etaCurrentStoreId + '"]');
+      if (el) { el.innerHTML = ''; el.removeAttribute('data-show'); }
+      closeEtaModal();
+    } catch (e) {
+      alert('キャンセルに失敗しました: ' + (e && e.message || e));
+    } finally {
+      etaModalCancelExisting.disabled = false;
     }
   });
 

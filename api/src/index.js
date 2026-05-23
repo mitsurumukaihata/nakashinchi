@@ -67,7 +67,7 @@ function corsHeaders(origin) {
   const allowed = origin && ALLOWED_ORIGINS.some(o => origin === o || origin.startsWith(o));
   return {
     'Access-Control-Allow-Origin':  allowed ? origin : ALLOWED_ORIGINS[0],
-    'Access-Control-Allow-Methods': 'GET, PUT, POST, OPTIONS',
+    'Access-Control-Allow-Methods': 'GET, PUT, POST, PATCH, DELETE, OPTIONS',
     'Access-Control-Allow-Headers': 'Content-Type, Authorization',
     'Access-Control-Max-Age':       '86400',
     'Vary': 'Origin'
@@ -634,16 +634,37 @@ export default {
         const [, storeId, arrId] = arrUpdMatch;
         const authHeader = request.headers.get('Authorization') || '';
         const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+
+        // 店舗 PIN なら全状態に変更可。客 Bearer なら自分のレコードを cancelled のみ可。
         const verifiedStoreId = await verifyToken(token, env.JWT_SECRET);
-        if (!verifiedStoreId || verifiedStoreId !== storeId) {
+        const verifiedUserId  = await verifyCustomerToken(token, env.JWT_SECRET);
+        const isStoreAdmin = verifiedStoreId === storeId;
+        const isCustomer   = !!verifiedUserId;
+        if (!isStoreAdmin && !isCustomer) {
           return json({ error: '認証が必要です' }, 401, cors);
         }
+
         const body = await request.json().catch(() => ({}));
         const allowed = ['pending', 'arrived', 'cancelled', 'timeout'];
         const newStatus = String(body.status || '');
         if (!allowed.includes(newStatus)) {
           return json({ error: 'status が不正です' }, 400, cors);
         }
+
+        if (isCustomer && !isStoreAdmin) {
+          // 客は cancelled のみ、かつ自分のレコードのみ
+          if (newStatus !== 'cancelled') {
+            return json({ error: 'お客様からはキャンセルのみ可能です' }, 403, cors);
+          }
+          const row = await env.DB
+            .prepare('SELECT customer_id FROM arrivals WHERE id = ? AND store_id = ?')
+            .bind(arrId, storeId).first();
+          if (!row) return json({ error: '通知が見つかりません' }, 404, cors);
+          if (row.customer_id !== verifiedUserId) {
+            return json({ error: '権限がありません' }, 403, cors);
+          }
+        }
+
         const seatId = (typeof body.seatId === 'string') ? body.seatId : null;
         const now = new Date().toISOString();
         const r = await env.DB.prepare(`

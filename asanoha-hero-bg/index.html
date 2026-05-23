@@ -22,6 +22,187 @@
 <link rel="stylesheet" href="style.css">
 <script src="../config.js"></script>
 <script src="../api-client.js" defer></script>
+<script src="../line-auth.js" defer></script>
+<style>
+/* ===== ヒーロー: 「今から向かう」ボタン ===== */
+.btn--eta {
+  background: linear-gradient(135deg, #c8102e 0%, #8e0e1c 100%);
+  color: #fff;
+  border: none;
+  box-shadow: 0 8px 30px rgba(200,16,46,0.40);
+  display: inline-flex; align-items: center; gap: 10px;
+}
+.btn--eta:hover { transform: translateY(-2px); box-shadow: 0 12px 36px rgba(200,16,46,0.55); }
+.btn--eta svg { width: 16px; height: 16px; }
+
+.eta-status {
+  display: none;
+  margin-top: 14px;
+  padding: 10px 16px;
+  background: rgba(200,16,46,0.18);
+  border: 1px solid rgba(245,239,230,0.30);
+  border-radius: 10px;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  color: rgba(245,239,230,0.9);
+  text-align: center;
+  line-height: 1.8;
+  backdrop-filter: blur(4px);
+  max-width: 340px;
+  margin-left: auto; margin-right: auto;
+}
+.eta-status[data-show="true"] { display: block; }
+.eta-status strong {
+  display: block;
+  color: #fff;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  margin-bottom: 2px;
+  font-weight: 600;
+}
+
+/* ===== ETA モーダル ===== */
+.eta-modal {
+  position: fixed; inset: 0; z-index: 100;
+  display: none;
+  align-items: center; justify-content: center;
+  padding: 24px;
+}
+.eta-modal[data-open="true"] { display: flex; }
+.eta-modal__backdrop {
+  position: absolute; inset: 0;
+  background: rgba(10,5,3,0.78);
+  backdrop-filter: blur(10px);
+}
+.eta-modal__panel {
+  position: relative;
+  background: #fff;
+  color: #1a1410;
+  border-radius: 14px;
+  padding: 28px 24px 26px;
+  max-width: 380px;
+  width: 100%;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+  animation: etaPop 0.3s cubic-bezier(.2,.7,.2,1);
+  font-family: 'Shippori Mincho B1', serif;
+}
+@keyframes etaPop {
+  from { opacity: 0; transform: translateY(20px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1); }
+}
+.eta-modal__close {
+  position: absolute; top: 12px; right: 12px;
+  width: 32px; height: 32px;
+  border: none; background: transparent;
+  font-size: 18px; color: #786858;
+  cursor: pointer; border-radius: 50%;
+  transition: background 0.2s;
+}
+.eta-modal__close:hover { background: rgba(0,0,0,0.05); }
+.eta-modal__crumb {
+  font-size: 10px;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  letter-spacing: 0.5em;
+  color: #c8102e;
+  margin-bottom: 6px;
+  text-indent: 0.5em;
+}
+.eta-modal__title {
+  font-family: 'Yuji Syuku', serif;
+  font-size: 26px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+.eta-modal__store {
+  font-size: 12px;
+  color: #786858;
+  letter-spacing: 0.1em;
+  margin-bottom: 22px;
+}
+.eta-modal__store strong { color: #1a1410; font-weight: 600; }
+.eta-modal__label {
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: #786858;
+  margin-bottom: 10px;
+}
+.eta-options {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  gap: 8px; margin-bottom: 22px;
+}
+.eta-option {
+  padding: 13px 4px;
+  background: #fff;
+  border: 1px solid rgba(180,160,140,0.4);
+  border-radius: 8px;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: center;
+  transition: all 0.18s;
+}
+.eta-option strong {
+  display: block;
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 22px; color: #1a1410; font-weight: 600;
+  line-height: 1; margin-bottom: 4px;
+}
+.eta-option small { font-size: 10px; color: #786858; letter-spacing: 0.1em; }
+.eta-option:hover { border-color: #1a1410; }
+.eta-option[aria-pressed="true"] {
+  background: #1a1410; border-color: #1a1410;
+}
+.eta-option[aria-pressed="true"] strong,
+.eta-option[aria-pressed="true"] small { color: #fff; }
+.eta-modal__note {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid rgba(180,160,140,0.4);
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  color: #1a1410;
+  background: #fff;
+  resize: none;
+  margin-bottom: 18px;
+}
+.eta-modal__note:focus { outline: none; border-color: #1a1410; }
+.eta-modal__submit {
+  display: block; width: 100%;
+  padding: 14px;
+  background: #c8102e; color: #fff;
+  border: none; border-radius: 999px;
+  font-family: inherit;
+  font-size: 12px; font-weight: 600; letter-spacing: 0.3em;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.18s;
+}
+.eta-modal__submit:hover { background: #8e0e1c; transform: translateY(-1px); }
+.eta-modal__submit:disabled { opacity: 0.45; cursor: default; transform: none; }
+.eta-modal__login-prompt {
+  margin-top: 14px; padding: 12px;
+  background: rgba(6,199,85,0.08);
+  border-radius: 8px;
+  font-size: 11px; color: #786858;
+  text-align: center; line-height: 1.8;
+}
+.eta-modal__login-prompt a {
+  color: #c8102e; font-weight: 600; text-decoration: underline; cursor: pointer;
+}
+.eta-modal__cancel-btn {
+  display: block; width: 100%;
+  margin-top: 10px;
+  padding: 12px;
+  background: transparent; color: #786858;
+  border: 1px solid rgba(180,160,140,0.4);
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 11px; letter-spacing: 0.25em;
+  cursor: pointer;
+}
+.eta-modal__cancel-btn:hover { color: #c8102e; border-color: #c8102e; }
+</style>
 </head>
 <body>
 
@@ -76,9 +257,16 @@
     </p>
 
     <div class="hero__actions">
-      <a href="#contact" class="btn btn--primary">ご予約・お問い合わせ</a>
+      <button type="button" class="btn btn--primary btn--eta" id="hero-eta-btn">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M12 7v5l3 2"/>
+        </svg>
+        今から 向かう
+      </button>
       <a href="#menu" class="btn btn--ghost">お品書きを見る</a>
     </div>
+    <div class="eta-status" id="hero-eta-status"></div>
   </div>
 
   <div class="hero__scroll" aria-hidden="true">
@@ -114,5 +302,182 @@
 </section>
 
 <script src="script.js" defer></script>
+
+<!-- ============ 「今から向かう」モーダル ============ -->
+<div class="eta-modal" id="eta-modal" data-open="false" aria-hidden="true">
+  <div class="eta-modal__backdrop" data-eta-close></div>
+  <div class="eta-modal__panel" role="dialog" aria-modal="true">
+    <button type="button" class="eta-modal__close" data-eta-close aria-label="閉じる">✕</button>
+    <p class="eta-modal__crumb">A R R I V I N G &nbsp; S O O N</p>
+    <h3 class="eta-modal__title" id="eta-modal-title">今から向かう</h3>
+    <p class="eta-modal__store"><strong>麻ノ葉</strong> に向かいます</p>
+
+    <p class="eta-modal__label">到 着 ま で</p>
+    <div class="eta-options" id="eta-options">
+      <button type="button" class="eta-option" data-eta="10" aria-pressed="false"><strong>10</strong><small>分</small></button>
+      <button type="button" class="eta-option" data-eta="20" aria-pressed="true"><strong>20</strong><small>分</small></button>
+      <button type="button" class="eta-option" data-eta="30" aria-pressed="false"><strong>30</strong><small>分</small></button>
+      <button type="button" class="eta-option" data-eta="60" aria-pressed="false"><strong>60</strong><small>分</small></button>
+    </div>
+
+    <textarea class="eta-modal__note" id="eta-modal-note" rows="2" placeholder="人数・席の希望など（任意）"></textarea>
+
+    <button type="button" class="eta-modal__submit" id="eta-modal-submit">店に知らせる</button>
+
+    <p class="eta-modal__login-prompt" id="eta-modal-login" hidden>
+      LINE でログインすると お店に名前と顔がわかる形で通知されます。<br>
+      <a id="eta-modal-login-link">LINE でつながる →</a>
+    </p>
+
+    <button type="button" class="eta-modal__cancel-btn" id="eta-modal-cancel-existing" hidden>
+      この通知をキャンセル
+    </button>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var API = window.NAKASHINCHI_API;
+  var STORE_ID = 'asanoha';
+  var STORE_NAME = '麻ノ葉';
+  var ETA_KEY = 'nakashinchi-recent-arrivals';
+
+  function getRecent() { try { return JSON.parse(localStorage.getItem(ETA_KEY) || '{}'); } catch(_) { return {}; } }
+  function setRecent(o) { try { localStorage.setItem(ETA_KEY, JSON.stringify(o)); } catch(_) {} }
+
+  var modal      = document.getElementById('eta-modal');
+  var optsWrap   = document.getElementById('eta-options');
+  var noteInput  = document.getElementById('eta-modal-note');
+  var submitBtn  = document.getElementById('eta-modal-submit');
+  var loginPrompt= document.getElementById('eta-modal-login');
+  var loginLink  = document.getElementById('eta-modal-login-link');
+  var cancelExistingBtn = document.getElementById('eta-modal-cancel-existing');
+  var statusEl   = document.getElementById('hero-eta-status');
+  var openBtn    = document.getElementById('hero-eta-btn');
+
+  var etaSelected = 20;
+
+  function fmtHm(iso) {
+    var d = new Date(iso);
+    return String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0');
+  }
+
+  function showStatus(arr) {
+    if (!arr || arr.status === 'cancelled' || arr.status === 'arrived') {
+      statusEl.removeAttribute('data-show');
+      statusEl.innerHTML = '';
+      return;
+    }
+    var msg = 'お店に通知済み';
+    statusEl.innerHTML = '<strong>' + fmtHm(arr.arrivingAt) + '</strong>' + msg + ' (' + arr.etaMinutes + '分後 到着予定)';
+    statusEl.setAttribute('data-show', 'true');
+  }
+
+  function hideStatus() {
+    statusEl.removeAttribute('data-show');
+    statusEl.innerHTML = '';
+  }
+
+  function openModal() {
+    var auth = window.nakashinchiLineAuth;
+    loginPrompt.hidden = !!(auth && auth.isLoggedIn());
+    // 既存通知がある場合はキャンセルボタン表示
+    var rec = getRecent()[STORE_ID];
+    if (rec && rec.id && rec.status === 'pending'
+        && Date.now() - new Date(rec.createdAt).getTime() < 4 * 3600 * 1000) {
+      cancelExistingBtn.hidden = false;
+      submitBtn.textContent = '別の時刻で 再 通 知';
+    } else {
+      cancelExistingBtn.hidden = true;
+      submitBtn.textContent = '店に知らせる';
+    }
+    modal.setAttribute('data-open', 'true');
+    modal.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+  }
+  function closeModal() {
+    modal.setAttribute('data-open', 'false');
+    modal.setAttribute('aria-hidden', 'true');
+    document.body.style.overflow = '';
+  }
+
+  if (openBtn) openBtn.addEventListener('click', openModal);
+  modal.addEventListener('click', function (e) {
+    if (e.target.hasAttribute && e.target.hasAttribute('data-eta-close')) closeModal();
+  });
+  optsWrap.addEventListener('click', function (e) {
+    var b = e.target.closest('.eta-option'); if (!b) return;
+    etaSelected = parseInt(b.dataset.eta, 10);
+    optsWrap.querySelectorAll('.eta-option').forEach(function (x) {
+      x.setAttribute('aria-pressed', x === b ? 'true' : 'false');
+    });
+  });
+  if (loginLink) {
+    loginLink.addEventListener('click', function (e) {
+      e.preventDefault();
+      if (window.nakashinchiLineAuth) window.nakashinchiLineAuth.login(location.pathname + location.search);
+    });
+  }
+
+  submitBtn.addEventListener('click', async function () {
+    var auth = window.nakashinchiLineAuth;
+    if (!auth || !auth.isLoggedIn()) {
+      loginPrompt.hidden = false;
+      loginPrompt.scrollIntoView({ behavior:'smooth', block:'nearest' });
+      return;
+    }
+    submitBtn.disabled = true; submitBtn.textContent = '送信中…';
+    try {
+      var r = await fetch(API + '/api/store/' + STORE_ID + '/arrivals', {
+        method:'POST',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer ' + auth.getToken()},
+        body: JSON.stringify({ etaMinutes: etaSelected, note: noteInput.value || null })
+      });
+      if (!r.ok) throw new Error('http_' + r.status);
+      var data = await r.json();
+      var all = getRecent(); all[STORE_ID] = data.arrival; setRecent(all);
+      showStatus(data.arrival);
+      closeModal();
+    } catch (e) {
+      alert('送信に失敗しました: ' + (e && e.message || e));
+    } finally {
+      submitBtn.disabled = false; submitBtn.textContent = '店に知らせる';
+    }
+  });
+
+  cancelExistingBtn.addEventListener('click', async function () {
+    var auth = window.nakashinchiLineAuth;
+    if (!auth || !auth.isLoggedIn()) return;
+    var rec = getRecent()[STORE_ID];
+    if (!rec || !rec.id) return;
+    if (!confirm('この通知をキャンセルしますか？')) return;
+    cancelExistingBtn.disabled = true;
+    try {
+      var r = await fetch(API + '/api/store/' + STORE_ID + '/arrivals/' + encodeURIComponent(rec.id), {
+        method:'PATCH',
+        headers:{'Content-Type':'application/json','Authorization':'Bearer ' + auth.getToken()},
+        body: JSON.stringify({ status: 'cancelled' })
+      });
+      if (!r.ok) throw new Error('http_' + r.status);
+      var all = getRecent();
+      if (all[STORE_ID]) { all[STORE_ID].status = 'cancelled'; setRecent(all); }
+      hideStatus();
+      closeModal();
+    } catch (e) {
+      alert('キャンセルに失敗しました: ' + (e && e.message || e));
+    } finally {
+      cancelExistingBtn.disabled = false;
+    }
+  });
+
+  // 起動時に直近通知を表示 (24h以内 / pending のみ)
+  var existing = getRecent()[STORE_ID];
+  if (existing && existing.status === 'pending'
+      && Date.now() - new Date(existing.createdAt).getTime() < 24 * 3600 * 1000) {
+    showStatus(existing);
+  }
+})();
+</script>
 </body>
 </html>
