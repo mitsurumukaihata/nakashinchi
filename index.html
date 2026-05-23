@@ -901,83 +901,113 @@ img { display: block; max-width: 100%; height: auto; }
   applyFilter();
 
   // ===========================================
-  // 店舗カードの自動スライド (おしゃれな演出)
-  // - requestAnimationFrame + 累積で fractional px をなめらかに進める
+  // 店舗カードの自動スライド (おしゃれな演出・マルキー方式)
+  // - カードをクローンして「無限ループ」感を出す
+  // - requestAnimationFrame + 累積 fractional px
   // - 操作中はポーズ、放置で再開
-  // - スクロール余地が無い時は何もしない
   // ===========================================
   (function autoSlide() {
     var grid = document.querySelector('.store-grid');
     if (!grid) return;
 
-    var SPEED_PX_PER_SEC = 16;
-    var END_HOLD_MS      = 1600;
-    var RESUME_AFTER_MS  = 1200;
-    var IDLE_RESUME_MS   = 4000;
-
-    var paused = false;
-    var lastT  = 0;
-    var accum  = 0;    // fractional pixel 累積
-    var resetting = false;
-    var idleTimer = null;
-
-    function visibleCount() {
-      return grid.querySelectorAll('.store-card:not([data-hidden="true"])').length;
+    // DOM/CSS の幅計測が安定してから始める
+    var initDone = false;
+    function initAfterLayout() {
+      if (initDone) return;
+      var cards = grid.querySelectorAll('.store-card');
+      if (cards.length < 2) return;
+      initDone = true;
+      init(Array.from(cards));
     }
-    function maxScrollable() { return grid.scrollWidth - grid.clientWidth - 1; }
-    function canScroll()     { return visibleCount() >= 2 && maxScrollable() > 4; }
+    if (document.readyState === 'complete') initAfterLayout();
+    else window.addEventListener('load', initAfterLayout);
+    // 念のため少し遅延でも試す
+    setTimeout(initAfterLayout, 300);
 
-    function step(now) {
-      if (!lastT) lastT = now;
-      var dt = now - lastT;
-      lastT = now;
+    function init(originalCards) {
+      var SPEED = 18;             // px/sec
+      var IDLE_RESUME_MS = 3500;
 
-      if (!paused && !resetting && canScroll()) {
-        accum += SPEED_PX_PER_SEC * dt / 1000;
-        if (accum >= 1) {
-          var add = Math.floor(accum);
-          accum -= add;
-          var newLeft = grid.scrollLeft + add;
-          var max = maxScrollable();
-          if (newLeft >= max) {
-            // 端まで到達 → 少し待ってからスムーズに先頭へ
-            grid.scrollLeft = max;
-            resetting = true;
-            setTimeout(function () {
-              grid.scrollTo({ left: 0, behavior: 'smooth' });
-              setTimeout(function () { resetting = false; accum = 0; lastT = 0; }, RESUME_AFTER_MS);
-            }, END_HOLD_MS);
-          } else {
-            grid.scrollLeft = newLeft;
+      // クローンしてループ可能にする (offsetWidth + gap で半周分の幅が出る)
+      originalCards.forEach(function (card) {
+        var clone = card.cloneNode(true);
+        clone.classList.add('store-card--clone');
+        clone.setAttribute('aria-hidden', 'true');
+        clone.querySelectorAll('a, button').forEach(function (el) { el.setAttribute('tabindex', '-1'); });
+        grid.appendChild(clone);
+      });
+
+      var halfWidth = 0;
+      function recalcHalf() {
+        // 表示中の元カードたちの幅合計 + 各 gap = clone 区間の先頭位置
+        var gapPx = parseInt(getComputedStyle(grid).gap) || 0;
+        var w = 0;
+        originalCards.forEach(function (c) {
+          if (c.getAttribute('data-hidden') === 'true') return;
+          w += c.offsetWidth + gapPx;
+        });
+        halfWidth = w;
+      }
+      recalcHalf();
+      window.addEventListener('resize', recalcHalf);
+
+      var paused = false;
+      var resetting = false;
+      var lastT = 0;
+      var accum = 0;
+      var idleTimer = null;
+
+      function visibleOriginalCount() {
+        return Array.prototype.filter.call(originalCards, function (c) {
+          return c.getAttribute('data-hidden') !== 'true';
+        }).length;
+      }
+
+      function step(now) {
+        if (!lastT) lastT = now;
+        var dt = now - lastT;
+        lastT = now;
+
+        if (!paused && !resetting && visibleOriginalCount() >= 2 && halfWidth > 4) {
+          accum += SPEED * dt / 1000;
+          if (accum >= 1) {
+            var add = Math.floor(accum);
+            accum -= add;
+            grid.scrollLeft = grid.scrollLeft + add;
+            // 半周を超えたら無音で前に戻る (clone 区間 → original 区間に置換)
+            if (grid.scrollLeft >= halfWidth) {
+              grid.scrollLeft = grid.scrollLeft - halfWidth;
+            }
           }
+        } else {
+          accum = 0;
+          if (paused || resetting) lastT = 0;
         }
-      } else {
-        // ポーズ中・準備中は時間累積をリセット (再開時のジャンプ防止)
-        accum = 0;
-        if (paused || resetting) lastT = 0;
+        requestAnimationFrame(step);
       }
       requestAnimationFrame(step);
-    }
-    requestAnimationFrame(step);
 
-    function pauseTemp() {
-      paused = true;
-      clearTimeout(idleTimer);
-      idleTimer = setTimeout(function () { paused = false; lastT = 0; }, IDLE_RESUME_MS);
-    }
-    grid.addEventListener('mouseenter', function () { paused = true; });
-    grid.addEventListener('mouseleave', function () { paused = false; lastT = 0; });
-    grid.addEventListener('touchstart', pauseTemp,  { passive: true });
-    grid.addEventListener('wheel',      pauseTemp,  { passive: true });
-    grid.addEventListener('pointerdown', pauseTemp, { passive: true });
-    grid.addEventListener('focusin',    function () { paused = true; });
-    grid.addEventListener('focusout',   function () { paused = false; lastT = 0; });
+      function pauseTemp() {
+        paused = true;
+        clearTimeout(idleTimer);
+        idleTimer = setTimeout(function () { paused = false; lastT = 0; }, IDLE_RESUME_MS);
+      }
+      grid.addEventListener('mouseenter', function () { paused = true; });
+      grid.addEventListener('mouseleave', function () { paused = false; lastT = 0; });
+      grid.addEventListener('touchstart',  pauseTemp, { passive: true });
+      grid.addEventListener('wheel',       pauseTemp, { passive: true });
+      grid.addEventListener('pointerdown', pauseTemp, { passive: true });
+      grid.addEventListener('focusin',     function () { paused = true; });
+      grid.addEventListener('focusout',    function () { paused = false; lastT = 0; });
+      document.addEventListener('visibilitychange', function () {
+        if (document.hidden) paused = true;
+        else { paused = false; lastT = 0; }
+      });
 
-    // タブが非アクティブの間は動かさない（バッテリ節約）
-    document.addEventListener('visibilitychange', function () {
-      if (document.hidden) paused = true;
-      else { paused = false; lastT = 0; }
-    });
+      // フィルタで非表示が変わったら半周幅を再計算
+      var mo = new MutationObserver(function () { recalcHalf(); });
+      originalCards.forEach(function (c) { mo.observe(c, { attributes: true, attributeFilter: ['data-hidden'] }); });
+    }
   })();
 
   // ===========================================
