@@ -1,0 +1,180 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0604">
+<meta name="robots" content="noindex">
+<title>LINE ログイン 動作確認 — 中新地</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;600&family=Yuji+Syuku&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { min-height: 100%; background: #0a0604; }
+body {
+  font-family: 'Shippori Mincho B1', serif;
+  color: #f5efe6;
+  display: flex; align-items: center; justify-content: center;
+  min-height: 100vh;
+  padding: calc(40px + env(safe-area-inset-top, 0px)) 24px 40px;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(0,200,80,0.10) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 100%, rgba(40,20,15,0.5) 0%, transparent 65%),
+    linear-gradient(180deg, #1a0c08 0%, #0a0604 60%, #050201 100%);
+}
+.card {
+  width: 100%; max-width: 420px;
+  background: rgba(20,10,6,0.65);
+  border: 1px solid rgba(245,239,230,0.10);
+  border-radius: 10px;
+  padding: 32px 26px;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+}
+.brand {
+  font-family: 'Yuji Syuku', serif;
+  font-size: 30px;
+  text-align: center;
+  letter-spacing: 0.08em;
+  margin-bottom: 6px;
+}
+.brand .ac { color: #c8102e; }
+.lead {
+  text-align: center;
+  font-size: 12px;
+  color: rgba(245,239,230,0.65);
+  letter-spacing: 0.15em;
+  margin-bottom: 26px;
+}
+.profile {
+  display: none;
+  text-align: center;
+  margin-bottom: 22px;
+}
+.profile img {
+  width: 80px; height: 80px;
+  border-radius: 50%;
+  border: 2px solid rgba(245,239,230,0.25);
+  margin-bottom: 12px;
+  object-fit: cover;
+}
+.profile__name { font-size: 18px; font-weight: 600; }
+.profile__id   { font-size: 10px; color: rgba(245,239,230,0.5); margin-top: 4px; letter-spacing: 0.05em; word-break: break-all; }
+body[data-state="logged-in"] .profile { display: block; }
+
+.btn {
+  display: block;
+  width: 100%;
+  padding: 14px 20px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
+  border-radius: 6px;
+  cursor: pointer;
+  border: none;
+  text-align: center;
+  text-decoration: none;
+  margin-top: 12px;
+  transition: all 0.2s;
+}
+.btn--line {
+  background: #06c755;
+  color: white;
+  box-shadow: 0 4px 18px rgba(6,199,85,0.30);
+}
+.btn--line:hover { background: #05a647; transform: translateY(-2px); }
+.btn--ghost {
+  background: transparent;
+  color: rgba(245,239,230,0.7);
+  border: 1px solid rgba(245,239,230,0.25);
+}
+.btn--ghost:hover { background: rgba(245,239,230,0.05); color: #fff; }
+
+.line-icon {
+  display: inline-block; vertical-align: middle;
+  width: 18px; height: 18px;
+  margin-right: 10px;
+  background: white; color: #06c755;
+  border-radius: 4px;
+  text-align: center; line-height: 18px;
+  font-size: 13px; font-weight: 800;
+}
+.btn--line:hover .line-icon { color: #05a647; }
+
+body[data-state="logged-in"] #btn-login { display: none; }
+body:not([data-state="logged-in"]) #btn-logout { display: none; }
+
+.note {
+  margin-top: 20px;
+  font-size: 10px;
+  color: rgba(245,239,230,0.4);
+  text-align: center;
+  letter-spacing: 0.08em;
+  line-height: 1.8;
+}
+</style>
+<script src="../../config.js"></script>
+<script src="../../line-auth.js" defer></script>
+</head>
+<body data-state="logged-out">
+
+<div class="card">
+  <h1 class="brand">中<span class="ac">新</span>地</h1>
+  <p class="lead">LINE ログイン 動作確認</p>
+
+  <div class="profile" id="profile">
+    <img id="profile-img" src="" alt="" referrerpolicy="no-referrer">
+    <div class="profile__name" id="profile-name">—</div>
+    <div class="profile__id"   id="profile-id">—</div>
+  </div>
+
+  <button class="btn btn--line" id="btn-login" type="button">
+    <span class="line-icon">L</span>LINE でログイン
+  </button>
+  <button class="btn btn--ghost" id="btn-logout" type="button">ログアウト</button>
+
+  <p class="note">
+    試験段階のテスト画面です。<br>
+    実装後はトップページから自然に呼び出されます。
+  </p>
+</div>
+
+<script>
+(function () {
+  function updateUI() {
+    var auth = window.nakashinchiLineAuth;
+    if (!auth) return;
+    var c = auth.getCustomer();
+    if (auth.isLoggedIn() && c) {
+      document.body.setAttribute('data-state', 'logged-in');
+      document.getElementById('profile-name').textContent = c.name || '匿名';
+      document.getElementById('profile-id').textContent   = c.id || '';
+      var img = document.getElementById('profile-img');
+      if (c.picture) { img.src = c.picture; img.style.display = ''; }
+      else { img.style.display = 'none'; }
+    } else {
+      document.body.setAttribute('data-state', 'logged-out');
+    }
+  }
+
+  function init() {
+    var auth = window.nakashinchiLineAuth;
+    if (!auth) { setTimeout(init, 50); return; }
+    document.getElementById('btn-login').addEventListener('click', function () {
+      auth.login(location.pathname + location.search);
+    });
+    document.getElementById('btn-logout').addEventListener('click', function () {
+      auth.logout(); updateUI();
+    });
+    updateUI();
+    // バックグラウンドで最新プロフィール取得
+    if (auth.isLoggedIn()) auth.refreshCustomer().then(updateUI);
+  }
+  init();
+})();
+</script>
+
+</body>
+</html>

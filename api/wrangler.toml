@@ -8,3 +8,8 @@ binding = "DB"
 database_name = "nakashinchi"
 database_id = "6e9c5d0c-deb6-4d3c-b3c2-cc1879d48567"
 migrations_dir = "migrations"
+
+# LINE Channel ID は公開情報 (OAuth URL に出る) なので vars でOK
+# Channel Secret は wrangler secret put LINE_CHANNEL_SECRET で別途登録
+[vars]
+LINE_CHANNEL_ID = "2010172690"

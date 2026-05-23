@@ -8,6 +8,12 @@
 
 window.NAKASHINCHI_API = 'https://nakashinchi-api.33322666666mm.workers.dev';
 
+// LINE Login Channel ID (公開情報、OAuth URL に含まれる)
+window.NAKASHINCHI_LINE_CHANNEL_ID = '2010172690';
+
+// LINE OAuth コールバック URL (LINE Developer Console と一致させる)
+window.NAKASHINCHI_LINE_CALLBACK = window.location.origin + '/nakashinchi/auth/line-callback/';
+
 // 店舗マスタ（landing 等から参照可能）
 window.NAKASHINCHI_STORES = [
   {

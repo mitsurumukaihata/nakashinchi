@@ -13,8 +13,13 @@ const ALLOWED_ORIGINS = [
   'http://127.0.0.1:5500'
 ];
 
-const TOKEN_TTL_SECONDS = 8 * 3600;  // 8時間
+const TOKEN_TTL_SECONDS          = 8 * 3600;        // 店舗 PIN トークン: 8時間
+const CUSTOMER_TOKEN_TTL_SECONDS = 30 * 24 * 3600;  // 客 LINE トークン: 30日
 const ALLOWED_KEYS = ['news', 'hours', 'display', 'seats'];
+
+// LINE OAuth
+const LINE_TOKEN_URL   = 'https://api.line.me/oauth2/v2.1/token';
+const LINE_PROFILE_URL = 'https://api.line.me/v2/profile';
 
 // ---------- CORS ----------
 function corsHeaders(origin) {
@@ -82,6 +87,42 @@ async function verifyToken(token, secret) {
   if (!Number.isFinite(exp) || exp * 1000 < Date.now()) return null;
   const expected = await hmacSign(`${storeId}.${expStr}`, secret);
   return expected === sig ? storeId : null;
+}
+
+// 客 (LINE 認証済み) のトークン: 'c:<userId>.<exp>.<sig>' の形式
+async function issueCustomerToken(userId, secret) {
+  const exp = Math.floor(Date.now() / 1000) + CUSTOMER_TOKEN_TTL_SECONDS;
+  const payload = `c:${userId}.${exp}`;
+  const sig = await hmacSign(payload, secret);
+  return `${payload}.${sig}`;
+}
+
+async function verifyCustomerToken(token, secret) {
+  if (!token) return null;
+  const parts = token.split('.');
+  if (parts.length !== 3) return null;
+  const [prefix, expStr, sig] = parts;
+  if (!prefix.startsWith('c:')) return null;
+  const userId = prefix.substring(2);
+  const exp = parseInt(expStr, 10);
+  if (!Number.isFinite(exp) || exp * 1000 < Date.now()) return null;
+  const expected = await hmacSign(`c:${userId}.${expStr}`, secret);
+  return expected === sig ? userId : null;
+}
+
+// base64url を JSON にデコード (LINE の id_token 解析用)
+function decodeJwtPayload(jwt) {
+  try {
+    const parts = jwt.split('.');
+    if (parts.length !== 3) return null;
+    const b64 = parts[1].replace(/-/g, '+').replace(/_/g, '/');
+    const pad = b64.length % 4 ? '='.repeat(4 - (b64.length % 4)) : '';
+    const json = atob(b64 + pad);
+    // CJK等を含む可能性があるので UTF-8 デコード
+    const bytes = Uint8Array.from(json, c => c.charCodeAt(0));
+    const text = new TextDecoder('utf-8').decode(bytes);
+    return JSON.parse(text);
+  } catch (_) { return null; }
 }
 
 // ---------- ルーティング ----------
@@ -207,6 +248,112 @@ export default {
       // ヘルスチェック
       if (path === '/api/health' && request.method === 'GET') {
         return json({ ok: true, time: new Date().toISOString() }, 200, cors);
+      }
+
+      // ===== LINE Login =====
+
+      // GET /api/auth/line/config — フロントが LINE の OAuth URL を組み立てるのに使う
+      if (path === '/api/auth/line/config' && request.method === 'GET') {
+        return json({
+          channelId: env.LINE_CHANNEL_ID || null,
+          configured: !!(env.LINE_CHANNEL_ID && env.LINE_CHANNEL_SECRET)
+        }, 200, cors);
+      }
+
+      // POST /api/auth/line/exchange — LINE から受け取った code を access_token + id_token に交換
+      //   Body: { code, redirectUri }
+      //   Response: { token, customer: { id, name, picture } }
+      if (path === '/api/auth/line/exchange' && request.method === 'POST') {
+        if (!env.LINE_CHANNEL_ID || !env.LINE_CHANNEL_SECRET) {
+          return json({ error: 'LINE 認証が設定されていません' }, 503, cors);
+        }
+        const body = await request.json().catch(() => ({}));
+        const { code, redirectUri } = body;
+        if (!code || !redirectUri) {
+          return json({ error: 'code と redirectUri は必須です' }, 400, cors);
+        }
+
+        // LINE のトークンエンドポイントに code を渡してトークン取得
+        const tokenRes = await fetch(LINE_TOKEN_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+          body: new URLSearchParams({
+            grant_type:    'authorization_code',
+            code,
+            redirect_uri:  redirectUri,
+            client_id:     env.LINE_CHANNEL_ID,
+            client_secret: env.LINE_CHANNEL_SECRET
+          }).toString()
+        });
+
+        if (!tokenRes.ok) {
+          const errText = await tokenRes.text().catch(() => '');
+          return json({ error: 'LINE トークン取得失敗', detail: errText }, 401, cors);
+        }
+        const tokens = await tokenRes.json();
+
+        // id_token からユーザー情報を取り出す
+        let userId = null, displayName = '匿名', pictureUrl = null;
+        if (tokens.id_token) {
+          const payload = decodeJwtPayload(tokens.id_token);
+          if (payload) {
+            userId      = payload.sub;
+            displayName = payload.name || '匿名';
+            pictureUrl  = payload.picture || null;
+          }
+        }
+        // id_token に name が含まれない場合は /v2/profile を叩く
+        if (!userId || displayName === '匿名') {
+          try {
+            const profRes = await fetch(LINE_PROFILE_URL, {
+              headers: { 'Authorization': 'Bearer ' + tokens.access_token }
+            });
+            if (profRes.ok) {
+              const prof = await profRes.json();
+              userId      = userId      || prof.userId;
+              displayName = (displayName === '匿名' ? prof.displayName : displayName) || '匿名';
+              pictureUrl  = pictureUrl  || prof.pictureUrl || null;
+            }
+          } catch (_) {}
+        }
+
+        if (!userId) {
+          return json({ error: 'LINE ユーザー情報が取得できませんでした' }, 502, cors);
+        }
+
+        // D1 customers に upsert
+        const now = new Date().toISOString();
+        await env.DB.prepare(`
+          INSERT INTO customers (id, display_name, picture_url, created_at, last_seen_at)
+          VALUES (?, ?, ?, ?, ?)
+          ON CONFLICT(id) DO UPDATE SET
+            display_name = excluded.display_name,
+            picture_url  = excluded.picture_url,
+            last_seen_at = excluded.last_seen_at
+        `).bind(userId, displayName, pictureUrl, now, now).run();
+
+        // アプリ独自のトークン発行 (30日有効)
+        const appToken = await issueCustomerToken(userId, env.JWT_SECRET);
+        return json({
+          token: appToken,
+          customer: { id: userId, name: displayName, picture: pictureUrl },
+          expiresIn: CUSTOMER_TOKEN_TTL_SECONDS
+        }, 200, cors);
+      }
+
+      // GET /api/auth/me — 自分の客プロフィールを返す (要 Bearer)
+      if (path === '/api/auth/me' && request.method === 'GET') {
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        const userId = await verifyCustomerToken(token, env.JWT_SECRET);
+        if (!userId) return json({ error: '認証されていません' }, 401, cors);
+        const row = await env.DB
+          .prepare('SELECT id, display_name, picture_url FROM customers WHERE id = ?')
+          .bind(userId).first();
+        if (!row) return json({ error: '客が見つかりません' }, 404, cors);
+        return json({
+          customer: { id: row.id, name: row.display_name, picture: row.picture_url }
+        }, 200, cors);
       }
 
       return json({ error: 'not found' }, 404, cors);

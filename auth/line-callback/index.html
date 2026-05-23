@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0604">
+<meta name="robots" content="noindex">
+<title>ログイン中… — 中新地</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;600&family=Yuji+Syuku&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: #0a0604; }
+body {
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Shippori Mincho B1', serif;
+  color: #f5efe6;
+  padding: calc(24px + env(safe-area-inset-top, 0px)) 24px 24px;
+  text-align: center;
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(0,200,80,0.10) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 100%, rgba(40,20,15,0.5) 0%, transparent 65%),
+    linear-gradient(180deg, #1a0c08 0%, #0a0604 60%, #050201 100%);
+}
+.cb {
+  max-width: 360px;
+  display: flex; flex-direction: column; align-items: center; gap: 18px;
+}
+.cb__brand {
+  font-family: 'Yuji Syuku', serif;
+  font-size: 32px;
+  letter-spacing: 0.08em;
+  color: #f5efe6;
+}
+.cb__brand .ac { color: #c8102e; }
+.cb__status {
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  line-height: 2;
+}
+.cb__spinner {
+  width: 42px; height: 42px;
+  border: 3px solid rgba(245,239,230,0.18);
+  border-top-color: #06c755;
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+.cb__success-icon, .cb__error-icon { display: none; font-size: 38px; line-height: 1; }
+.cb[data-state="success"] .cb__spinner    { display: none; }
+.cb[data-state="success"] .cb__success-icon { display: block; color: #06c755; }
+.cb[data-state="error"]   .cb__spinner    { display: none; }
+.cb[data-state="error"]   .cb__error-icon { display: block; color: #e85060; }
+.cb__detail {
+  font-size: 11px; color: rgba(245,239,230,0.55);
+  letter-spacing: 0.05em; margin-top: 6px;
+  word-break: break-all;
+}
+.cb__back {
+  margin-top: 14px;
+  font-size: 12px; letter-spacing: 0.25em;
+  color: rgba(245,239,230,0.7);
+  padding: 10px 22px;
+  border: 1px solid rgba(245,239,230,0.25);
+  border-radius: 999px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.cb__back:hover { color: #fff; border-color: #fff; background: rgba(245,239,230,0.06); }
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+<script src="../../config.js"></script>
+<script src="../../line-auth.js" defer></script>
+</head>
+<body>
+
+<div class="cb" id="cb" data-state="loading">
+  <h1 class="cb__brand">中<span class="ac">新</span>地</h1>
+  <div class="cb__spinner" aria-hidden="true"></div>
+  <div class="cb__success-icon" aria-hidden="true">✓</div>
+  <div class="cb__error-icon" aria-hidden="true">!</div>
+  <p class="cb__status" id="status">LINE 認証を確認しています…</p>
+  <p class="cb__detail" id="detail" hidden></p>
+  <a href="../../" id="back-link" class="cb__back" hidden>トップへ戻る</a>
+</div>
+
+<script>
+(async function () {
+  var cb       = document.getElementById('cb');
+  var statusEl = document.getElementById('status');
+  var detail   = document.getElementById('detail');
+  var backLink = document.getElementById('back-link');
+
+  function fail(msg, dbg) {
+    cb.setAttribute('data-state', 'error');
+    statusEl.textContent = msg;
+    if (dbg) { detail.textContent = dbg; detail.hidden = false; }
+    backLink.hidden = false;
+  }
+  function success(name, returnTo) {
+    cb.setAttribute('data-state', 'success');
+    statusEl.innerHTML = (name ? (name + ' さん、') : '') + 'ログイン完了';
+    setTimeout(function () { window.location.href = returnTo; }, 700);
+  }
+
+  // line-auth.js が読み込まれるのを少し待つ
+  for (var i = 0; i < 30 && !window.nakashinchiLineAuth; i++) {
+    await new Promise(function (r) { setTimeout(r, 30); });
+  }
+  if (!window.nakashinchiLineAuth) { fail('スクリプトの読み込みに失敗しました'); return; }
+
+  var params = new URLSearchParams(window.location.search);
+  var code   = params.get('code');
+  var state  = params.get('state');
+  var error  = params.get('error');
+  var errDesc = params.get('error_description');
+
+  if (error) {
+    fail('ログインがキャンセルされました', errDesc || error);
+    return;
+  }
+  if (!code || !state) {
+    fail('認証情報が見つかりません');
+    return;
+  }
+
+  var auth = window.nakashinchiLineAuth;
+  var expectedState = sessionStorage.getItem(auth._stateKey);
+  if (!expectedState || expectedState !== state) {
+    fail('セキュリティ検証に失敗しました', 'state mismatch');
+    return;
+  }
+
+  try {
+    var result   = await auth._exchange(code, auth._callbackUrl);
+    var returnTo = sessionStorage.getItem(auth._returnKey) || '../../';
+    sessionStorage.removeItem(auth._stateKey);
+    sessionStorage.removeItem(auth._returnKey);
+    success(result.customer && result.customer.name, returnTo);
+  } catch (e) {
+    fail('ログイン処理でエラーが発生しました', String(e && e.message || e));
+  }
+})();
+</script>
+
+</body>
+</html>

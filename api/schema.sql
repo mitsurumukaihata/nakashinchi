@@ -24,5 +24,38 @@ CREATE TABLE IF NOT EXISTS store_data (
 
 CREATE INDEX IF NOT EXISTS idx_store_data_updated ON store_data(updated_at);
 
+-- LINE Login で認証したお客様 (Phase 2)
+CREATE TABLE IF NOT EXISTS customers (
+  id            TEXT PRIMARY KEY,                              -- LINE user_id (U... 形式)
+  display_name  TEXT NOT NULL,
+  picture_url   TEXT,
+  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+  last_seen_at  TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_customers_last_seen ON customers(last_seen_at);
+
+-- 来店通知 (お客様 "今から向かう" 機能用)
+CREATE TABLE IF NOT EXISTS arrivals (
+  id            TEXT PRIMARY KEY,
+  store_id      TEXT NOT NULL,
+  customer_id   TEXT NOT NULL,
+  eta_minutes   INTEGER NOT NULL,
+  arriving_at   TEXT NOT NULL,                                  -- ISO 日時
+  note          TEXT,
+  seat_id       TEXT,                                           -- 店員が席を割当てた場合
+  status        TEXT NOT NULL DEFAULT 'pending',                -- pending | arrived | cancelled | timeout
+  created_at    TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at    TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (store_id)    REFERENCES stores(id),
+  FOREIGN KEY (customer_id) REFERENCES customers(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_arrivals_store_status ON arrivals(store_id, status);
+CREATE INDEX IF NOT EXISTS idx_arrivals_customer    ON arrivals(customer_id);
+CREATE INDEX IF NOT EXISTS idx_arrivals_arriving    ON arrivals(arriving_at);
+
 -- 初期登録：麻ノ葉（PINは scripts/set-pin.mjs で別途設定）
 INSERT OR IGNORE INTO stores (id, name) VALUES ('asanoha', '麻ノ葉');
+-- 初期登録：Ivory
+INSERT OR IGNORE INTO stores (id, name) VALUES ('ivory', 'Innocent Base Ivory');
