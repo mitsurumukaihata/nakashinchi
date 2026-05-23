@@ -422,11 +422,12 @@ a { color: inherit; text-decoration: none; }
 }
 
 .hero__brand {
-  font-family: var(--font-brush);
-  font-weight: 400;
+  /* 旧版に揃え、明朝の重量で「麻ノ葉」を強く立ち上げる */
+  font-family: 'Shippori Mincho B1', 'Yu Mincho', 'Hiragino Mincho ProN', serif;
+  font-weight: 800;
   font-size: clamp(64px, 11vw, 140px);
-  line-height: 1.0;
-  letter-spacing: 0.04em;
+  line-height: 1.05;
+  letter-spacing: 0.06em;
   color: var(--color-paper);
   margin-bottom: 16px;
   text-shadow: 0 4px 28px rgba(0, 0, 0, 0.6);
