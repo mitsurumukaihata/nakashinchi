@@ -206,12 +206,12 @@ img { display: block; max-width: 100%; height: auto; }
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 24px;
 }
-/* スマホ：横スワイプ・スナップで店舗をめくれる */
+/* スマホ：横スワイプ で店舗をめくれる (snap は proximity = ふんわり吸着) */
 @media (max-width: 760px) {
   .store-grid {
     display: flex;
     overflow-x: auto;
-    scroll-snap-type: x mandatory;
+    scroll-snap-type: x proximity;   /* mandatory だと autoSlide が戻されるため proximity */
     gap: 14px;
     padding: 4px 24px 16px;
     margin: 0 -24px;
@@ -230,13 +230,12 @@ img { display: block; max-width: 100%; height: auto; }
     overflow-x: auto;
     gap: 24px;
     padding-bottom: 16px;
-    scroll-snap-type: x mandatory;
-    scroll-behavior: smooth;
+    scroll-snap-type: x proximity;   /* 同上 */
     scrollbar-width: thin;
   }
   .store-grid::-webkit-scrollbar { height: 4px; }
   .store-grid::-webkit-scrollbar-thumb { background: rgba(180,160,140,0.4); border-radius: 999px; }
-  .store-card { flex: 0 0 minmax(320px, 360px); width: 360px; scroll-snap-align: start; }
+  .store-card { flex: 0 0 360px; max-width: 360px; scroll-snap-align: start; }
   .store-card--placeholder { min-height: 480px; }
 }
 
@@ -903,59 +902,82 @@ img { display: block; max-width: 100%; height: auto; }
 
   // ===========================================
   // 店舗カードの自動スライド (おしゃれな演出)
-  // - 操作中は一時停止、放置で再開
-  // - カードが1枚しか表示されていない場合はスキップ
+  // - requestAnimationFrame + 累積で fractional px をなめらかに進める
+  // - 操作中はポーズ、放置で再開
+  // - スクロール余地が無い時は何もしない
   // ===========================================
   (function autoSlide() {
     var grid = document.querySelector('.store-grid');
     if (!grid) return;
+
+    var SPEED_PX_PER_SEC = 16;
+    var END_HOLD_MS      = 1600;
+    var RESUME_AFTER_MS  = 1200;
+    var IDLE_RESUME_MS   = 4000;
+
     var paused = false;
+    var lastT  = 0;
+    var accum  = 0;    // fractional pixel 累積
+    var resetting = false;
     var idleTimer = null;
-    var SPEED_PX_PER_SEC = 14;
-    var FRAME_MS = 30;
-    var STEP = SPEED_PX_PER_SEC * FRAME_MS / 1000;
-    var lastT = 0;
 
-    function visibleCards() {
-      return Array.prototype.filter.call(
-        grid.querySelectorAll('.store-card'),
-        function (el) { return el.getAttribute('data-hidden') !== 'true'; }
-      );
+    function visibleCount() {
+      return grid.querySelectorAll('.store-card:not([data-hidden="true"])').length;
     }
-    function maxScrollable() { return grid.scrollWidth - grid.clientWidth - 2; }
-    function shouldRun() {
-      // 可視カードが多くてスクロール余地がある時だけ動かす
-      return visibleCards().length >= 2 && maxScrollable() > 10;
-    }
+    function maxScrollable() { return grid.scrollWidth - grid.clientWidth - 1; }
+    function canScroll()     { return visibleCount() >= 2 && maxScrollable() > 4; }
 
-    function tick() {
-      if (!paused && shouldRun()) {
-        var max = maxScrollable();
-        if (grid.scrollLeft >= max) {
-          // 端まで来たら少し待ってから戻す
-          paused = true;
-          setTimeout(function () {
-            grid.scrollTo({ left: 0, behavior: 'smooth' });
-            setTimeout(function () { paused = false; }, 1200);
-          }, 1500);
-        } else {
-          grid.scrollLeft += STEP;
+    function step(now) {
+      if (!lastT) lastT = now;
+      var dt = now - lastT;
+      lastT = now;
+
+      if (!paused && !resetting && canScroll()) {
+        accum += SPEED_PX_PER_SEC * dt / 1000;
+        if (accum >= 1) {
+          var add = Math.floor(accum);
+          accum -= add;
+          var newLeft = grid.scrollLeft + add;
+          var max = maxScrollable();
+          if (newLeft >= max) {
+            // 端まで到達 → 少し待ってからスムーズに先頭へ
+            grid.scrollLeft = max;
+            resetting = true;
+            setTimeout(function () {
+              grid.scrollTo({ left: 0, behavior: 'smooth' });
+              setTimeout(function () { resetting = false; accum = 0; lastT = 0; }, RESUME_AFTER_MS);
+            }, END_HOLD_MS);
+          } else {
+            grid.scrollLeft = newLeft;
+          }
         }
+      } else {
+        // ポーズ中・準備中は時間累積をリセット (再開時のジャンプ防止)
+        accum = 0;
+        if (paused || resetting) lastT = 0;
       }
+      requestAnimationFrame(step);
     }
-    setInterval(tick, FRAME_MS);
+    requestAnimationFrame(step);
 
     function pauseTemp() {
       paused = true;
       clearTimeout(idleTimer);
-      idleTimer = setTimeout(function () { paused = false; }, 4500);
+      idleTimer = setTimeout(function () { paused = false; lastT = 0; }, IDLE_RESUME_MS);
     }
     grid.addEventListener('mouseenter', function () { paused = true; });
-    grid.addEventListener('mouseleave', function () { paused = false; });
-    grid.addEventListener('touchstart', pauseTemp, { passive: true });
-    grid.addEventListener('wheel',      pauseTemp, { passive: true });
+    grid.addEventListener('mouseleave', function () { paused = false; lastT = 0; });
+    grid.addEventListener('touchstart', pauseTemp,  { passive: true });
+    grid.addEventListener('wheel',      pauseTemp,  { passive: true });
+    grid.addEventListener('pointerdown', pauseTemp, { passive: true });
     grid.addEventListener('focusin',    function () { paused = true; });
-    grid.addEventListener('focusout',   function () { paused = false; });
+    grid.addEventListener('focusout',   function () { paused = false; lastT = 0; });
+
+    // タブが非アクティブの間は動かさない（バッテリ節約）
+    document.addEventListener('visibilitychange', function () {
+      if (document.hidden) paused = true;
+      else { paused = false; lastT = 0; }
+    });
   })();
 
   // ===========================================
