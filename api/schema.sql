@@ -55,6 +55,18 @@ CREATE INDEX IF NOT EXISTS idx_arrivals_store_status ON arrivals(store_id, statu
 CREATE INDEX IF NOT EXISTS idx_arrivals_customer    ON arrivals(customer_id);
 CREATE INDEX IF NOT EXISTS idx_arrivals_arriving    ON arrivals(arriving_at);
 
+-- お気に入り (LINE Login 済みの客が登録)
+CREATE TABLE IF NOT EXISTS favorites (
+  customer_id TEXT NOT NULL,
+  store_id    TEXT NOT NULL,
+  created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (customer_id, store_id),
+  FOREIGN KEY (customer_id) REFERENCES customers(id),
+  FOREIGN KEY (store_id)    REFERENCES stores(id)
+);
+CREATE INDEX IF NOT EXISTS idx_favorites_customer ON favorites(customer_id);
+CREATE INDEX IF NOT EXISTS idx_favorites_store    ON favorites(store_id);
+
 -- 初期登録：麻ノ葉（PINは scripts/set-pin.mjs で別途設定）
 INSERT OR IGNORE INTO stores (id, name) VALUES ('asanoha', '麻ノ葉');
 -- 初期登録：Ivory

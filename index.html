@@ -18,6 +18,8 @@
 <script src="pwa-register.js" defer></script>
 <script src="config.js"></script>
 <script src="api-client.js" defer></script>
+<script src="line-auth.js" defer></script>
+<script src="favorites.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;700&family=Yuji+Syuku&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -512,12 +514,171 @@ img { display: block; max-width: 100%; height: auto; }
   .store-card__body { padding: 20px 18px 22px; }
   .store-card__name { font-size: 36px; }
 }
+
+/* ============ AUTH PILL (右上ログイン導線) ============ */
+.auth-pill {
+  position: absolute;
+  top: calc(20px + env(safe-area-inset-top, 0px));
+  right: 20px;
+  z-index: 5;
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 8px 14px 8px 10px;
+  background: rgba(20,10,6,0.55);
+  border: 1px solid rgba(245,239,230,0.18);
+  border-radius: 999px;
+  color: var(--color-paper);
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  transition: all 0.2s;
+}
+.auth-pill:hover { background: rgba(245,239,230,0.10); border-color: rgba(245,239,230,0.4); }
+.auth-pill__icon {
+  width: 22px; height: 22px;
+  border-radius: 50%;
+  background: rgba(245,239,230,0.18);
+  display: inline-flex; align-items: center; justify-content: center;
+  font-size: 11px;
+  color: var(--color-paper);
+  overflow: hidden;
+}
+.auth-pill__icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.auth-pill[data-state="logged-in"]  .auth-pill__icon { background: #06c755; }
+.auth-pill__label { white-space: nowrap; font-weight: 600; }
+
+/* メニュー */
+.auth-menu {
+  position: absolute;
+  top: calc(60px + env(safe-area-inset-top, 0px));
+  right: 20px;
+  z-index: 6;
+  min-width: 200px;
+  background: rgba(15,8,5,0.96);
+  border: 1px solid rgba(245,239,230,0.18);
+  border-radius: 10px;
+  padding: 8px 0;
+  box-shadow: 0 14px 36px rgba(0,0,0,0.55);
+  display: none;
+  backdrop-filter: blur(10px);
+}
+.auth-menu[data-open="true"] { display: block; }
+.auth-menu__item {
+  display: block; width: 100%;
+  background: transparent; border: none;
+  text-align: left;
+  padding: 10px 18px;
+  color: var(--color-paper);
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 0.12em;
+  cursor: pointer;
+}
+.auth-menu__item:hover { background: rgba(245,239,230,0.08); }
+.auth-menu__item--name {
+  font-size: 11px; color: var(--color-text-muted);
+  padding: 8px 18px 10px; cursor: default;
+  border-bottom: 1px solid rgba(245,239,230,0.10);
+}
+.auth-menu__item--name:hover { background: transparent; }
+
+/* ============ ♡ お気に入りボタン (カード右上) ============ */
+.fav-btn {
+  position: absolute;
+  top: 12px; right: 12px;
+  z-index: 3;
+  width: 38px; height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(245,239,230,0.25);
+  background: rgba(0,0,0,0.55);
+  color: rgba(245,239,230,0.9);
+  display: inline-flex; align-items: center; justify-content: center;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  transition: all 0.2s;
+  font-size: 18px;
+  padding: 0;
+}
+.fav-btn:hover { background: rgba(0,0,0,0.75); transform: scale(1.08); }
+.fav-btn[data-active="true"] {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: #fff;
+}
+.fav-btn[data-active="true"]:hover { background: var(--color-accent-deep); }
+.fav-btn svg { width: 18px; height: 18px; }
+
+/* ============ お気に入りセクション ============ */
+.favs-section {
+  background: var(--color-paper-2);
+  color: var(--color-ink);
+  padding: clamp(48px, 8vh, 80px) 24px clamp(40px, 6vh, 60px);
+  border-bottom: 1px solid rgba(180,160,140,0.25);
+  display: none;
+}
+.favs-section[data-has-items="true"] { display: block; }
+.favs-section__head {
+  max-width: 1100px; margin: 0 auto 26px;
+  display: flex; align-items: baseline; gap: 14px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+.favs-section__crumb {
+  font-size: 10px;
+  letter-spacing: 0.5em;
+  color: var(--color-accent);
+  font-family: var(--font-num);
+}
+.favs-section__title {
+  font-family: var(--font-brush);
+  font-size: clamp(24px, 3vw, 32px);
+  font-weight: 400;
+  letter-spacing: 0.06em;
+}
+.favs-section__count {
+  font-family: var(--font-num);
+  font-size: 12px;
+  color: var(--color-text-soft);
+  letter-spacing: 0.2em;
+}
+.favs-list {
+  max-width: 1100px; margin: 0 auto;
+  display: flex; flex-wrap: wrap; gap: 12px;
+  justify-content: center;
+}
+.favs-list__item {
+  display: inline-flex; align-items: center; gap: 10px;
+  padding: 10px 18px 10px 14px;
+  background: #fff;
+  border: 1px solid rgba(180,160,140,0.4);
+  border-radius: 999px;
+  color: var(--color-ink);
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  transition: all 0.2s;
+}
+.favs-list__item:hover { border-color: var(--color-ink); transform: translateY(-2px); }
+.favs-list__item__heart { color: var(--color-accent); font-size: 14px; }
+.favs-list__item__yomi {
+  font-family: var(--font-num);
+  font-size: 10px;
+  color: var(--color-text-soft);
+  letter-spacing: 0.3em;
+}
 </style>
 </head>
 <body>
 
 <!-- ============ INTRO ============ -->
 <section class="intro">
+  <button class="auth-pill" id="auth-pill" type="button" data-state="logged-out" hidden>
+    <span class="auth-pill__icon" id="auth-pill-icon">＋</span>
+    <span class="auth-pill__label" id="auth-pill-label">LINE で つながる</span>
+  </button>
+  <div class="auth-menu" id="auth-menu" data-open="false">
+    <div class="auth-menu__item auth-menu__item--name" id="auth-menu-name">—</div>
+    <button class="auth-menu__item" id="auth-menu-logout" type="button">ログアウト</button>
+  </div>
   <p class="intro__yomi">N A K A S H I N C H I &nbsp;·&nbsp; H I R O S H I M A</p>
   <h1 class="intro__title">中新地</h1>
   <p class="intro__copy">夜の街に、語らいの席を。</p>
@@ -526,6 +687,16 @@ img { display: block; max-width: 100%; height: auto; }
     縁ある人と酌み交わす夜を、まずは一軒から。
   </p>
   <div class="intro__divider"></div>
+</section>
+
+<!-- ============ お気に入り ============ -->
+<section class="favs-section" id="favs-section" data-has-items="false">
+  <div class="favs-section__head">
+    <span class="favs-section__crumb">F A V O R I T E S</span>
+    <h2 class="favs-section__title">お気に入りの店</h2>
+    <span class="favs-section__count" id="favs-count">0</span>
+  </div>
+  <div class="favs-list" id="favs-list"></div>
 </section>
 
 <!-- ============ STORES ============ -->
@@ -559,6 +730,11 @@ img { display: block; max-width: 100%; height: auto; }
           <span class="dot"></span>
           <span class="store-card__badge-text">確認中…</span>
         </span>
+        <button class="fav-btn" type="button" data-fav-for="asanoha" aria-label="お気に入り" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </button>
         <img src="asanoha-hero-bg/public/images/hero-japanese.jpg" alt="麻ノ葉 店内">
       </div>
       <div class="store-card__body">
@@ -590,6 +766,11 @@ img { display: block; max-width: 100%; height: auto; }
           <span class="dot"></span>
           <span class="store-card__badge-text">確認中…</span>
         </span>
+        <button class="fav-btn" type="button" data-fav-for="ivory" aria-label="お気に入り" aria-pressed="false">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>
+          </svg>
+        </button>
         <img src="ivory-hero-bg/public/images/hero-ivory.jpg" alt="Innocent Base Ivory 店内" loading="lazy">
       </div>
       <div class="store-card__body">
@@ -1015,6 +1196,134 @@ img { display: block; max-width: 100%; height: auto; }
 
   var locateBtn   = document.getElementById('locate-btn');
   var locateLabel = document.getElementById('locate-label');
+
+  // ===========================================
+  // ログイン導線 (auth-pill) + お気に入り
+  // ===========================================
+  var STORE_BY_ID = {};
+  (window.NAKASHINCHI_STORES || []).forEach(function (s) { STORE_BY_ID[s.id] = s; });
+
+  var authPill     = document.getElementById('auth-pill');
+  var authPillIcon = document.getElementById('auth-pill-icon');
+  var authPillLabel= document.getElementById('auth-pill-label');
+  var authMenu     = document.getElementById('auth-menu');
+  var authMenuName = document.getElementById('auth-menu-name');
+  var authMenuLogout = document.getElementById('auth-menu-logout');
+
+  function renderAuthPill() {
+    if (!authPill) return;
+    authPill.hidden = false;
+    var auth = window.nakashinchiLineAuth;
+    var c = auth && auth.getCustomer();
+    if (auth && auth.isLoggedIn() && c) {
+      authPill.setAttribute('data-state', 'logged-in');
+      authPillLabel.textContent = c.name || 'マイページ';
+      if (c.picture) {
+        authPillIcon.innerHTML = '<img src="' + c.picture + '" alt="" referrerpolicy="no-referrer">';
+      } else {
+        authPillIcon.textContent = (c.name || '？').slice(0,1);
+      }
+      authMenuName.textContent = (c.name || '匿名') + ' さん';
+    } else {
+      authPill.setAttribute('data-state', 'logged-out');
+      authPillLabel.textContent = 'LINE で つながる';
+      authPillIcon.textContent  = '＋';
+    }
+  }
+
+  function waitAuth(cb) {
+    if (window.nakashinchiLineAuth) { cb(); return; }
+    setTimeout(function () { waitAuth(cb); }, 50);
+  }
+
+  waitAuth(function () {
+    renderAuthPill();
+    // 起動時にプロフィール最新化
+    if (window.nakashinchiLineAuth.isLoggedIn()) {
+      window.nakashinchiLineAuth.refreshCustomer().then(renderAuthPill);
+    }
+  });
+
+  if (authPill) {
+    authPill.addEventListener('click', function (e) {
+      e.stopPropagation();
+      var auth = window.nakashinchiLineAuth;
+      if (!auth) return;
+      if (auth.isLoggedIn()) {
+        // メニュー開閉
+        var open = authMenu.getAttribute('data-open') === 'true';
+        authMenu.setAttribute('data-open', open ? 'false' : 'true');
+      } else {
+        // トップページに戻すために自分自身のURLをreturnToに
+        auth.login(location.pathname + location.search);
+      }
+    });
+  }
+  document.addEventListener('click', function (e) {
+    if (!authMenu) return;
+    if (authMenu.contains(e.target) || (authPill && authPill.contains(e.target))) return;
+    authMenu.setAttribute('data-open', 'false');
+  });
+  if (authMenuLogout) {
+    authMenuLogout.addEventListener('click', function () {
+      window.nakashinchiLineAuth.logout();
+      authMenu.setAttribute('data-open', 'false');
+      renderAuthPill();
+      // お気に入りもローカルに戻す
+      if (window.nakashinchiFavorites) window.nakashinchiFavorites.refresh();
+    });
+  }
+
+  // ===== お気に入りボタン同期 =====
+  function syncFavButtons(list) {
+    var setIds = new Set(list);
+    document.querySelectorAll('.fav-btn[data-fav-for]').forEach(function (btn) {
+      var sid = btn.getAttribute('data-fav-for');
+      var on = setIds.has(sid);
+      btn.setAttribute('data-active', on ? 'true' : 'false');
+      btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    renderFavsSection(list);
+  }
+
+  function renderFavsSection(list) {
+    var section = document.getElementById('favs-section');
+    var listEl  = document.getElementById('favs-list');
+    var countEl = document.getElementById('favs-count');
+    if (!section || !listEl) return;
+    listEl.innerHTML = '';
+    list.forEach(function (sid) {
+      var s = STORE_BY_ID[sid];
+      if (!s) return;
+      var a = document.createElement('a');
+      a.className = 'favs-list__item';
+      a.href = s.heroUrl || ('#' + sid);
+      a.innerHTML =
+        '<span class="favs-list__item__heart">♥</span>' +
+        '<span>' + (s.name || sid) + '</span>' +
+        '<span class="favs-list__item__yomi">' + (s.romaji || '') + '</span>';
+      listEl.appendChild(a);
+    });
+    if (countEl) countEl.textContent = String(list.length);
+    section.setAttribute('data-has-items', list.length > 0 ? 'true' : 'false');
+  }
+
+  document.addEventListener('click', function (e) {
+    var btn = e.target.closest && e.target.closest('.fav-btn[data-fav-for]');
+    if (!btn) return;
+    e.preventDefault();
+    e.stopPropagation();
+    var sid = btn.getAttribute('data-fav-for');
+    if (window.nakashinchiFavorites) {
+      window.nakashinchiFavorites.toggle(sid);
+    }
+  });
+
+  function initFavs() {
+    if (!window.nakashinchiFavorites) { setTimeout(initFavs, 50); return; }
+    window.nakashinchiFavorites.onChange(syncFavButtons);
+  }
+  initFavs();
 
   locateBtn.addEventListener('click', function () {
     if (!navigator.geolocation) {

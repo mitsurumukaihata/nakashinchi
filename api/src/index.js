@@ -356,6 +356,74 @@ export default {
         }, 200, cors);
       }
 
+      // ===== お気に入り =====
+
+      // GET /api/customer/favorites — 自分のお気に入り店舗 ID 一覧
+      if (path === '/api/customer/favorites' && request.method === 'GET') {
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        const userId = await verifyCustomerToken(token, env.JWT_SECRET);
+        if (!userId) return json({ error: '認証されていません' }, 401, cors);
+        const rows = await env.DB
+          .prepare('SELECT store_id, created_at FROM favorites WHERE customer_id = ? ORDER BY created_at DESC')
+          .bind(userId).all();
+        return json({
+          favorites: (rows.results || []).map(r => ({ storeId: r.store_id, createdAt: r.created_at }))
+        }, 200, cors);
+      }
+
+      // PUT/DELETE /api/customer/favorites/:storeId
+      const favMatch = path.match(/^\/api\/customer\/favorites\/([^\/]+)$/);
+      if (favMatch) {
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        const userId = await verifyCustomerToken(token, env.JWT_SECRET);
+        if (!userId) return json({ error: '認証されていません' }, 401, cors);
+        const [, storeId] = favMatch;
+
+        // 店舗存在チェック
+        const store = await env.DB.prepare('SELECT id FROM stores WHERE id = ?').bind(storeId).first();
+        if (!store) return json({ error: '店舗が見つかりません' }, 404, cors);
+
+        if (request.method === 'PUT') {
+          const now = new Date().toISOString();
+          await env.DB.prepare(`
+            INSERT INTO favorites (customer_id, store_id, created_at)
+            VALUES (?, ?, ?)
+            ON CONFLICT(customer_id, store_id) DO NOTHING
+          `).bind(userId, storeId, now).run();
+          return json({ ok: true, storeId, createdAt: now }, 200, cors);
+        }
+
+        if (request.method === 'DELETE') {
+          await env.DB
+            .prepare('DELETE FROM favorites WHERE customer_id = ? AND store_id = ?')
+            .bind(userId, storeId).run();
+          return json({ ok: true, deleted: true }, 200, cors);
+        }
+      }
+
+      // POST /api/customer/favorites/merge — 匿名時にローカルに溜めたお気に入りを一括登録
+      //   Body: { storeIds: [...] }
+      if (path === '/api/customer/favorites/merge' && request.method === 'POST') {
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        const userId = await verifyCustomerToken(token, env.JWT_SECRET);
+        if (!userId) return json({ error: '認証されていません' }, 401, cors);
+        const body = await request.json().catch(() => ({}));
+        const ids = Array.isArray(body.storeIds) ? body.storeIds.filter(s => typeof s === 'string') : [];
+        if (ids.length === 0) return json({ ok: true, merged: 0 }, 200, cors);
+
+        const now = new Date().toISOString();
+        const stmts = ids.map(sid => env.DB.prepare(`
+          INSERT INTO favorites (customer_id, store_id, created_at)
+          VALUES (?, ?, ?)
+          ON CONFLICT(customer_id, store_id) DO NOTHING
+        `).bind(userId, sid, now));
+        await env.DB.batch(stmts);
+        return json({ ok: true, merged: ids.length }, 200, cors);
+      }
+
       return json({ error: 'not found' }, 404, cors);
     } catch (err) {
       return json({ error: 'internal_error', detail: String(err && err.message || err) }, 500, cors);
