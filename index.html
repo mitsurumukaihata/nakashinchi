@@ -52,7 +52,7 @@ img { display: block; max-width: 100%; height: auto; }
 /* ============ HERO ============ */
 .intro {
   position: relative;
-  padding: clamp(60px, 14vh, 140px) 24px clamp(50px, 10vh, 100px);
+  padding: calc(clamp(60px, 14vh, 140px) + env(safe-area-inset-top, 0px)) 24px clamp(50px, 10vh, 100px);
   text-align: center;
   background:
     radial-gradient(ellipse at 50% 30%, rgba(200,16,46,0.18) 0%, transparent 55%),
@@ -320,7 +320,10 @@ img { display: block; max-width: 100%; height: auto; }
   font-weight: 600;
   letter-spacing: 0.04em;
   margin-top: 2px;
+  transition: color 0.3s;
 }
+.store-card__meta-item strong.is-full { color: var(--color-accent); }
+.store-card__meta-item strong.is-low  { color: var(--color-accent-soft); }
 .store-card__cta {
   margin-top: 16px;
   display: flex; align-items: center; gap: 6px;
@@ -490,9 +493,9 @@ img { display: block; max-width: 100%; height: auto; }
             営業
             <strong id="card-hours-asanoha">17:00 — 25:00</strong>
           </div>
-          <div class="store-card__meta-item">
-            席数
-            <strong>BOX 5 / カウンター 6</strong>
+          <div class="store-card__meta-item" id="card-seats-wrap-asanoha">
+            空席
+            <strong id="card-seats-asanoha">残り 11 / 11 席</strong>
           </div>
           <div class="store-card__meta-item" id="card-distance-asanoha" hidden>
             現在地から
@@ -609,16 +612,13 @@ img { display: block; max-width: 100%; height: auto; }
     var badge    = document.getElementById('card-status-asanoha');
     var badgeTxt = badge ? badge.querySelector('.store-card__badge-text') : null;
     var hoursEl  = document.getElementById('card-hours-asanoha');
+    var seatsEl  = document.getElementById('card-seats-asanoha');
     if (!badge || !badgeTxt || !hoursEl) return;
 
-    // バッジ表示判定
+    // バッジ：状態のみ。満席なら「満席」に上書き
     var label = st.label;
     var state = st.state;
     if (st.open && open === 0) { state = 'full'; label = '満席'; }
-    else if (st.open && d.showSeats) {
-      if (d.showSeatsDetail) label += ' (空 ' + open + ')';
-      else                    label += ' (残 ' + open + ')';
-    }
     if (!d.showBadge && st.open) {
       badge.hidden = true;
     } else {
@@ -626,7 +626,26 @@ img { display: block; max-width: 100%; height: auto; }
       badge.setAttribute('data-status', state);
       badgeTxt.textContent = label;
     }
+
+    // 営業時間
     hoursEl.textContent = h.open + ' — ' + h.close;
+
+    // 空席数の表示
+    if (seatsEl) {
+      var dow = new Date().getDay();
+      var isClosedDay = (h.closedDays || []).indexOf(dow) !== -1;
+      var allowSeats = st.state !== 'stopped' && st.state !== 'ended' && !isClosedDay;
+      seatsEl.classList.remove('is-full', 'is-low');
+      if (!allowSeats) {
+        seatsEl.textContent = '—';
+      } else if (open === 0) {
+        seatsEl.textContent = '満席';
+        seatsEl.classList.add('is-full');
+      } else {
+        seatsEl.textContent = '残り ' + open + ' / ' + TOTAL_SEATS + ' 席';
+        if (open <= 3) seatsEl.classList.add('is-low');
+      }
+    }
   }
 
   refreshAsanoha();

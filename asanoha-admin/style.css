@@ -72,7 +72,7 @@ button { font-family: inherit; cursor: pointer; }
   position: sticky; top: 0; z-index: 50;
   background: var(--color-paper);
   border-bottom: 1px solid var(--color-paper-line);
-  padding: 14px 18px 12px;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 18px 12px;
 }
 .topbar__inner {
   display: grid;
@@ -477,7 +477,7 @@ body[data-theme="dark"] .card--active {
   .cards__grid { grid-template-columns: repeat(2, 1fr); }
 }
 @media (max-width: 600px) {
-  .topbar { padding: 12px 12px 10px; }
+  .topbar { padding: calc(12px + env(safe-area-inset-top, 0px)) 12px 10px; }
   .topbar__inner { gap: 6px; grid-template-columns: auto 1fr auto; }
   .topbar__back { padding: 6px 9px; font-size: 9px; letter-spacing: 0.1em; }
   .topbar__brand { font-size: 22px; }
