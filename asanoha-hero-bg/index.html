@@ -301,6 +301,132 @@
   <a href="../asanoha-admin/" class="hero__admin" title="店主向け管理画面">管理&nbsp;→</a>
 </section>
 
+<!-- ============ 店舗情報セクション ============ -->
+<section class="info-section" id="info-section" hidden>
+  <div class="info-section__inner">
+    <p class="info-section__crumb">S T O R E &nbsp; I N F O</p>
+    <h2 class="info-section__title">麻<span style="color:#c8102e">ノ</span>葉 について</h2>
+
+    <p class="info-section__about" id="info-about" hidden></p>
+
+    <dl class="info-list">
+      <div class="info-row" id="info-row-address" hidden>
+        <dt>住所</dt>
+        <dd>
+          <span id="info-zip"></span>
+          <span id="info-address"></span>
+          <a id="info-maplink" target="_blank" rel="noopener" hidden>地図 →</a>
+        </dd>
+      </div>
+      <div class="info-row" id="info-row-tel" hidden>
+        <dt>電話</dt>
+        <dd><a id="info-tel-link"></a></dd>
+      </div>
+      <div class="info-row" id="info-row-access" hidden>
+        <dt>アクセス</dt>
+        <dd id="info-access"></dd>
+      </div>
+      <div class="info-row" id="info-row-instagram" hidden>
+        <dt>Instagram</dt>
+        <dd><a id="info-ig-link" target="_blank" rel="noopener"></a></dd>
+      </div>
+      <div class="info-row" id="info-row-website" hidden>
+        <dt>Web</dt>
+        <dd><a id="info-web-link" target="_blank" rel="noopener"></a></dd>
+      </div>
+      <div class="info-row" id="info-row-notes" hidden>
+        <dt>ご利用</dt>
+        <dd id="info-notes"></dd>
+      </div>
+    </dl>
+  </div>
+</section>
+
+<style>
+.info-section {
+  background: linear-gradient(180deg, #0a0604 0%, #1a0c08 100%);
+  color: #f5efe6;
+  padding: clamp(60px, 10vh, 100px) 24px clamp(70px, 12vh, 120px);
+  position: relative;
+}
+.info-section[hidden] { display: none; }
+.info-section__inner { max-width: 720px; margin: 0 auto; }
+.info-section__crumb {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 10px;
+  letter-spacing: 0.5em;
+  color: rgba(245,239,230,0.5);
+  text-align: center;
+  text-indent: 0.5em;
+  margin-bottom: 8px;
+}
+.info-section__crumb::before, .info-section__crumb::after {
+  content: '·'; margin: 0 8px; color: #c8102e;
+}
+.info-section__title {
+  font-family: 'Yuji Syuku', serif;
+  font-weight: 400;
+  font-size: clamp(24px, 3vw, 32px);
+  letter-spacing: 0.08em;
+  text-align: center;
+  margin-bottom: 36px;
+}
+.info-section__about {
+  font-size: 14px;
+  letter-spacing: 0.1em;
+  line-height: 2.2;
+  text-align: center;
+  color: rgba(245,239,230,0.85);
+  margin: 0 auto 38px;
+  max-width: 28em;
+  white-space: pre-wrap;
+}
+.info-list {
+  display: flex; flex-direction: column;
+  border-top: 1px solid rgba(245,239,230,0.12);
+}
+.info-row {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 18px;
+  padding: 18px 4px;
+  border-bottom: 1px solid rgba(245,239,230,0.12);
+  align-items: start;
+}
+.info-row dt {
+  font-family: 'Cormorant Garamond', Georgia, serif;
+  font-size: 11px;
+  letter-spacing: 0.35em;
+  color: rgba(245,239,230,0.55);
+  text-transform: uppercase;
+  padding-top: 3px;
+}
+.info-row dd {
+  font-size: 14px;
+  letter-spacing: 0.06em;
+  line-height: 2;
+  color: #f5efe6;
+  white-space: pre-wrap;
+}
+.info-row dd a {
+  display: inline-block;
+  color: #c8102e;
+  text-decoration: none;
+  border-bottom: 1px solid rgba(200,16,46,0.45);
+  margin-left: 4px;
+  padding-bottom: 1px;
+  font-size: 12px;
+  letter-spacing: 0.15em;
+}
+.info-row dd a:hover { color: #fff; border-color: #fff; }
+.info-row #info-zip { display: inline-block; margin-right: 8px; color: rgba(245,239,230,0.6); }
+@media (max-width: 600px) {
+  .info-row { grid-template-columns: 80px 1fr; gap: 12px; }
+  .info-row dt { font-size: 10px; letter-spacing: 0.25em; }
+}
+</style>
+
+
 <script src="script.js" defer></script>
 
 <!-- ============ 「今から向かう」モーダル ============ -->
@@ -477,6 +603,71 @@
       && Date.now() - new Date(existing.createdAt).getTime() < 24 * 3600 * 1000) {
     showStatus(existing);
   }
+})();
+</script>
+
+<!-- 店舗情報セクションの読み込み -->
+<script>
+(async function () {
+  if (!window.NAKASHINCHI_API) return;
+  function setText(id, text) {
+    var el = document.getElementById(id);
+    if (el) el.textContent = text || '';
+  }
+  function showRow(id, show) {
+    var el = document.getElementById(id);
+    if (el) { if (show) el.removeAttribute('hidden'); else el.setAttribute('hidden',''); }
+  }
+  try {
+    var r = await fetch(window.NAKASHINCHI_API + '/api/store/asanoha/info', { cache: 'no-cache' });
+    if (!r.ok) return;
+    var data = await r.json();
+    var v = data.value || {};
+    var anyShown = false;
+    var section = document.getElementById('info-section');
+
+    if (v.about) {
+      var a = document.getElementById('info-about');
+      a.textContent = v.about; a.removeAttribute('hidden'); anyShown = true;
+    }
+    if (v.address || v.zip || v.mapurl) {
+      setText('info-zip',     v.zip ? '〒' + v.zip : '');
+      setText('info-address', v.address || '');
+      if (v.mapurl) {
+        var ml = document.getElementById('info-maplink');
+        ml.href = v.mapurl; ml.removeAttribute('hidden');
+      }
+      showRow('info-row-address', true); anyShown = true;
+    }
+    if (v.tel) {
+      var tl = document.getElementById('info-tel-link');
+      tl.href = 'tel:' + v.tel.replace(/[^\d+]/g, '');
+      tl.textContent = v.tel;
+      showRow('info-row-tel', true); anyShown = true;
+    }
+    if (v.access) {
+      setText('info-access', v.access);
+      showRow('info-row-access', true); anyShown = true;
+    }
+    if (v.instagram) {
+      var ig = document.getElementById('info-ig-link');
+      var handle = v.instagram.replace(/^@/, '');
+      ig.href = 'https://instagram.com/' + encodeURIComponent(handle);
+      ig.textContent = '@' + handle;
+      showRow('info-row-instagram', true); anyShown = true;
+    }
+    if (v.website) {
+      var w = document.getElementById('info-web-link');
+      w.href = v.website;
+      w.textContent = v.website.replace(/^https?:\/\//, '').replace(/\/$/, '');
+      showRow('info-row-website', true); anyShown = true;
+    }
+    if (v.notes) {
+      setText('info-notes', v.notes);
+      showRow('info-row-notes', true); anyShown = true;
+    }
+    if (anyShown && section) section.removeAttribute('hidden');
+  } catch (_) {}
 })();
 </script>
 </body>

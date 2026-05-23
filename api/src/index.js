@@ -15,7 +15,7 @@ const ALLOWED_ORIGINS = [
 
 const TOKEN_TTL_SECONDS          = 8 * 3600;        // 店舗 PIN トークン: 8時間
 const CUSTOMER_TOKEN_TTL_SECONDS = 30 * 24 * 3600;  // 客 LINE トークン: 30日
-const ALLOWED_KEYS = ['news', 'hours', 'display', 'seats'];
+const ALLOWED_KEYS = ['news', 'hours', 'display', 'seats', 'info'];
 
 // LINE OAuth
 const LINE_TOKEN_URL   = 'https://api.line.me/oauth2/v2.1/token';

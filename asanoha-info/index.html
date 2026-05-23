@@ -1,0 +1,451 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1a0c08">
+<title>麻ノ葉 — 店舗情報</title>
+
+<link rel="icon"             href="../icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon" href="../icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable"          content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600&family=Yuji+Syuku&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../pin-modal.css">
+
+<script src="../config.js"></script>
+<script src="../api-client.js" defer></script>
+<script src="../pin-modal.js" defer></script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
+:root {
+  --bg-1:#1a0c08; --bg-2:#0a0604; --bg-3:#050201;
+  --paper:#f5efe6;
+  --paper-soft:rgba(245,239,230,0.78);
+  --paper-dim:rgba(245,239,230,0.45);
+  --paper-faint:rgba(245,239,230,0.16);
+  --accent:#c8102e;
+  --green:#06c755;
+  --font-jp:'Shippori Mincho B1','Yu Mincho',serif;
+  --font-brush:'Yuji Syuku',serif;
+  --font-num:'Cormorant Garamond',Georgia,serif;
+}
+html, body { background: var(--bg-2); min-height: 100%; }
+body {
+  font-family: var(--font-jp);
+  color: var(--paper);
+  -webkit-font-smoothing: antialiased;
+  padding-bottom: env(safe-area-inset-bottom);
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(200,16,46,0.10) 0%, transparent 55%),
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 60%, var(--bg-3) 100%);
+}
+
+.topbar {
+  position: sticky; top: 0; z-index: 10;
+  padding: calc(14px + env(safe-area-inset-top, 0px)) 20px 14px;
+  background: rgba(15,8,5,0.85);
+  border-bottom: 1px solid var(--paper-faint);
+  backdrop-filter: blur(10px);
+  display: flex; align-items: center; gap: 18px;
+}
+.topbar__back {
+  color: var(--paper-soft); text-decoration: none;
+  font-size: 11px; letter-spacing: 0.2em;
+  padding: 8px 14px;
+  border: 1px solid var(--paper-faint); border-radius: 999px;
+  transition: all 0.18s;
+}
+.topbar__back:hover { color: var(--paper); border-color: var(--paper); }
+.topbar__center { flex: 1; text-align: center; }
+.topbar__crumb {
+  font-family: var(--font-num); font-size: 10px;
+  letter-spacing: 0.45em; color: var(--paper-dim);
+}
+.topbar__brand {
+  font-family: var(--font-brush); font-weight: 400;
+  font-size: 22px; letter-spacing: 0.06em; line-height: 1.2;
+}
+.topbar__brand .ac { color: var(--accent); }
+
+.page { max-width: 720px; margin: 0 auto; padding: 28px 20px 80px; }
+.page__crumb {
+  font-family: var(--font-num); font-size: 10px;
+  letter-spacing: 0.5em; color: var(--paper-dim);
+  text-indent: 0.5em; margin-bottom: 6px;
+}
+.page__title {
+  font-family: var(--font-brush); font-weight: 400;
+  font-size: 28px; letter-spacing: 0.06em;
+  margin-bottom: 8px;
+}
+.page__lead {
+  font-size: 12px; color: var(--paper-dim);
+  letter-spacing: 0.08em; line-height: 2;
+  margin-bottom: 28px;
+}
+
+.card {
+  background: rgba(245,239,230,0.045);
+  border: 1px solid var(--paper-faint);
+  border-radius: 14px;
+  padding: 22px 22px 24px;
+  margin-bottom: 16px;
+}
+.card__title {
+  font-family: var(--font-num);
+  font-size: 11px;
+  letter-spacing: 0.4em;
+  color: var(--accent);
+  margin-bottom: 14px;
+  text-indent: 0.4em;
+}
+
+.field { display: block; margin-bottom: 16px; }
+.field:last-child { margin-bottom: 0; }
+.field__label {
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  color: var(--paper-dim);
+  margin-bottom: 6px;
+}
+.field__hint {
+  font-size: 10px;
+  color: var(--paper-dim);
+  letter-spacing: 0.05em;
+  margin-top: 4px;
+  line-height: 1.7;
+}
+.field input, .field textarea {
+  width: 100%;
+  padding: 11px 14px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--paper-faint);
+  border-radius: 8px;
+  color: var(--paper);
+  font-family: inherit;
+  font-size: 14px;
+  letter-spacing: 0.04em;
+  resize: vertical;
+}
+.field input:focus, .field textarea:focus { outline: none; border-color: var(--paper); }
+.field textarea { min-height: 70px; line-height: 1.7; }
+
+.actions {
+  position: sticky; bottom: 0;
+  margin: 24px -20px 0;
+  padding: 16px 20px calc(16px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, transparent, var(--bg-2) 30%);
+  display: flex; gap: 10px; justify-content: flex-end;
+}
+.btn {
+  padding: 12px 22px;
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.22em;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: all 0.18s;
+}
+.btn--primary { background: var(--accent); color: #fff; }
+.btn--primary:hover { background: #8e0e1c; transform: translateY(-1px); }
+.btn--primary:disabled { opacity: 0.5; cursor: default; transform: none; }
+.btn--ghost {
+  background: transparent; color: var(--paper-soft);
+  border-color: var(--paper-faint);
+}
+.btn--ghost:hover { color: var(--paper); border-color: var(--paper); }
+
+.toast {
+  position: fixed; left: 50%; bottom: 28px;
+  transform: translateX(-50%);
+  padding: 12px 22px;
+  background: rgba(6,199,85,0.92);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 12px; letter-spacing: 0.18em;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  opacity: 0; transition: opacity 0.3s ease;
+  z-index: 50;
+}
+.toast[data-show="true"] { opacity: 1; }
+
+.preview {
+  background: rgba(0,0,0,0.3);
+  border: 1px dashed var(--paper-faint);
+  border-radius: 10px;
+  padding: 16px 18px;
+  margin-top: 8px;
+}
+.preview__title {
+  font-size: 10px; letter-spacing: 0.3em;
+  color: var(--paper-dim);
+  margin-bottom: 8px;
+}
+.preview__name {
+  font-family: var(--font-brush); font-size: 20px;
+  margin-bottom: 4px;
+}
+.preview__line {
+  font-size: 12px; line-height: 2;
+  color: var(--paper-soft);
+  letter-spacing: 0.05em;
+}
+.preview__line a { color: var(--accent); text-decoration: underline; }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <a class="topbar__back" href="../asanoha-admin/">← 管理</a>
+  <div class="topbar__center">
+    <div class="topbar__crumb">S T O R E &nbsp; I N F O</div>
+    <h1 class="topbar__brand">麻<span class="ac">ノ</span>葉 — 店舗情報</h1>
+  </div>
+  <div style="width:60px"></div>
+</header>
+
+<main class="page">
+  <p class="page__crumb">管理 / 店舗情報</p>
+  <h2 class="page__title">店舗情報</h2>
+  <p class="page__lead">
+    住所・電話・アクセス・地図 などの基本情報を編集できます。<br>
+    トップページ・店舗ページの「店舗情報」セクションに反映されます。
+  </p>
+
+  <div class="card">
+    <div class="card__title">B A S I C &nbsp; I N F O</div>
+    <label class="field">
+      <div class="field__label">店 舗 名 ( 表 示 用 )</div>
+      <input type="text" id="f-name" value="麻ノ葉" disabled>
+      <div class="field__hint">店舗名は config.js で固定 (変更は別途)</div>
+    </label>
+    <label class="field">
+      <div class="field__label">郵 便 番 号</div>
+      <input type="text" id="f-zip" placeholder="730-0036" inputmode="numeric">
+    </label>
+    <label class="field">
+      <div class="field__label">住 所</div>
+      <input type="text" id="f-address" placeholder="広島市中区中新地◯-◯-◯">
+    </label>
+    <label class="field">
+      <div class="field__label">電 話 番 号</div>
+      <input type="tel" id="f-tel" placeholder="082-XXX-XXXX">
+    </label>
+    <label class="field">
+      <div class="field__label">アクセス</div>
+      <textarea id="f-access" placeholder="広電「銀山町」電停から徒歩3分&#10;駐車場なし、近隣コインパーキングをご利用ください"></textarea>
+    </label>
+  </div>
+
+  <div class="card">
+    <div class="card__title">L I N K S</div>
+    <label class="field">
+      <div class="field__label">G o o g l e &nbsp; M a p s &nbsp; U R L</div>
+      <input type="url" id="f-mapurl" placeholder="https://maps.app.goo.gl/...">
+      <div class="field__hint">スマホで Google Maps を開き共有 → リンクをコピー</div>
+    </label>
+    <label class="field">
+      <div class="field__label">I n s t a g r a m</div>
+      <input type="text" id="f-instagram" placeholder="manoha_official (@ なし)">
+    </label>
+    <label class="field">
+      <div class="field__label">ウェブサイト ( 任意 )</div>
+      <input type="url" id="f-website" placeholder="https://...">
+    </label>
+  </div>
+
+  <div class="card">
+    <div class="card__title">A B O U T &nbsp; ( 任 意 )</div>
+    <label class="field">
+      <div class="field__label">お 店 紹 介 ( 1 〜 3 文 )</div>
+      <textarea id="f-about" placeholder="広島・中新地の語らいの席。縁起の文様、麻ノ葉。"></textarea>
+    </label>
+    <label class="field">
+      <div class="field__label">予 約 ・ 利 用 案 内</div>
+      <textarea id="f-notes" placeholder="お一人様も歓迎です。&#10;ご予約は LINE よりお気軽にどうぞ。"></textarea>
+    </label>
+  </div>
+
+  <!-- プレビュー -->
+  <div class="preview">
+    <div class="preview__title">P R E V I E W</div>
+    <div class="preview__name">麻<span style="color:var(--accent)">ノ</span>葉</div>
+    <div class="preview__line" id="prev-zip">—</div>
+    <div class="preview__line" id="prev-address">—</div>
+    <div class="preview__line" id="prev-tel">—</div>
+    <div class="preview__line" id="prev-access">—</div>
+    <div class="preview__line" id="prev-links">—</div>
+  </div>
+
+  <div class="actions">
+    <button type="button" class="btn btn--ghost" id="btn-reload">取消・再読込</button>
+    <button type="button" class="btn btn--primary" id="btn-save">保 存</button>
+  </div>
+</main>
+
+<div class="toast" id="toast">保存しました</div>
+
+<!-- PIN モーダル -->
+<div id="pin-modal" class="pin-modal" hidden>
+  <div class="pin-modal__backdrop"></div>
+  <div class="pin-modal__panel" role="dialog" aria-modal="true">
+    <h3 class="pin-modal__title">店舗 PIN を入力</h3>
+    <p class="pin-modal__sub">麻ノ葉 管理者用</p>
+    <input id="pin-input" type="password" inputmode="numeric" autocomplete="off" class="pin-modal__input" placeholder="••••">
+    <p id="pin-error" class="pin-modal__error" hidden></p>
+    <div class="pin-modal__actions">
+      <button id="pin-cancel" type="button" class="pin-modal__btn pin-modal__btn--ghost">キャンセル</button>
+      <button id="pin-submit" type="button" class="pin-modal__btn">認証</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function () {
+  'use strict';
+  var API = window.NAKASHINCHI_API;
+  var STORE_ID = 'asanoha';
+
+  var fields = {
+    zip:       document.getElementById('f-zip'),
+    address:   document.getElementById('f-address'),
+    tel:       document.getElementById('f-tel'),
+    access:    document.getElementById('f-access'),
+    mapurl:    document.getElementById('f-mapurl'),
+    instagram: document.getElementById('f-instagram'),
+    website:   document.getElementById('f-website'),
+    about:     document.getElementById('f-about'),
+    notes:     document.getElementById('f-notes')
+  };
+  var btnSave   = document.getElementById('btn-save');
+  var btnReload = document.getElementById('btn-reload');
+  var toast     = document.getElementById('toast');
+
+  function waitDeps() {
+    return new Promise(function (resolve) {
+      var tries = 0;
+      var iv = setInterval(function () {
+        if (window.nakashinchiApi && window.promptPin) { clearInterval(iv); resolve(true); }
+        else if (++tries > 100) { clearInterval(iv); resolve(false); }
+      }, 30);
+    });
+  }
+
+  async function ensureAuth() {
+    if (!window.nakashinchiApi.isOnline()) {
+      alert('API が設定されていません'); return null;
+    }
+    var t = window.nakashinchiApi.getToken();
+    if (t) return t;
+    return await window.promptPin();
+  }
+
+  function showToast(msg, ok) {
+    toast.textContent = msg || '保存しました';
+    toast.style.background = ok === false ? 'rgba(232,80,96,0.94)' : 'rgba(6,199,85,0.92)';
+    toast.setAttribute('data-show', 'true');
+    setTimeout(function () { toast.removeAttribute('data-show'); }, 2200);
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function updatePreview() {
+    var v = collectValues();
+    document.getElementById('prev-zip').textContent     = v.zip ? '〒' + v.zip : '—';
+    document.getElementById('prev-address').textContent = v.address || '住所未設定';
+    document.getElementById('prev-tel').textContent     = v.tel ? 'TEL: ' + v.tel : '電話番号未設定';
+    document.getElementById('prev-access').textContent  = v.access || 'アクセス情報未設定';
+    var links = [];
+    if (v.mapurl)    links.push('<a href="' + escapeHtml(v.mapurl) + '" target="_blank">地図</a>');
+    if (v.instagram) links.push('<a href="https://instagram.com/' + encodeURIComponent(v.instagram.replace(/^@/,'')) + '" target="_blank">Instagram</a>');
+    if (v.website)   links.push('<a href="' + escapeHtml(v.website) + '" target="_blank">Web</a>');
+    document.getElementById('prev-links').innerHTML = links.length ? links.join(' / ') : '—';
+  }
+  Object.values(fields).forEach(function (el) {
+    if (el) el.addEventListener('input', updatePreview);
+  });
+
+  function collectValues() {
+    return {
+      zip:       fields.zip.value.trim(),
+      address:   fields.address.value.trim(),
+      tel:       fields.tel.value.trim(),
+      access:    fields.access.value.trim(),
+      mapurl:    fields.mapurl.value.trim(),
+      instagram: fields.instagram.value.trim().replace(/^@/, ''),
+      website:   fields.website.value.trim(),
+      about:     fields.about.value.trim(),
+      notes:     fields.notes.value.trim()
+    };
+  }
+  function applyValues(v) {
+    v = v || {};
+    Object.keys(fields).forEach(function (k) {
+      if (fields[k]) fields[k].value = v[k] || '';
+    });
+    updatePreview();
+  }
+
+  async function load() {
+    try {
+      var r = await fetch(API + '/api/store/' + STORE_ID + '/info', { cache: 'no-cache' });
+      if (!r.ok) return;
+      var data = await r.json();
+      applyValues(data.value || {});
+    } catch (_) {}
+  }
+
+  async function save() {
+    var token = window.nakashinchiApi.getToken();
+    if (!token) { token = await ensureAuth(); if (!token) return; }
+    var body = collectValues();
+    btnSave.disabled = true;
+    btnSave.textContent = '保存中…';
+    try {
+      var r = await fetch(API + '/api/store/' + STORE_ID + '/info', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify(body)
+      });
+      if (r.status === 401) {
+        window.nakashinchiApi.clearToken();
+        var t2 = await ensureAuth();
+        if (!t2) return;
+        return save();
+      }
+      if (!r.ok) throw new Error('http_' + r.status);
+      showToast('保存しました');
+    } catch (e) {
+      showToast('保存に失敗しました', false);
+    } finally {
+      btnSave.disabled = false;
+      btnSave.textContent = '保 存';
+    }
+  }
+
+  btnSave.addEventListener('click', save);
+  btnReload.addEventListener('click', load);
+
+  (async function init() {
+    var ok = await waitDeps();
+    if (!ok) { alert('スクリプト読み込みに失敗'); return; }
+    var t = await ensureAuth();
+    if (!t) return;
+    await load();
+  })();
+})();
+</script>
+
+</body>
+</html>
