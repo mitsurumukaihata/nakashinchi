@@ -7,6 +7,9 @@
    - 朱色は使わず、Ivory ブランドカラーで統一
    =========================================== */
 :root {
+  /* 画像パス */
+  --hero-img: url('public/images/hero-ivory.jpg');
+
   /* DARK (default) */
   --color-bg:          #0a0a0a;
   --color-ink:         #0a0a0a;
@@ -18,6 +21,11 @@
   --color-accent:      #d4a96a;   /* くすんだ金 (薬莢の色) */
   --color-accent-soft: #e8c98e;
   --color-danger:      #c83232;   /* 控えめな赤 (照準) */
+
+  /* 画像フィルタ（暗さ・色味調整用） */
+  --img-brightness: 0.55;
+  --img-contrast:   1.10;
+  --img-saturate:   0.85;
 
   --hero-h-desktop: 92vh;
   --hero-h-mobile:  86vh;
@@ -69,17 +77,31 @@ button { font-family: inherit; cursor: pointer; }
   .hero { height: var(--hero-h-desktop); min-height: 700px; }
 }
 
-/* 背景 (SVG ターゲット) */
+/* 背景 (店内写真 + SVG ターゲットを薄く重ねる) */
 .hero__bg {
   position: absolute;
   top: env(safe-area-inset-top, 0px); right: 0; bottom: 0; left: 0;
   z-index: 1;
-  background: radial-gradient(ellipse at 50% 40%, #1a1614 0%, #0a0a0a 60%, #050505 100%);
+  background-image: var(--hero-img);
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-color: #0a0a0a;
+  filter:
+    brightness(var(--img-brightness))
+    contrast(var(--img-contrast))
+    saturate(var(--img-saturate));
 }
+/* SVG ターゲットを薄く重ねる (店内写真の上に光の輪のように) */
 .bg-target {
-  position: absolute; inset: 0;
+  position: absolute;
+  top: env(safe-area-inset-top, 0px); right: 0; bottom: 0; left: 0;
   width: 100%; height: 100%;
-  animation: bgSlowRotate 60s linear infinite;
+  z-index: 1;
+  pointer-events: none;
+  opacity: 0.45;
+  mix-blend-mode: screen;
+  animation: bgSlowRotate 90s linear infinite;
   transform-origin: 50% 50%;
 }
 @keyframes bgSlowRotate {
@@ -92,18 +114,25 @@ button { font-family: inherit; cursor: pointer; }
   top: env(safe-area-inset-top, 0px); right: 0; bottom: 0; left: 0;
   z-index: 2;
   background:
-    radial-gradient(ellipse at 50% 30%, rgba(212,169,106,0.05) 0%, transparent 50%),
-    linear-gradient(180deg, transparent 0%, rgba(10,10,10,0.4) 65%, rgba(10,10,10,0.95) 100%);
+    radial-gradient(ellipse at 50% 30%, rgba(212,169,106,0.10) 0%, transparent 50%),
+    linear-gradient(180deg, rgba(10,10,10,0.15) 0%, rgba(10,10,10,0.45) 50%, rgba(10,10,10,0.92) 100%);
 }
 
 body[data-theme="light"] .hero__bg {
-  background: radial-gradient(ellipse at 50% 40%, #f5efe0 0%, #e0dac8 60%, #d4ccb8 100%);
+  filter:
+    brightness(0.92)
+    contrast(0.96)
+    saturate(0.78);
 }
-body[data-theme="light"] .bg-target g { stroke: rgba(26,22,20,0.10) !important; }
+body[data-theme="light"] .bg-target {
+  opacity: 0.20;
+  mix-blend-mode: multiply;
+}
+body[data-theme="light"] .bg-target g { stroke: rgba(40,30,15,0.30) !important; }
 body[data-theme="light"] .hero__overlay {
   background:
-    radial-gradient(ellipse at 50% 30%, rgba(142,106,48,0.08) 0%, transparent 50%),
-    linear-gradient(180deg, transparent 0%, rgba(235,229,213,0.5) 65%, rgba(235,229,213,0.95) 100%);
+    radial-gradient(ellipse at 50% 30%, rgba(142,106,48,0.10) 0%, transparent 50%),
+    linear-gradient(180deg, rgba(235,229,213,0.30) 0%, rgba(235,229,213,0.60) 55%, rgba(235,229,213,0.95) 100%);
 }
 
 /* 弾痕パーティクル */
