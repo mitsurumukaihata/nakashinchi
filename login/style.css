@@ -170,18 +170,12 @@ button { font-family: inherit; cursor: pointer; }
   box-shadow: 0 0 0 3px rgba(200,16,46,0.15);
 }
 .field__input::placeholder { color: var(--color-text-soft); }
-.field__input--select {
-  appearance: none;
-  -webkit-appearance: none;
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><polyline points='0,0 5,6 10,0' fill='none' stroke='%23a89888' stroke-width='1.5'/></svg>");
-  background-repeat: no-repeat;
-  background-position: right 14px center;
-  padding-right: 36px;
-  cursor: pointer;
-}
-.field__input--select option {
-  background: var(--color-bg-2);
-  color: var(--color-paper);
+.field-note {
+  font-size: 10px;
+  color: var(--color-text-soft);
+  letter-spacing: 0.08em;
+  line-height: 1.7;
+  padding: 4px 4px 0;
 }
 
 /* ===== META ROW (チェックボックス + リンク) ===== */

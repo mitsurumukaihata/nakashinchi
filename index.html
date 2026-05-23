@@ -180,6 +180,25 @@ img { display: block; max-width: 100%; height: auto; }
 .locate-btn[data-state="done"]     { background: var(--color-accent); }
 .locate-btn svg { width: 14px; height: 14px; }
 
+.filter-btn {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 11px 18px;
+  background: transparent; color: var(--color-text-soft);
+  border: 1px solid rgba(180,160,140,0.35); border-radius: 999px;
+  font-family: inherit; font-size: 12px; font-weight: 600;
+  letter-spacing: 0.2em;
+  cursor: pointer;
+  transition: all 0.25s ease;
+}
+.filter-btn:hover {
+  border-color: var(--color-ink); color: var(--color-ink);
+}
+.filter-btn[aria-pressed="true"] {
+  background: var(--color-ink); color: var(--color-paper); border-color: var(--color-ink);
+}
+.filter-btn svg { opacity: 0.6; }
+.filter-btn[aria-pressed="true"] svg { opacity: 1; }
+
 .store-grid {
   max-width: 1100px;
   margin: 0 auto;
@@ -203,6 +222,26 @@ img { display: block; max-width: 100%; height: auto; }
   .store-card { flex: 0 0 86%; scroll-snap-align: start; }
   .store-card--placeholder { min-height: 340px; }
 }
+
+/* デスクトップでも横スクロール+自動スライドにする (店舗が増えるとカルーセル感) */
+@media (min-width: 761px) {
+  .store-grid {
+    display: flex;
+    overflow-x: auto;
+    gap: 24px;
+    padding-bottom: 16px;
+    scroll-snap-type: x mandatory;
+    scroll-behavior: smooth;
+    scrollbar-width: thin;
+  }
+  .store-grid::-webkit-scrollbar { height: 4px; }
+  .store-grid::-webkit-scrollbar-thumb { background: rgba(180,160,140,0.4); border-radius: 999px; }
+  .store-card { flex: 0 0 minmax(320px, 360px); width: 360px; scroll-snap-align: start; }
+  .store-card--placeholder { min-height: 480px; }
+}
+
+/* フィルタで非表示にする */
+.store-card[data-hidden="true"] { display: none; }
 .scroll-hint {
   display: none;
   text-align: center;
@@ -494,13 +533,19 @@ img { display: block; max-width: 100%; height: auto; }
         </svg>
         <span id="locate-label">現在地から近い順</span>
       </button>
+      <button class="filter-btn" id="filter-btn" type="button" aria-pressed="false">
+        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" width="14" height="14">
+          <path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        <span id="filter-label">空席のある店だけ</span>
+      </button>
     </div>
   </header>
 
   <div class="store-grid">
 
     <!-- 麻ノ葉 -->
-    <a href="asanoha-hero-bg/" class="store-card">
+    <a href="asanoha-hero-bg/" class="store-card" data-store-id="asanoha">
       <div class="store-card__media">
         <span class="store-card__badge" id="card-status-asanoha" data-status="loading">
           <span class="dot"></span>
@@ -531,7 +576,7 @@ img { display: block; max-width: 100%; height: auto; }
     </a>
 
     <!-- Innocent Base Ivory -->
-    <a href="ivory-hero-bg/" class="store-card store-card--ivory">
+    <a href="ivory-hero-bg/" class="store-card store-card--ivory" data-store-id="ivory">
       <div class="store-card__media store-card__media--ivory">
         <span class="store-card__badge" id="card-status-ivory" data-status="loading">
           <span class="dot"></span>
@@ -803,17 +848,115 @@ img { display: block; max-width: 100%; height: auto; }
   refreshAsanoha();
   refreshIvory();
   refreshFromApiAll();
-  setInterval(function () { refreshAsanoha(); refreshIvory(); }, 60 * 1000);
+  setInterval(function () { refreshAsanoha(); refreshIvory(); applyFilter(); }, 60 * 1000);
   setInterval(refreshFromApiAll, 30 * 1000);
   window.addEventListener('storage', function (e) {
     if (!e.key) return;
     if (e.key.indexOf('store-cache:asanoha:') === 0 || e.key === HOURS_KEY || e.key === DISPLAY_KEY || e.key === SEATS_KEY) {
-      refreshAsanoha();
+      refreshAsanoha(); applyFilter();
     }
     if (e.key.indexOf('store-cache:ivory:') === 0) {
-      refreshIvory();
+      refreshIvory(); applyFilter();
     }
   });
+
+  // ===========================================
+  // 空席フィルタ
+  // ===========================================
+  var FILTER_KEY = 'landing-filter-available';
+  var filterBtn   = document.getElementById('filter-btn');
+  var filterLabel = document.getElementById('filter-label');
+  var filterOn    = false;
+  try { filterOn = localStorage.getItem(FILTER_KEY) === '1'; } catch (_) {}
+
+  function storeHasAvailability(storeId) {
+    var h = readHours(storeId, storeId === 'ivory' ? IVORY_DEFAULT_HOURS : DEFAULT_HOURS);
+    var st = isOpenNow(new Date(), h);
+    if (!st.open) return false;
+    // 麻ノ葉のみ席状況を持つ。Ivory は営業中なら "空席ありと見なす"
+    if (storeId === 'asanoha') {
+      var seats = readSeats(storeId);
+      var open = TOTAL_SEATS - countTaken(seats);
+      return open > 0;
+    }
+    return true;
+  }
+  function applyFilter() {
+    document.querySelectorAll('.store-card[data-store-id]').forEach(function (card) {
+      var storeId = card.dataset.storeId;
+      var hide = filterOn && !storeHasAvailability(storeId);
+      card.setAttribute('data-hidden', hide ? 'true' : 'false');
+    });
+    if (filterBtn) {
+      filterBtn.setAttribute('aria-pressed', filterOn ? 'true' : 'false');
+      filterLabel.textContent = filterOn ? '空席のある店だけ ON' : '空席のある店だけ';
+    }
+  }
+  if (filterBtn) {
+    filterBtn.addEventListener('click', function () {
+      filterOn = !filterOn;
+      try { localStorage.setItem(FILTER_KEY, filterOn ? '1' : '0'); } catch (_) {}
+      applyFilter();
+    });
+  }
+  applyFilter();
+
+  // ===========================================
+  // 店舗カードの自動スライド (おしゃれな演出)
+  // - 操作中は一時停止、放置で再開
+  // - カードが1枚しか表示されていない場合はスキップ
+  // ===========================================
+  (function autoSlide() {
+    var grid = document.querySelector('.store-grid');
+    if (!grid) return;
+    var paused = false;
+    var idleTimer = null;
+    var SPEED_PX_PER_SEC = 14;
+    var FRAME_MS = 30;
+    var STEP = SPEED_PX_PER_SEC * FRAME_MS / 1000;
+    var lastT = 0;
+
+    function visibleCards() {
+      return Array.prototype.filter.call(
+        grid.querySelectorAll('.store-card'),
+        function (el) { return el.getAttribute('data-hidden') !== 'true'; }
+      );
+    }
+    function maxScrollable() { return grid.scrollWidth - grid.clientWidth - 2; }
+    function shouldRun() {
+      // 可視カードが多くてスクロール余地がある時だけ動かす
+      return visibleCards().length >= 2 && maxScrollable() > 10;
+    }
+
+    function tick() {
+      if (!paused && shouldRun()) {
+        var max = maxScrollable();
+        if (grid.scrollLeft >= max) {
+          // 端まで来たら少し待ってから戻す
+          paused = true;
+          setTimeout(function () {
+            grid.scrollTo({ left: 0, behavior: 'smooth' });
+            setTimeout(function () { paused = false; }, 1200);
+          }, 1500);
+        } else {
+          grid.scrollLeft += STEP;
+        }
+      }
+    }
+    setInterval(tick, FRAME_MS);
+
+    function pauseTemp() {
+      paused = true;
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(function () { paused = false; }, 4500);
+    }
+    grid.addEventListener('mouseenter', function () { paused = true; });
+    grid.addEventListener('mouseleave', function () { paused = false; });
+    grid.addEventListener('touchstart', pauseTemp, { passive: true });
+    grid.addEventListener('wheel',      pauseTemp, { passive: true });
+    grid.addEventListener('focusin',    function () { paused = true; });
+    grid.addEventListener('focusout',   function () { paused = false; });
+  })();
 
   // ===========================================
   // 位置情報で距離計算

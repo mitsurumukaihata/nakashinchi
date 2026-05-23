@@ -29,21 +29,114 @@
   --overlay-b: 2;
 }
 
-/* === LIGHT 配色（昼） === */
+/* === LIGHT 配色（昼）===
+   昼の麻ノ葉：朝の和紙、墨と朱の世界。
+   背景: 生成り (#f5efe6)、テキストは墨色、ブランドは深い墨に朱のアクセント。
+   壁画は彩度を少し下げて、明るい時間の壁を見せる雰囲気に。 */
 body[data-theme="light"] {
   --color-bg:          #f5efe6;
   --color-ink:         #1a1410;
-  --color-paper:       #1a1410;   /* 反転：テキストカラー */
+  --color-paper:       #1a1410;
   --color-text:        #1a1410;
-  --color-text-muted:  #5a4838;
+  --color-text-muted:  #6a5848;
+  --color-text-soft:   #a89888;
   --color-accent:      #c8102e;
   --color-accent-deep: #8e0e1c;
   --color-accent-soft: #d8203e;
-
-  --overlay-r: 245;
-  --overlay-g: 239;
-  --overlay-b: 230;
 }
+
+/* ライト時は壁画の彩度を少し下げて朝の柔らかさを出す */
+body[data-theme="light"] .hero__bg {
+  filter:
+    brightness(1.04)
+    contrast(0.96)
+    saturate(0.88);
+}
+
+/* ライトモードのオーバーレイ — 暗にせず、生成りで馴染ませる */
+body[data-theme="light"] .hero__overlay {
+  background:
+    linear-gradient(180deg,
+      rgba(245, 239, 230, 0)    0%,
+      rgba(245, 239, 230, 0)   38%,
+      rgba(245, 239, 230, 0.55) 48%,
+      rgba(245, 239, 230, 0.92) 60%,
+      rgba(245, 239, 230, 1)  100%);
+}
+@media (min-width: 768px) {
+  body[data-theme="light"] .hero__overlay {
+    background:
+      linear-gradient(110deg,
+        rgba(245, 239, 230, 0.30) 0%,
+        rgba(245, 239, 230, 0.10) 35%,
+        rgba(245, 239, 230, 0.05) 55%,
+        rgba(245, 239, 230, 0.30) 100%),
+      linear-gradient(180deg,
+        rgba(245, 239, 230, 0.00) 0%,
+        rgba(245, 239, 230, 0.00) 50%,
+        rgba(245, 239, 230, 0.85) 100%);
+  }
+}
+
+/* ライト時のテキスト系：墨色、影は控えめ */
+body[data-theme="light"] .hero__brand        { color: var(--color-paper); text-shadow: 0 2px 14px rgba(255,255,255,0.55); }
+body[data-theme="light"] .hero__brand-accent { color: var(--color-accent); text-shadow: 0 0 12px rgba(200,16,46,0.20), 0 2px 4px rgba(255,255,255,0.5); }
+body[data-theme="light"] .hero__brand-jp     { color: var(--color-text-muted); }
+body[data-theme="light"] .hero__copy         { color: var(--color-paper); text-shadow: 0 1px 8px rgba(255,255,255,0.5); }
+body[data-theme="light"] .hero__sub          { color: var(--color-text-muted); text-shadow: none; }
+body[data-theme="light"] .hero__mark         { color: var(--color-text-muted); }
+body[data-theme="light"] .hero__mark-line    { background: var(--color-accent); }
+
+/* ライト時の状態 / 空席バッジ */
+body[data-theme="light"] .hero__status,
+body[data-theme="light"] .hero__seats-badge {
+  background: rgba(255, 255, 255, 0.6);
+  color: var(--color-text-muted);
+  border-color: rgba(26, 20, 16, 0.15);
+}
+body[data-theme="light"] .hero__status[data-status="open"]   { color: #2a7a3a; border-color: rgba(42,122,58,0.40); }
+body[data-theme="light"] .hero__status[data-status="open"]   .hero__status-dot { background: #2a7a3a; box-shadow: 0 0 8px rgba(42,122,58,0.4); }
+body[data-theme="light"] .hero__status[data-status="closed"] .hero__status-dot { background: rgba(26,20,16,0.4); }
+
+/* ライト時のお知らせバナー */
+body[data-theme="light"] .hero__news {
+  background: rgba(255, 255, 255, 0.65);
+  border-left-color: var(--color-accent);
+  backdrop-filter: blur(4px);
+}
+body[data-theme="light"] .hero__news-text { color: var(--color-paper); }
+body[data-theme="light"] .hero__news-tag { color: var(--color-accent); border-color: var(--color-accent); }
+
+/* ライト時のボタン */
+body[data-theme="light"] .btn--ghost {
+  background: rgba(255, 255, 255, 0.5);
+  color: var(--color-paper);
+  border-color: rgba(26, 20, 16, 0.30);
+}
+body[data-theme="light"] .btn--ghost:hover {
+  background: rgba(26, 20, 16, 0.08);
+  border-color: var(--color-paper);
+}
+
+/* ライト時の管理・戻る・トグル ボタン */
+body[data-theme="light"] .hero__back,
+body[data-theme="light"] .hero__admin,
+body[data-theme="light"] .hero__theme {
+  background: rgba(255, 255, 255, 0.65);
+  color: var(--color-text-muted);
+  border-color: rgba(26, 20, 16, 0.18);
+}
+body[data-theme="light"] .hero__back:hover,
+body[data-theme="light"] .hero__admin:hover,
+body[data-theme="light"] .hero__theme:hover {
+  color: var(--color-paper);
+  background: rgba(255, 255, 255, 0.85);
+  border-color: rgba(26, 20, 16, 0.45);
+}
+
+/* ライト時のスクロールヒント */
+body[data-theme="light"] .hero__scroll      { color: var(--color-text-muted); }
+body[data-theme="light"] .hero__scroll-line { background: var(--color-text-muted); }
 
   /* === ヒーロー高さ === */
   --hero-h-desktop: 90vh;

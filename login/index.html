@@ -44,14 +44,6 @@
 
     <form class="login__form" id="login-form" autocomplete="on" novalidate>
       <div class="field">
-        <label for="store" class="field__label">店舗</label>
-        <select id="store" class="field__input field__input--select" required>
-          <option value="">店舗を選んでください</option>
-          <option value="asanoha">麻ノ葉 (まのは)</option>
-          <option value="ivory">Innocent Base Ivory</option>
-        </select>
-      </div>
-      <div class="field">
         <label for="email" class="field__label">メールアドレス</label>
         <input id="email" type="email" class="field__input" placeholder="store@example.com" autocomplete="email">
       </div>
@@ -59,6 +51,7 @@
         <label for="password" class="field__label">パスワード</label>
         <input id="password" type="password" class="field__input" placeholder="••••••••" autocomplete="current-password">
       </div>
+      <p class="field-note">メールアドレスに紐づく店舗の管理画面へ自動で移動します。</p>
 
       <div class="form-meta">
         <label class="check-row">
