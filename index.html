@@ -385,6 +385,17 @@ img { display: block; max-width: 100%; height: auto; }
 }
 .store-card__meta-item strong.is-full { color: var(--color-accent); }
 .store-card__meta-item strong.is-low  { color: var(--color-accent-soft); }
+.store-card__heading-tag {
+  display: inline-block;
+  margin-left: 4px;
+  padding: 2px 7px;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  background: rgba(200,16,46,0.12);
+  color: var(--color-accent);
+  border-radius: 4px;
+  font-family: var(--font-num);
+}
 .store-card__cta {
   margin-top: 16px;
   display: flex; align-items: center; gap: 6px;
@@ -1265,6 +1276,35 @@ img { display: block; max-width: 100%; height: auto; }
     await Promise.all(STORES.map(function (s) { return fetchStoreAll(s.id); }));
     refreshAsanoha();
     refreshIvory();
+    refreshHeadingCounts();
+  }
+
+  // 各店舗の「向かい中」人数を取得して、カードに表示
+  async function refreshHeadingCounts() {
+    if (!window.NAKASHINCHI_API) return;
+    await Promise.all(STORES.map(async function (s) {
+      try {
+        var r = await fetch(window.NAKASHINCHI_API + '/api/store/' + s.id + '/arrivals/heading-count', { cache: 'no-cache' });
+        if (!r.ok) return;
+        var data = await r.json();
+        applyHeadingCount(s.id, data.headingCount || 0);
+      } catch (_) {}
+    }));
+  }
+  function applyHeadingCount(storeId, n) {
+    var card = document.querySelector('.store-card[data-store-id="' + storeId + '"]');
+    if (!card) return;
+    var meta = card.querySelector('.store-card__meta');
+    if (!meta) return;
+    // 既存の向かい中アイテムを削除
+    var prev = meta.querySelector('.store-card__heading-item');
+    if (prev) prev.remove();
+    if (n > 0) {
+      var item = document.createElement('div');
+      item.className = 'store-card__meta-item store-card__heading-item';
+      item.innerHTML = '向かい中<strong style="color:var(--color-accent);">' + n + ' 名</strong>';
+      meta.appendChild(item);
+    }
   }
 
   refreshAsanoha();

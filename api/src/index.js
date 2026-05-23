@@ -588,6 +588,23 @@ export default {
         }, 200, cors);
       }
 
+      // GET /api/store/:storeId/arrivals/heading-count  ── 公開: 向かい中の人数
+      //   過去1時間以内に作成 + pending + 到着予定が未来 or 直近1時間以内 のみ
+      const headingMatch = path.match(/^\/api\/store\/([^\/]+)\/arrivals\/heading-count$/);
+      if (headingMatch && request.method === 'GET') {
+        const [, storeId] = headingMatch;
+        const now = new Date();
+        const cutoffPast = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
+        const r = await env.DB.prepare(`
+          SELECT COUNT(*) AS n
+            FROM arrivals
+           WHERE store_id = ?
+             AND status = 'pending'
+             AND created_at >= ?
+        `).bind(storeId, cutoffPast).first();
+        return json({ storeId, headingCount: (r && r.n) || 0 }, 200, cors);
+      }
+
       // GET /api/store/:storeId/arrivals?status=pending|all  ── 店側ダッシュボード
       //   要 store PIN Bearer
       if (arrCreateMatch && request.method === 'GET') {

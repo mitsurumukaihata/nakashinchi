@@ -353,6 +353,106 @@ body {
   cursor: pointer;
 }
 .history-link:hover { color: var(--paper); }
+
+/* ===== 席選択モーダル ===== */
+.seat-modal {
+  position: fixed; inset: 0;
+  z-index: 100;
+  display: none;
+  align-items: center; justify-content: center;
+  padding: 20px;
+}
+.seat-modal[data-open="true"] { display: flex; }
+.seat-modal__backdrop {
+  position: absolute; inset: 0;
+  background: rgba(10,5,3,0.78);
+  backdrop-filter: blur(8px);
+}
+.seat-modal__panel {
+  position: relative;
+  background: #15090d;
+  border: 1px solid var(--paper-faint);
+  border-radius: 14px;
+  padding: 26px 24px 22px;
+  max-width: 460px;
+  width: 100%;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.55);
+}
+.seat-modal__title {
+  font-family: var(--font-brush);
+  font-size: 22px;
+  font-weight: 400;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+.seat-modal__sub {
+  font-size: 11px;
+  color: var(--paper-dim);
+  letter-spacing: 0.1em;
+  margin-bottom: 18px;
+}
+.seat-section {
+  margin-bottom: 14px;
+}
+.seat-section__label {
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--paper-dim);
+  font-family: var(--font-num);
+  margin-bottom: 8px;
+}
+.seat-grid {
+  display: flex; flex-wrap: wrap; gap: 8px;
+}
+.seat-btn {
+  min-width: 56px;
+  padding: 10px 12px;
+  background: rgba(245,239,230,0.05);
+  border: 1px solid var(--paper-faint);
+  border-radius: 8px;
+  color: var(--paper);
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.seat-btn[data-taken="true"] {
+  background: rgba(232,80,96,0.18);
+  border-color: rgba(232,80,96,0.4);
+  color: rgba(245,239,230,0.45);
+  cursor: not-allowed;
+}
+.seat-btn:not([data-taken="true"]):hover {
+  border-color: var(--green);
+  color: var(--green);
+}
+.seat-btn[aria-pressed="true"] {
+  background: var(--green); border-color: var(--green); color: #fff;
+}
+.seat-modal__actions {
+  display: flex; gap: 8px; margin-top: 20px;
+}
+.seat-modal__btn {
+  flex: 1;
+  padding: 12px;
+  border-radius: 999px;
+  border: none;
+  font-family: inherit;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.25em;
+  cursor: pointer;
+}
+.seat-modal__btn--confirm { background: var(--green); color: #fff; }
+.seat-modal__btn--confirm:hover { background: #04a045; }
+.seat-modal__btn--confirm:disabled { opacity: 0.4; }
+.seat-modal__btn--skip {
+  background: transparent; color: var(--paper-soft); border: 1px solid var(--paper-faint);
+}
+.seat-modal__btn--skip:hover { color: var(--paper); border-color: var(--paper); }
+.seat-modal__btn--cancel {
+  background: transparent; color: var(--paper-dim); border: 1px solid var(--paper-faint);
+}
+.seat-modal__btn--cancel:hover { color: var(--paper-soft); }
 </style>
 </head>
 <body>
@@ -395,6 +495,30 @@ body {
   <div id="arr-list"></div>
   <a class="history-link" id="history-link">過去 24h の履歴も表示 →</a>
 </section>
+
+<!-- 席選択モーダル -->
+<div class="seat-modal" id="seat-modal" data-open="false">
+  <div class="seat-modal__backdrop"></div>
+  <div class="seat-modal__panel">
+    <h3 class="seat-modal__title">席を選んで 来店確認</h3>
+    <p class="seat-modal__sub" id="seat-modal-sub">どの席に着いてもらいますか？</p>
+
+    <div class="seat-section">
+      <div class="seat-section__label">B O X &nbsp; ( 5 )</div>
+      <div class="seat-grid" id="seat-box-grid"></div>
+    </div>
+    <div class="seat-section">
+      <div class="seat-section__label">C O U N T E R &nbsp; ( 6 )</div>
+      <div class="seat-grid" id="seat-counter-grid"></div>
+    </div>
+
+    <div class="seat-modal__actions">
+      <button type="button" class="seat-modal__btn seat-modal__btn--cancel" id="seat-cancel-btn">戻る</button>
+      <button type="button" class="seat-modal__btn seat-modal__btn--skip"   id="seat-skip-btn">席を選ばず確認</button>
+      <button type="button" class="seat-modal__btn seat-modal__btn--confirm" id="seat-confirm-btn" disabled>確 定</button>
+    </div>
+  </div>
+</div>
 
 <!-- PIN モーダル -->
 <div id="pin-modal" class="pin-modal" hidden>
@@ -626,6 +750,135 @@ body {
     render(data);
   }
 
+  // ===== 席選択モーダル =====
+  var seatModal = document.getElementById('seat-modal');
+  var seatBoxWrap = document.getElementById('seat-box-grid');
+  var seatCntWrap = document.getElementById('seat-counter-grid');
+  var seatConfirmBtn = document.getElementById('seat-confirm-btn');
+  var seatSkipBtn    = document.getElementById('seat-skip-btn');
+  var seatCancelBtn  = document.getElementById('seat-cancel-btn');
+  var seatModalSub   = document.getElementById('seat-modal-sub');
+
+  var SEATS_CACHE_KEY = 'store-cache:asanoha:seats';
+  var TOTAL_BOX = 5;
+  var TOTAL_COUNTER = 6;
+  var currentArrivalId = null;
+  var selectedSeat = null;
+
+  function readSeats() {
+    try {
+      var c = JSON.parse(localStorage.getItem(SEATS_CACHE_KEY) || 'null');
+      return (c && c.value) || {};
+    } catch (_) { return {}; }
+  }
+  function buildSeatBtn(id, taken) {
+    var b = document.createElement('button');
+    b.type = 'button';
+    b.className = 'seat-btn';
+    b.dataset.seat = id;
+    if (taken) b.setAttribute('data-taken', 'true');
+    b.textContent = id;
+    b.setAttribute('aria-pressed', 'false');
+    b.addEventListener('click', function () {
+      if (taken) return;
+      selectedSeat = id;
+      seatModal.querySelectorAll('.seat-btn').forEach(function (x) {
+        x.setAttribute('aria-pressed', x === b ? 'true' : 'false');
+      });
+      seatConfirmBtn.disabled = false;
+    });
+    return b;
+  }
+
+  async function fetchLatestSeats() {
+    // サーバから最新の seats を取得
+    try {
+      var r = await fetch(API + '/api/store/' + STORE_ID + '/seats', { cache: 'no-cache' });
+      if (!r.ok) return;
+      var data = await r.json();
+      if (data && data.value) {
+        localStorage.setItem(SEATS_CACHE_KEY, JSON.stringify({ value: data.value, updatedAt: data.updatedAt }));
+      }
+    } catch (_) {}
+  }
+
+  async function openSeatModal(arrivalId, customerName) {
+    currentArrivalId = arrivalId;
+    selectedSeat = null;
+    await fetchLatestSeats();
+    var seats = readSeats();
+    seatModalSub.textContent = (customerName || 'お客様') + ' を どの席に着いてもらいますか？';
+    seatBoxWrap.innerHTML = '';
+    seatCntWrap.innerHTML = '';
+    for (var i = 1; i <= TOTAL_BOX; i++) {
+      var sid = 'box-' + i;
+      seatBoxWrap.appendChild(buildSeatBtn(sid, !!seats[sid]));
+    }
+    for (var j = 1; j <= TOTAL_COUNTER; j++) {
+      var sid2 = 'counter-' + j;
+      seatCntWrap.appendChild(buildSeatBtn(sid2, !!seats[sid2]));
+    }
+    seatConfirmBtn.disabled = true;
+    seatModal.setAttribute('data-open', 'true');
+  }
+  function closeSeatModal() {
+    seatModal.setAttribute('data-open', 'false');
+    currentArrivalId = null;
+    selectedSeat = null;
+  }
+
+  async function confirmArrivalWithSeat(seatId) {
+    if (!currentArrivalId) return;
+    var token = window.nakashinchiApi.getToken();
+    if (!token) { token = await ensureAuth(); if (!token) return; }
+
+    seatConfirmBtn.disabled = true;
+    seatSkipBtn.disabled = true;
+    try {
+      // 1) arrival ステータス更新 + seatId 記録
+      var body = { status: 'arrived' };
+      if (seatId) body.seatId = seatId;
+      var r1 = await fetch(API + '/api/store/' + STORE_ID + '/arrivals/' + encodeURIComponent(currentArrivalId), {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+        body: JSON.stringify(body)
+      });
+      if (!r1.ok) throw new Error('arrival_update_failed');
+
+      // 2) seats を更新 (席選択された場合のみ)
+      if (seatId) {
+        await fetchLatestSeats();
+        var seats = readSeats();
+        seats[seatId] = true;
+        var r2 = await fetch(API + '/api/store/' + STORE_ID + '/seats', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token },
+          body: JSON.stringify(seats)
+        });
+        if (r2.ok) {
+          try {
+            var d = await r2.json();
+            localStorage.setItem(SEATS_CACHE_KEY, JSON.stringify({ value: seats, updatedAt: d.updatedAt || new Date().toISOString() }));
+          } catch (_) {}
+        }
+      }
+      closeSeatModal();
+      await refresh(true);
+    } catch (e) {
+      alert('処理に失敗しました: ' + (e && e.message || e));
+    } finally {
+      seatConfirmBtn.disabled = false;
+      seatSkipBtn.disabled = false;
+    }
+  }
+
+  seatConfirmBtn.addEventListener('click', function () { confirmArrivalWithSeat(selectedSeat); });
+  seatSkipBtn.addEventListener('click',   function () { confirmArrivalWithSeat(null); });
+  seatCancelBtn.addEventListener('click', closeSeatModal);
+  seatModal.addEventListener('click', function (e) {
+    if (e.target === seatModal.querySelector('.seat-modal__backdrop')) closeSeatModal();
+  });
+
   // アクション (来店確認/キャンセル)
   listEl.addEventListener('click', async function (e) {
     var btn = e.target.closest('.arr-btn');
@@ -633,6 +886,14 @@ body {
     var id = btn.dataset.id;
     var act = btn.dataset.act;
     if (!id || !act) return;
+
+    // 来店確認は席選択モーダルへ
+    if (act === 'arrived') {
+      var arrCard = btn.closest('.arr');
+      var name = arrCard ? (arrCard.querySelector('.arr__name') || {}).textContent : null;
+      openSeatModal(id, name);
+      return;
+    }
 
     if (act === 'cancelled' && !confirm('この通知をキャンセル扱いにしますか？')) return;
 
