@@ -131,6 +131,10 @@ body::before {
 .cb[data-state="success"] .cb__ring { border-color: rgba(6,199,85,0.35); }
 .cb[data-state="error"]   .cb__ring { border-color: rgba(232,80,96,0.35); }
 
+/* 遷移直前のフェードアウト */
+body { transition: opacity 0.55s ease; }
+body[data-leaving="true"] { opacity: 0; }
+
 /* ─────────── テキスト ─────────── */
 .cb__status {
   font-size: 14px;
@@ -242,9 +246,11 @@ body::before {
     } else {
       statusEl.textContent = 'ようこそ';
     }
-    subEl.textContent = 'P L E A S E &nbsp; W A I T';
+    subEl.innerHTML = 'P L E A S E &nbsp; W A I T';
     subEl.hidden = false;
-    setTimeout(function () { window.location.href = returnTo; }, 900);
+    // 文字をゆっくり読める時間 → フェードアウトしてから遷移
+    setTimeout(function () { document.body.setAttribute('data-leaving', 'true'); }, 1800);
+    setTimeout(function () { window.location.href = returnTo; }, 2400);
   }
 
   // line-auth.js が読み込まれるのを少し待つ
