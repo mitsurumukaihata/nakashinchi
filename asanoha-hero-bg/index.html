@@ -597,12 +597,48 @@
     }
   });
 
-  // 起動時に直近通知を表示 (24h以内 / pending のみ)
-  var existing = getRecent()[STORE_ID];
-  if (existing && existing.status === 'pending'
-      && Date.now() - new Date(existing.createdAt).getTime() < 24 * 3600 * 1000) {
-    showStatus(existing);
+  function refreshLocal() {
+    var existing = getRecent()[STORE_ID];
+    if (existing && existing.status === 'pending'
+        && Date.now() - new Date(existing.createdAt).getTime() < 24 * 3600 * 1000) {
+      showStatus(existing);
+    } else {
+      hideStatus();
+    }
   }
+  refreshLocal();
+
+  async function syncMyArrivalsFromServer() {
+    var auth = window.nakashinchiLineAuth;
+    if (!auth || !auth.isLoggedIn() || !API) return;
+    try {
+      var r = await fetch(API + '/api/customer/arrivals', {
+        headers: { 'Authorization': 'Bearer ' + auth.getToken() },
+        cache: 'no-cache'
+      });
+      if (!r.ok) return;
+      var data = await r.json();
+      var rec = getRecent();
+      var local = rec[STORE_ID];
+      if (!local || !local.id) return;
+      var server = (data.arrivals || []).find(function (x) { return x.id === local.id; });
+      if (server && server.status !== local.status) {
+        rec[STORE_ID].status    = server.status;
+        rec[STORE_ID].updatedAt = server.updatedAt;
+        setRecent(rec);
+        refreshLocal();
+      }
+    } catch (_) {}
+  }
+  // 認証スクリプトの読み込み完了待ち + 定期同期
+  (function waitAuthThenSync() {
+    if (window.nakashinchiLineAuth) { syncMyArrivalsFromServer(); }
+    else setTimeout(waitAuthThenSync, 80);
+  })();
+  setInterval(syncMyArrivalsFromServer, 30 * 1000);
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) syncMyArrivalsFromServer();
+  });
 })();
 </script>
 

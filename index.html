@@ -1664,13 +1664,61 @@ img { display: block; max-width: 100%; height: auto; }
   }
 
   // 起動時に直近通知があれば表示
-  Object.keys(getRecentArrivals()).forEach(function (sid) {
-    var a = getRecentArrivals()[sid];
-    if (!a) return;
-    // 24時間以内のみ
-    if (Date.now() - new Date(a.createdAt).getTime() < 24 * 3600 * 1000) {
-      showEtaStatus(sid, a);
-    }
+  function refreshLocalStatusFromCache() {
+    var rec = getRecentArrivals();
+    document.querySelectorAll('[data-eta-status]').forEach(function (el) {
+      var sid = el.getAttribute('data-eta-status');
+      var a = rec[sid];
+      if (!a) { el.removeAttribute('data-show'); el.innerHTML = ''; return; }
+      if (Date.now() - new Date(a.createdAt).getTime() >= 24 * 3600 * 1000) {
+        el.removeAttribute('data-show'); el.innerHTML = ''; return;
+      }
+      if (a.status === 'pending') {
+        showEtaStatus(sid, a);
+      } else {
+        el.removeAttribute('data-show'); el.innerHTML = '';
+      }
+    });
+  }
+  refreshLocalStatusFromCache();
+
+  // サーバから自分の通知一覧を取得してローカルキャッシュを同期
+  async function syncMyArrivalsFromServer() {
+    var auth = window.nakashinchiLineAuth;
+    if (!auth || !auth.isLoggedIn() || !window.NAKASHINCHI_API) return;
+    try {
+      var r = await fetch(window.NAKASHINCHI_API + '/api/customer/arrivals', {
+        headers: { 'Authorization': 'Bearer ' + auth.getToken() },
+        cache: 'no-cache'
+      });
+      if (!r.ok) return;
+      var data = await r.json();
+      var rec = getRecentArrivals();
+      var changed = false;
+      // ローカルに保持している各店舗の最新ステータスをサーバ値で上書き
+      Object.keys(rec).forEach(function (sid) {
+        var local = rec[sid];
+        if (!local || !local.id) return;
+        var server = (data.arrivals || []).find(function (x) { return x.id === local.id; });
+        if (server && server.status !== local.status) {
+          rec[sid].status    = server.status;
+          rec[sid].updatedAt = server.updatedAt;
+          changed = true;
+        }
+      });
+      if (changed) {
+        setRecentArrivals(rec);
+        refreshLocalStatusFromCache();
+      }
+    } catch (_) {}
+  }
+  // 初回 + 30秒ごと + 可視性変化で同期
+  waitAuth(function () {
+    syncMyArrivalsFromServer();
+  });
+  setInterval(syncMyArrivalsFromServer, 30 * 1000);
+  document.addEventListener('visibilitychange', function () {
+    if (!document.hidden) syncMyArrivalsFromServer();
   });
 
   // ===========================================
