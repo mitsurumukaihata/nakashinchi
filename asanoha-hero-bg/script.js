@@ -138,30 +138,25 @@
       }
     }
 
-    // 空席バッジ — 受付停止・本日終了・定休日 以外は常時表示
+    // 空席バッジ — 営業中のみ表示（時間外/受付停止/本日終了/定休日は非表示）
+    // 例外: 「満席の時もはっきり表示」(showWhenFull) が ON で実際に満席なら時間外でも表示
     if (seatsEl && seatsTxt) {
-      var dow = new Date().getDay();
-      var isClosedDay = (h.closedDays || []).indexOf(dow) !== -1;
-      var allowSeats = d.showSeats
-                    && st.state !== 'stopped'
-                    && st.state !== 'ended'
-                    && !isClosedDay;
-      if (allowSeats) {
+      var showByOpen     = st.open;
+      var showByFullFlag = d.showWhenFull && counts.open === 0
+                        && st.state !== 'stopped' && st.state !== 'ended';
+      var shouldShow = d.showSeats && (showByOpen || showByFullFlag);
+      if (shouldShow) {
         seatsEl.hidden = false;
         if (counts.open === 0) {
           seatsEl.setAttribute('data-state', 'full');
           seatsTxt.textContent = '本日 満席';
         } else {
           seatsEl.removeAttribute('data-state');
-          var label;
           if (d.showSeatsDetail) {
-            label = 'BOX 残' + counts.boxOpen + ' / カウンター 残' + counts.counterOpen;
+            seatsTxt.textContent = 'BOX 残' + counts.boxOpen + ' / カウンター 残' + counts.counterOpen;
           } else {
-            label = '空席 残り ' + counts.open + ' 席';
+            seatsTxt.textContent = '空席 残り ' + counts.open + ' 席';
           }
-          // 営業時間外なら頭に「本日」を付けて時間外であることを示唆
-          if (!st.open) label = '本日 ' + label;
-          seatsTxt.textContent = label;
         }
       } else {
         seatsEl.hidden = true;

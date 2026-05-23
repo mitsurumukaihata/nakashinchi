@@ -630,20 +630,26 @@ img { display: block; max-width: 100%; height: auto; }
     // 営業時間
     hoursEl.textContent = h.open + ' — ' + h.close;
 
-    // 空席数の表示
+    // 空席数の表示（営業中のみ。時間外/受付停止/本日終了/定休日は行ごと非表示）
+    // 例外: showWhenFull ON で 満席なら時間外でも見せる
     if (seatsEl) {
-      var dow = new Date().getDay();
-      var isClosedDay = (h.closedDays || []).indexOf(dow) !== -1;
-      var allowSeats = st.state !== 'stopped' && st.state !== 'ended' && !isClosedDay;
+      var wrap = document.getElementById('card-seats-wrap-asanoha');
+      var showByOpen     = st.open;
+      var showByFullFlag = d.showWhenFull && open === 0
+                        && st.state !== 'stopped' && st.state !== 'ended';
+      var shouldShow = d.showSeats && (showByOpen || showByFullFlag);
       seatsEl.classList.remove('is-full', 'is-low');
-      if (!allowSeats) {
-        seatsEl.textContent = '—';
-      } else if (open === 0) {
-        seatsEl.textContent = '満席';
-        seatsEl.classList.add('is-full');
+      if (shouldShow) {
+        if (wrap) wrap.hidden = false;
+        if (open === 0) {
+          seatsEl.textContent = '満席';
+          seatsEl.classList.add('is-full');
+        } else {
+          seatsEl.textContent = '残り ' + open + ' / ' + TOTAL_SEATS + ' 席';
+          if (open <= 3) seatsEl.classList.add('is-low');
+        }
       } else {
-        seatsEl.textContent = '残り ' + open + ' / ' + TOTAL_SEATS + ' 席';
-        if (open <= 3) seatsEl.classList.add('is-low');
+        if (wrap) wrap.hidden = true;
       }
     }
   }
