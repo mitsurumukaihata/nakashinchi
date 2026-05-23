@@ -935,7 +935,7 @@ img { display: block; max-width: 100%; height: auto; }
 
     function init(originalCards) {
       var SPEED = 32;             // px/sec (見える速度に)
-      var IDLE_RESUME_MS = 3500;
+      var IDLE_RESUME_MS = 1500;  // 触ってないところから 1.5 秒で再開
 
       // クローンしてループ可能にする (offsetWidth + gap で半周分の幅が出る)
       originalCards.forEach(function (card) {
