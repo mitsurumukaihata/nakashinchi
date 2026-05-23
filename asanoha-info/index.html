@@ -399,7 +399,8 @@ body {
 
   function updatePreview() {
     var v = collectValues();
-    document.getElementById('prev-zip').textContent     = v.zip ? '〒' + v.zip : '—';
+    var zipClean = (v.zip || '').replace(/^[〒\s]+/, '').trim();
+    document.getElementById('prev-zip').textContent     = zipClean ? '〒' + zipClean : '—';
     document.getElementById('prev-address').textContent = v.address || '住所未設定';
     document.getElementById('prev-tel').textContent     = v.tel ? 'TEL: ' + v.tel : '電話番号未設定';
     document.getElementById('prev-access').textContent  = v.access || 'アクセス情報未設定';
@@ -415,7 +416,7 @@ body {
 
   function collectValues() {
     return {
-      zip:       fields.zip.value.trim(),
+      zip:       fields.zip.value.replace(/^[〒\s]+/, '').trim(),
       address:   fields.address.value.trim(),
       tel:       fields.tel.value.trim(),
       access:    fields.access.value.trim(),

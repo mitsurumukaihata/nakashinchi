@@ -403,6 +403,7 @@ body[data-theme="dark"] .info-section {
   display: flex; flex-direction: column;
   border-top: 1px solid var(--info-line);
 }
+.info-list, .info-list * { margin: 0; padding: 0; }   /* <dd> のUAデフォルト margin-left:40px を確実に消す */
 .info-row {
   display: grid;
   grid-template-columns: 100px 1fr;
@@ -418,6 +419,7 @@ body[data-theme="dark"] .info-section {
   color: var(--info-text-dim);
   text-transform: uppercase;
   padding-top: 3px;
+  text-align: left;
 }
 .info-row dd {
   font-size: 14px;
@@ -425,6 +427,9 @@ body[data-theme="dark"] .info-section {
   line-height: 2;
   color: var(--info-text);
   white-space: pre-wrap;
+  text-align: left;
+  margin: 0;
+  word-break: break-word;
 }
 .info-row dd a {
   display: inline-block;
@@ -685,7 +690,8 @@ body[data-theme="dark"] .info-section {
       a.textContent = v.about; a.removeAttribute('hidden'); anyShown = true;
     }
     if (v.address || v.zip || v.mapurl) {
-      setText('info-zip',     v.zip ? '〒' + v.zip : '');
+      var zipClean = (v.zip || '').replace(/^[〒\s]+/, '').trim();
+      setText('info-zip',     zipClean ? '〒' + zipClean : '');
       setText('info-address', v.address || '');
       if (v.mapurl) {
         var ml = document.getElementById('info-maplink');
