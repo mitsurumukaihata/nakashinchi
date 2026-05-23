@@ -242,6 +242,13 @@ img { display: block; max-width: 100%; height: auto; }
   object-position: center 40%;
   transition: transform 0.6s cubic-bezier(.2,.7,.2,1);
 }
+.ivory-card-art {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  display: block;
+  transition: transform 0.6s cubic-bezier(.2,.7,.2,1);
+}
+.store-card:hover .ivory-card-art { transform: scale(1.04); }
 .store-card:hover .store-card__media img { transform: scale(1.04); }
 .store-card__media::after {
   content: '';
@@ -508,6 +515,60 @@ img { display: block; max-width: 100%; height: auto; }
       </div>
     </a>
 
+    <!-- Innocent Base Ivory -->
+    <a href="ivory-hero-bg/" class="store-card store-card--ivory">
+      <div class="store-card__media store-card__media--ivory">
+        <span class="store-card__badge" id="card-status-ivory" data-status="loading">
+          <span class="dot"></span>
+          <span class="store-card__badge-text">確認中…</span>
+        </span>
+        <!-- ターゲットモチーフ (画像が無いので SVG で生成) -->
+        <svg class="ivory-card-art" viewBox="0 0 400 280" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <defs>
+            <radialGradient id="ivCardBg" cx="50%" cy="50%" r="60%">
+              <stop offset="0%"  stop-color="#1a1614"/>
+              <stop offset="100%" stop-color="#050505"/>
+            </radialGradient>
+          </defs>
+          <rect width="400" height="280" fill="url(#ivCardBg)"/>
+          <g fill="none" stroke="rgba(212,169,106,0.30)" stroke-width="1">
+            <circle cx="200" cy="140" r="40"/>
+            <circle cx="200" cy="140" r="65"/>
+            <circle cx="200" cy="140" r="90"/>
+            <circle cx="200" cy="140" r="115"/>
+            <circle cx="200" cy="140" r="140"/>
+          </g>
+          <g stroke="rgba(212,169,106,0.18)" stroke-width="0.8">
+            <line x1="200" y1="20"  x2="200" y2="100"/>
+            <line x1="200" y1="180" x2="200" y2="260"/>
+            <line x1="20"  y1="140" x2="100" y2="140"/>
+            <line x1="300" y1="140" x2="380" y2="140"/>
+          </g>
+          <circle cx="200" cy="140" r="2.5" fill="rgba(212,169,106,0.6)"/>
+        </svg>
+      </div>
+      <div class="store-card__body">
+        <p class="store-card__yomi" style="color:#9a7a40">I N N O C E N T &nbsp; B A S E</p>
+        <h3 class="store-card__name" style="font-family:'Bebas Neue',serif">Ivory</h3>
+        <p class="store-card__copy">Bar &amp; Gun Arena. 撃つ夜、注ぐ夜。</p>
+        <div class="store-card__meta">
+          <div class="store-card__meta-item">
+            営業
+            <strong id="card-hours-ivory">21:00 — 05:00</strong>
+          </div>
+          <div class="store-card__meta-item">
+            定休
+            <strong>火曜</strong>
+          </div>
+          <div class="store-card__meta-item" id="card-distance-ivory" hidden>
+            現在地から
+            <strong id="dist-ivory">— km</strong>
+          </div>
+        </div>
+        <div class="store-card__cta">店ページを見る →</div>
+      </div>
+    </a>
+
     <!-- 掲載待ち（次の店舗用プレースホルダー） -->
     <div class="store-card store-card--placeholder">
       <div>
@@ -561,37 +622,45 @@ img { display: block; max-width: 100%; height: auto; }
   var DEFAULT_DISPLAY = { showBadge: true, showSeats: true, showSeatsDetail: false, showWhenFull: false };
   var TOTAL_SEATS = 11;
 
-  // 店舗データ（位置情報・将来増やしていく）
-  var STORES = [
-    { id: 'asanoha', name: '麻ノ葉', lat: 34.3925, lng: 132.4541 }
-  ];
+  // 店舗データ（位置情報・将来増やしていく。config.js の NAKASHINCHI_STORES を優先）
+  var STORES = (window.NAKASHINCHI_STORES || []).map(function (s) {
+    return { id: s.id, name: s.name, lat: s.lat, lng: s.lng };
+  });
+  if (STORES.length === 0) {
+    STORES = [
+      { id: 'asanoha', name: '麻ノ葉', lat: 34.3925, lng: 132.4541 },
+      { id: 'ivory',   name: 'Ivory', lat: 34.39163, lng: 132.46220 }
+    ];
+  }
 
   // ---- 営業判定 ----
   function todayStr() {
     var d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
-  function readCacheOrLegacy(cacheKey, legacyKey, defaults) {
+  function readCacheOrLegacy(storeId, cacheKey, legacyKey, defaults) {
     try {
-      var c = JSON.parse(localStorage.getItem('manoha-cache:' + cacheKey) || 'null');
+      var c = JSON.parse(localStorage.getItem('store-cache:' + storeId + ':' + cacheKey) || 'null');
       if (c && c.value) return Object.assign({}, defaults || {}, c.value);
     } catch (_) {}
-    try {
-      var v = JSON.parse(localStorage.getItem(legacyKey) || 'null');
-      if (v) return Object.assign({}, defaults || {}, v);
-    } catch (_) {}
+    if (storeId === 'asanoha') {
+      try {
+        var v = JSON.parse(localStorage.getItem(legacyKey) || 'null');
+        if (v) return Object.assign({}, defaults || {}, v);
+      } catch (_) {}
+    }
     return Object.assign({}, defaults || {});
   }
-  function readHours() {
-    var m = readCacheOrLegacy('hours', HOURS_KEY, DEFAULT_HOURS);
+  function readHours(storeId, def) {
+    var m = readCacheOrLegacy(storeId, 'hours', storeId === 'asanoha' ? HOURS_KEY : null, def || DEFAULT_HOURS);
     if (m.reception !== 'normal' && m.receptionDate !== todayStr()) m.reception = 'normal';
     return m;
   }
-  function readDisplay() {
-    return readCacheOrLegacy('display', DISPLAY_KEY, DEFAULT_DISPLAY);
+  function readDisplay(storeId) {
+    return readCacheOrLegacy(storeId, 'display', storeId === 'asanoha' ? DISPLAY_KEY : null, DEFAULT_DISPLAY);
   }
-  function readSeats() {
-    return readCacheOrLegacy('seats', SEATS_KEY, {});
+  function readSeats(storeId) {
+    return readCacheOrLegacy(storeId, 'seats', storeId === 'asanoha' ? SEATS_KEY : null, {});
   }
   async function refreshFromApi() {
     if (!window.nakashinchiApi || !window.nakashinchiApi.isOnline()) return;
@@ -618,9 +687,9 @@ img { display: block; max-width: 100%; height: auto; }
   }
 
   function refreshAsanoha() {
-    var h = readHours();
-    var d = readDisplay();
-    var seats = readSeats();
+    var h = readHours('asanoha', DEFAULT_HOURS);
+    var d = readDisplay('asanoha');
+    var seats = readSeats('asanoha');
     var open = TOTAL_SEATS - countTaken(seats);
     var st = isOpenNow(new Date(), h);
 
@@ -669,14 +738,64 @@ img { display: block; max-width: 100%; height: auto; }
     }
   }
 
+  // Ivory カードも同様に
+  var IVORY_DEFAULT_HOURS = { open: '21:00', close: '05:00', crossDay: true, closedDays: [2], reception: 'normal', receptionDate: '' };
+  function refreshIvory() {
+    var h = readHours('ivory', IVORY_DEFAULT_HOURS);
+    var d = readDisplay('ivory');
+    var st = isOpenNow(new Date(), h);
+
+    var badge    = document.getElementById('card-status-ivory');
+    var badgeTxt = badge ? badge.querySelector('.store-card__badge-text') : null;
+    var hoursEl  = document.getElementById('card-hours-ivory');
+    if (!badge || !badgeTxt || !hoursEl) return;
+
+    var label = st.label;
+    var state = st.state;
+    if (!d.showBadge && st.open) {
+      badge.hidden = true;
+    } else {
+      badge.hidden = false;
+      badge.setAttribute('data-status', state);
+      badgeTxt.textContent = label;
+    }
+    hoursEl.textContent = h.open + ' — ' + h.close;
+  }
+
+  // 複数店舗の API フェッチ (raw fetch、api-client は単一店舗用なので)
+  async function fetchStoreAll(storeId) {
+    if (!window.NAKASHINCHI_API) return;
+    try {
+      var r = await fetch(window.NAKASHINCHI_API + '/api/store/' + storeId + '/all', { cache: 'no-cache' });
+      if (!r.ok) return;
+      var json = await r.json();
+      Object.keys(json.data || {}).forEach(function (k) {
+        try {
+          localStorage.setItem('store-cache:' + storeId + ':' + k, JSON.stringify({
+            value: json.data[k].value, updatedAt: json.data[k].updatedAt
+          }));
+        } catch (_) {}
+      });
+    } catch (_) {}
+  }
+  async function refreshFromApiAll() {
+    await Promise.all(STORES.map(function (s) { return fetchStoreAll(s.id); }));
+    refreshAsanoha();
+    refreshIvory();
+  }
+
   refreshAsanoha();
-  refreshFromApi();
-  setInterval(refreshAsanoha, 60 * 1000);
-  setInterval(refreshFromApi, 30 * 1000);
+  refreshIvory();
+  refreshFromApiAll();
+  setInterval(function () { refreshAsanoha(); refreshIvory(); }, 60 * 1000);
+  setInterval(refreshFromApiAll, 30 * 1000);
   window.addEventListener('storage', function (e) {
-    if (e.key === HOURS_KEY || e.key === DISPLAY_KEY || e.key === SEATS_KEY
-        || e.key === 'manoha-cache:hours' || e.key === 'manoha-cache:display' || e.key === 'manoha-cache:seats') {
+    if (!e.key) return;
+    if (e.key.indexOf('store-cache:asanoha:') === 0 || e.key === HOURS_KEY || e.key === DISPLAY_KEY || e.key === SEATS_KEY) {
       refreshAsanoha();
+    }
+    if (e.key.indexOf('store-cache:ivory:') === 0) {
+      refreshIvory();
     }
   });
 

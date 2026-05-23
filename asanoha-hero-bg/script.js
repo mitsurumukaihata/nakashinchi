@@ -6,6 +6,24 @@
 (function () {
   'use strict';
 
+  // ---- 昼/夜 テーマ切替（manoha-theme で admin/edit と同期）----
+  var THEME_KEY = 'manoha-theme';
+  function applyTheme(t) { document.body.setAttribute('data-theme', t === 'light' ? 'light' : 'dark'); }
+  function loadTheme()   { try { return localStorage.getItem(THEME_KEY) || 'dark'; } catch (_) { return 'dark'; } }
+  function saveTheme(t)  { try { localStorage.setItem(THEME_KEY, t); } catch (_) {} }
+  applyTheme(loadTheme());
+  var themeBtn = document.getElementById('theme-toggle');
+  if (themeBtn) {
+    themeBtn.addEventListener('click', function () {
+      var cur = document.body.getAttribute('data-theme') === 'light' ? 'light' : 'dark';
+      var nxt = cur === 'light' ? 'dark' : 'light';
+      applyTheme(nxt); saveTheme(nxt);
+    });
+  }
+  window.addEventListener('storage', function (e) {
+    if (e.key === THEME_KEY) applyTheme(e.newValue || 'dark');
+  });
+
   var NEWS_KEY    = 'manoha-news-v1';
   var HOURS_KEY   = 'manoha-hours-v1';
   var DISPLAY_KEY = 'manoha-display-v1';
@@ -37,7 +55,7 @@
   function refreshNewsLocal() {
     // 旧localStorage (manoha-news-v1) または APIキャッシュ (manoha-cache:news) のどちらでも読める
     try {
-      var c = JSON.parse(localStorage.getItem('manoha-cache:news') || 'null');
+      var c = JSON.parse(localStorage.getItem('store-cache:asanoha:news') || 'null');
       if (c && c.value) { showNews(c.value); return; }
       var legacy = JSON.parse(localStorage.getItem(NEWS_KEY) || 'null');
       if (legacy) { showNews(legacy); return; }
@@ -60,7 +78,7 @@
   }
   function readCacheOrLegacy(cacheKey, legacyKey, defaults) {
     try {
-      var c = JSON.parse(localStorage.getItem('manoha-cache:' + cacheKey) || 'null');
+      var c = JSON.parse(localStorage.getItem('store-cache:asanoha:' + cacheKey) || 'null');
       if (c && c.value) return Object.assign({}, defaults, c.value);
     } catch (_) {}
     try {
@@ -81,7 +99,7 @@
   }
   function readSeats() {
     try {
-      var c = JSON.parse(localStorage.getItem('manoha-cache:seats') || 'null');
+      var c = JSON.parse(localStorage.getItem('store-cache:asanoha:seats') || 'null');
       if (c && c.value) return c.value;
     } catch (_) {}
     try {
@@ -192,9 +210,9 @@
 
   // ---- 同じ端末の別タブ更新を反映 ----
   window.addEventListener('storage', function (e) {
-    if (e.key === NEWS_KEY || e.key === 'manoha-cache:news') refreshNewsLocal();
+    if (e.key === NEWS_KEY || e.key === 'store-cache:asanoha:news') refreshNewsLocal();
     if (e.key === HOURS_KEY || e.key === DISPLAY_KEY || e.key === SEATS_KEY
-        || e.key === 'manoha-cache:hours' || e.key === 'manoha-cache:display' || e.key === 'manoha-cache:seats') {
+        || e.key === 'store-cache:asanoha:hours' || e.key === 'store-cache:asanoha:display' || e.key === 'store-cache:asanoha:seats') {
       refresh();
     }
   });

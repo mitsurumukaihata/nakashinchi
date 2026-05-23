@@ -94,7 +94,7 @@
   function readHours() {
     // 新キャッシュ (API 経由) → 旧 key
     try {
-      var c = JSON.parse(localStorage.getItem('manoha-cache:hours') || 'null');
+      var c = JSON.parse(localStorage.getItem('store-cache:asanoha:hours') || 'null');
       if (c && c.value) {
         var m1 = Object.assign({}, DEFAULT_HOURS, c.value);
         if (m1.reception !== 'normal' && m1.receptionDate !== todayStr()) m1.reception = 'normal';
@@ -148,7 +148,7 @@
   var cardNewsInfo = document.getElementById('card-news-info');
   function readCacheOrLegacy(cacheKey, legacyKey) {
     try {
-      var c = JSON.parse(localStorage.getItem('manoha-cache:' + cacheKey) || 'null');
+      var c = JSON.parse(localStorage.getItem('store-cache:asanoha:' + cacheKey) || 'null');
       if (c && c.value) return c.value;
     } catch (_) {}
     try {
@@ -230,9 +230,9 @@
 
   // 別タブ更新の同期
   window.addEventListener('storage', function (e) {
-    if (e.key === SEATS_STORAGE_KEY || e.key === 'manoha-cache:seats')   refreshSeats();
-    else if (e.key === HOURS_STORAGE_KEY || e.key === 'manoha-cache:hours') { tickTime(); refreshSeats(); }
-    else if (e.key === NEWS_STORAGE_KEY  || e.key === 'manoha-cache:news')  refreshNews();
+    if (e.key === SEATS_STORAGE_KEY || e.key === 'store-cache:asanoha:seats')   refreshSeats();
+    else if (e.key === HOURS_STORAGE_KEY || e.key === 'store-cache:asanoha:hours') { tickTime(); refreshSeats(); }
+    else if (e.key === NEWS_STORAGE_KEY  || e.key === 'store-cache:asanoha:news')  refreshNews();
     else if (e.key === THEME_STORAGE_KEY) applyTheme(e.newValue || 'light');
   });
 })();

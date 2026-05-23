@@ -18,8 +18,30 @@
 
   var API_BASE = (window.NAKASHINCHI_API || '').replace(/\/$/, '');
   var STORE_ID = window.NAKASHINCHI_STORE_ID || 'asanoha';
-  var TOKEN_KEY = 'manoha-auth-token';
-  var CACHE_PREFIX = 'manoha-cache:';
+  var TOKEN_KEY = 'auth-token:' + STORE_ID;       // 店ごとに認証トークンを分ける
+  var CACHE_PREFIX = 'store-cache:' + STORE_ID + ':';
+
+  // 旧形式 (manoha-cache:*, manoha-auth-token) からの自動移行
+  (function migrateLegacy() {
+    if (STORE_ID !== 'asanoha') return;
+    try {
+      // 認証トークン移行
+      var legacyTok = localStorage.getItem('manoha-auth-token');
+      if (legacyTok && !localStorage.getItem(TOKEN_KEY)) {
+        localStorage.setItem(TOKEN_KEY, legacyTok);
+        localStorage.removeItem('manoha-auth-token');
+      }
+      // データキャッシュ移行
+      ['news', 'hours', 'display', 'seats'].forEach(function (k) {
+        var oldKey = 'manoha-cache:' + k;
+        var newKey = CACHE_PREFIX + k;
+        var oldVal = localStorage.getItem(oldKey);
+        if (oldVal && !localStorage.getItem(newKey)) {
+          localStorage.setItem(newKey, oldVal);
+        }
+      });
+    } catch (_) {}
+  })();
 
   function isOnline()    { return API_BASE.length > 0; }
   function getStoreId()  { return STORE_ID; }

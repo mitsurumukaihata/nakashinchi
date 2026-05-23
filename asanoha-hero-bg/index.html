@@ -89,6 +89,26 @@
   <!-- 中新地 飲食店ガイド トップへ戻る（左上） -->
   <a href="../" class="hero__back" title="中新地 飲食店ガイド トップへ">←&nbsp;中新地</a>
 
+  <!-- 昼/夜 テーマ切替（右上） -->
+  <button class="hero__theme" id="theme-toggle" type="button" aria-label="昼夜 テーマ切替">
+    <svg class="theme-toggle__moon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+      <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.5 5.5 0 0 1-7.54-7.54A9.05 9.05 0 0 0 12 3z"/>
+    </svg>
+    <svg class="theme-toggle__sun" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <circle cx="12" cy="12" r="4" fill="currentColor"/>
+      <g stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none">
+        <line x1="12" y1="2"     x2="12"    y2="5"/>
+        <line x1="12" y1="19"    x2="12"    y2="22"/>
+        <line x1="2"  y1="12"    x2="5"     y2="12"/>
+        <line x1="19" y1="12"    x2="22"    y2="12"/>
+        <line x1="4.93"  y1="4.93"  x2="7.05"  y2="7.05"/>
+        <line x1="16.95" y1="16.95" x2="19.07" y2="19.07"/>
+        <line x1="4.93"  y1="19.07" x2="7.05"  y2="16.95"/>
+        <line x1="16.95" y1="7.05"  x2="19.07" y2="4.93"/>
+      </g>
+    </svg>
+  </button>
+
   <!-- 店主向け 管理リンク（控えめに右下） -->
   <a href="../asanoha-admin/" class="hero__admin" title="店主向け管理画面">管理&nbsp;→</a>
 </section>

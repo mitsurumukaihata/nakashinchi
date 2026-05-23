@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="広島・中新地。Bar + Gun Arena。撃つ夜、注ぐ夜。Innocent Base Ivory。">
+<title>Innocent Base Ivory — 広島・中新地</title>
+<meta name="theme-color" content="#0a0a0a">
+
+<!-- PWA -->
+<link rel="manifest"          href="../manifest.webmanifest">
+<link rel="icon"              href="../icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon"  href="../icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable"          content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title"            content="Ivory">
+<meta name="mobile-web-app-capable"                content="yes">
+<script src="../pwa-register.js" defer></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500;600;700&family=Shippori+Mincho+B1:wght@400;500;600&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+<script src="../config.js"></script>
+<script>window.NAKASHINCHI_STORE_ID = 'ivory';</script>
+<script src="../api-client.js" defer></script>
+</head>
+<body>
+
+<section class="hero" aria-label="Innocent Base Ivory">
+
+  <!-- 背景：黒ベース + 微細なターゲットリング + 弾痕パターン -->
+  <div class="hero__bg" aria-hidden="true">
+    <svg class="bg-target" viewBox="0 0 800 800" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <radialGradient id="vignette" cx="50%" cy="50%" r="60%">
+          <stop offset="0%"   stop-color="rgba(0,0,0,0)"/>
+          <stop offset="70%"  stop-color="rgba(0,0,0,0.4)"/>
+          <stop offset="100%" stop-color="rgba(0,0,0,0.85)"/>
+        </radialGradient>
+      </defs>
+      <!-- ターゲットリング (10個、外側へ薄く) -->
+      <g fill="none" stroke="rgba(245,235,213,0.06)" stroke-width="1.2">
+        <circle cx="400" cy="400" r="60"/>
+        <circle cx="400" cy="400" r="110"/>
+        <circle cx="400" cy="400" r="160"/>
+        <circle cx="400" cy="400" r="210"/>
+        <circle cx="400" cy="400" r="260"/>
+        <circle cx="400" cy="400" r="310"/>
+        <circle cx="400" cy="400" r="360"/>
+      </g>
+      <!-- ターゲットの中心 + クロスヘア -->
+      <g stroke="rgba(245,235,213,0.10)" stroke-width="0.8">
+        <line x1="400" y1="50" x2="400" y2="350"/>
+        <line x1="400" y1="450" x2="400" y2="750"/>
+        <line x1="50" y1="400" x2="350" y2="400"/>
+        <line x1="450" y1="400" x2="750" y2="400"/>
+      </g>
+      <circle cx="400" cy="400" r="3" fill="rgba(245,235,213,0.15)"/>
+      <!-- ビネット -->
+      <rect width="800" height="800" fill="url(#vignette)"/>
+    </svg>
+  </div>
+  <div class="hero__overlay" aria-hidden="true"></div>
+
+  <!-- 弾痕パーティクル -->
+  <div class="hero__shots" aria-hidden="true">
+    <span style="--x:12%; --y:18%; --d:0s"></span>
+    <span style="--x:78%; --y:22%; --d:1.2s"></span>
+    <span style="--x:88%; --y:62%; --d:2.4s"></span>
+    <span style="--x:18%; --y:72%; --d:3.6s"></span>
+    <span style="--x:55%; --y:88%; --d:4.8s"></span>
+  </div>
+
+  <div class="hero__content">
+    <div class="hero__top-line">
+      <p class="hero__mark"><span class="hero__mark-line"></span>HIROSHIMA · 中新地 · BAR &amp; GUN ARENA</p>
+      <div class="hero__badges">
+        <div class="hero__status" id="hero-status" data-status="loading" hidden>
+          <span class="hero__status-dot"></span>
+          <span class="hero__status-text">確認中…</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- お知らせバナー -->
+    <div class="hero__news" id="hero-news" hidden>
+      <span class="hero__news-tag">News</span>
+      <span class="hero__news-text" id="hero-news-text"></span>
+    </div>
+
+    <p class="hero__sub-mark">I N N O C E N T &nbsp; B A S E</p>
+    <h1 class="hero__brand">Ivory</h1>
+    <p class="hero__brand-jp">ア&nbsp;イ&nbsp;ボ&nbsp;リ&nbsp;ー</p>
+
+    <p class="hero__copy">撃つ夜、<br class="sp-only">注ぐ夜。</p>
+
+    <p class="hero__sub">
+      Bar & Gun Arena. エアソフトガンと一杯と。<br>
+      流川町、深夜のホットな体験を。
+    </p>
+
+    <div class="hero__actions">
+      <a href="tel:0825674403" class="btn btn--primary">電話で問い合わせ</a>
+      <a href="https://www.instagram.com/ivory0604/" target="_blank" rel="noopener" class="btn btn--ghost">Instagram</a>
+    </div>
+
+    <div class="hero__info">
+      <div class="info-item">
+        <span class="info-item__label">OPEN</span>
+        <span class="info-item__value">21:00 — 05:00</span>
+      </div>
+      <div class="info-item">
+        <span class="info-item__label">CLOSED</span>
+        <span class="info-item__value">火曜</span>
+      </div>
+      <div class="info-item">
+        <span class="info-item__label">ADDR</span>
+        <span class="info-item__value">中区流川町 4-5 東邦ビル1 5F</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- 中新地 トップへ戻る -->
+  <a href="../" class="hero__back" title="中新地 トップへ">←&nbsp;中新地</a>
+
+  <!-- 昼/夜 切替 -->
+  <button class="hero__theme" id="theme-toggle" type="button" aria-label="昼夜 テーマ切替">
+    <svg class="theme-toggle__moon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor" aria-hidden="true">
+      <path d="M12 3a9 9 0 1 0 9 9c0-.46-.04-.92-.1-1.36a5.5 5.5 0 0 1-7.54-7.54A9.05 9.05 0 0 0 12 3z"/>
+    </svg>
+    <svg class="theme-toggle__sun" viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+      <circle cx="12" cy="12" r="4" fill="currentColor"/>
+      <g stroke="currentColor" stroke-width="2" stroke-linecap="round" fill="none">
+        <line x1="12" y1="2" x2="12" y2="5"/>
+        <line x1="12" y1="19" x2="12" y2="22"/>
+        <line x1="2" y1="12" x2="5" y2="12"/>
+        <line x1="19" y1="12" x2="22" y2="12"/>
+        <line x1="4.93" y1="4.93" x2="7.05" y2="7.05"/>
+        <line x1="16.95" y1="16.95" x2="19.07" y2="19.07"/>
+        <line x1="4.93" y1="19.07" x2="7.05" y2="16.95"/>
+        <line x1="16.95" y1="7.05" x2="19.07" y2="4.93"/>
+      </g>
+    </svg>
+  </button>
+
+  <div class="hero__scroll" aria-hidden="true">
+    <span>S C R O L L</span>
+    <span class="hero__scroll-line"></span>
+  </div>
+</section>
+
+<script src="script.js" defer></script>
+</body>
+</html>

@@ -56,7 +56,7 @@
       if (rawH) {
         var dh = JSON.parse(rawH);
         if (dh) {
-          localStorage.setItem('manoha-cache:' + KEY_HOURS, JSON.stringify({ value: dh, updatedAt: dh.updatedAt || new Date().toISOString() }));
+          localStorage.setItem('store-cache:asanoha:' + KEY_HOURS, JSON.stringify({ value: dh, updatedAt: dh.updatedAt || new Date().toISOString() }));
         }
         localStorage.removeItem(LEGACY_HOURS_KEY);
       }
@@ -64,7 +64,7 @@
       if (rawD) {
         var dd = JSON.parse(rawD);
         if (dd) {
-          localStorage.setItem('manoha-cache:' + KEY_DISPLAY, JSON.stringify({ value: dd, updatedAt: dd.updatedAt || new Date().toISOString() }));
+          localStorage.setItem('store-cache:asanoha:' + KEY_DISPLAY, JSON.stringify({ value: dd, updatedAt: dd.updatedAt || new Date().toISOString() }));
         }
         localStorage.removeItem(LEGACY_DISPLAY_KEY);
       }
@@ -192,9 +192,9 @@
       if (dRes && dRes.value) display = Object.assign({}, DEFAULT_DISPLAY, dRes.value);
     } else {
       try {
-        var ch = JSON.parse(localStorage.getItem('manoha-cache:' + KEY_HOURS) || 'null');
+        var ch = JSON.parse(localStorage.getItem('store-cache:asanoha:' + KEY_HOURS) || 'null');
         if (ch && ch.value) hours = Object.assign({}, DEFAULT_HOURS, ch.value);
-        var cd = JSON.parse(localStorage.getItem('manoha-cache:' + KEY_DISPLAY) || 'null');
+        var cd = JSON.parse(localStorage.getItem('store-cache:asanoha:' + KEY_DISPLAY) || 'null');
         if (cd && cd.value) display = Object.assign({}, DEFAULT_DISPLAY, cd.value);
       } catch (_) {}
     }
@@ -211,8 +211,8 @@
     // オフライン (API未設定) なら localStorage キャッシュのみ
     if (!isOnline()) {
       try {
-        localStorage.setItem('manoha-cache:' + KEY_HOURS,   JSON.stringify({ value: hours,   updatedAt: hours.updatedAt }));
-        localStorage.setItem('manoha-cache:' + KEY_DISPLAY, JSON.stringify({ value: display, updatedAt: display.updatedAt }));
+        localStorage.setItem('store-cache:asanoha:' + KEY_HOURS,   JSON.stringify({ value: hours,   updatedAt: hours.updatedAt }));
+        localStorage.setItem('store-cache:asanoha:' + KEY_DISPLAY, JSON.stringify({ value: display, updatedAt: display.updatedAt }));
         showToast('保存しました（この端末のみ）');
       } catch (_) { showToast('保存に失敗しました'); }
       return;
@@ -266,7 +266,7 @@
 
   // 別タブ同期
   window.addEventListener('storage', function (e) {
-    if (e.key === 'manoha-cache:' + KEY_HOURS || e.key === 'manoha-cache:' + KEY_DISPLAY) load();
+    if (e.key === 'store-cache:asanoha:' + KEY_HOURS || e.key === 'store-cache:asanoha:' + KEY_DISPLAY) load();
     else if (e.key === THEME_STORAGE_KEY) applyTheme(e.newValue || 'light');
   });
 

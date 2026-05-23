@@ -13,7 +13,7 @@
   /* === 画像パス（変更しやすいよう変数化） === */
   --hero-img: url('public/images/hero-japanese.jpg');
 
-  /* === 配色（黒・生成り・朱色・深赤） === */
+  /* === 配色 DARK（黒・生成り・朱色・深赤） === */
   --color-bg:          #0a0604;
   --color-ink:         #1a1410;
   --color-paper:       #f5efe6;
@@ -22,6 +22,28 @@
   --color-accent:      #c8102e;  /* 朱色 */
   --color-accent-deep: #8e0e1c;  /* 深赤 */
   --color-accent-soft: #e85060;  /* 薄紅 */
+
+  /* オーバーレイ色（rgba計算用） */
+  --overlay-r: 8;
+  --overlay-g: 4;
+  --overlay-b: 2;
+}
+
+/* === LIGHT 配色（昼） === */
+body[data-theme="light"] {
+  --color-bg:          #f5efe6;
+  --color-ink:         #1a1410;
+  --color-paper:       #1a1410;   /* 反転：テキストカラー */
+  --color-text:        #1a1410;
+  --color-text-muted:  #5a4838;
+  --color-accent:      #c8102e;
+  --color-accent-deep: #8e0e1c;
+  --color-accent-soft: #d8203e;
+
+  --overlay-r: 245;
+  --overlay-g: 239;
+  --overlay-b: 230;
+}
 
   /* === ヒーロー高さ === */
   --hero-h-desktop: 90vh;
@@ -415,6 +437,44 @@ a { color: inherit; text-decoration: none; }
   background: var(--color-text-muted);
   transform-origin: top;
   animation: scrollLine 2.4s 3.6s ease-in-out infinite;
+}
+
+/* 昼/夜 テーマ切替ボタン（右上） */
+.hero__theme {
+  position: absolute;
+  right: 18px;
+  top: calc(18px + env(safe-area-inset-top, 0px));
+  z-index: 6;
+  width: 36px; height: 36px;
+  display: flex; align-items: center; justify-content: center;
+  background: rgba(0, 0, 0, 0.30);
+  color: rgba(245, 239, 230, 0.75);
+  border: 1px solid rgba(245, 239, 230, 0.20);
+  border-radius: 50%;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  cursor: pointer;
+  transition: all 0.25s ease;
+  opacity: 0;
+  animation: fadeUp 1.4s 0.4s ease forwards;
+}
+.hero__theme:hover {
+  color: var(--color-paper);
+  border-color: rgba(245, 239, 230, 0.55);
+  background: rgba(0, 0, 0, 0.45);
+  transform: rotate(15deg);
+}
+.hero__theme:focus-visible {
+  outline: 2px solid var(--color-accent-soft);
+  outline-offset: 2px;
+}
+.hero__theme .theme-toggle__moon { display: block; }
+.hero__theme .theme-toggle__sun  { display: none; }
+body[data-theme="light"] .hero__theme .theme-toggle__moon { display: none; }
+body[data-theme="light"] .hero__theme .theme-toggle__sun  { display: block; }
+@media (max-width: 600px) {
+  .hero__theme { right: 14px; top: calc(14px + env(safe-area-inset-top, 0px)); width: 32px; height: 32px; }
+  .hero__theme svg { width: 14px; height: 14px; }
 }
 
 /* 中新地 トップへ戻るリンク（左上） */

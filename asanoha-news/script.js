@@ -45,7 +45,7 @@
       var data = JSON.parse(raw);
       // 新キャッシュにコピーして旧キーは消す
       if (data && data.message) {
-        localStorage.setItem('manoha-cache:' + KEY, JSON.stringify({
+        localStorage.setItem('store-cache:asanoha:' + KEY, JSON.stringify({
           value: { message: data.message, updatedAt: data.updatedAt || new Date().toISOString() },
           updatedAt: data.updatedAt || new Date().toISOString()
         }));
@@ -102,7 +102,7 @@
     } else {
       // api-client.js が未読込のとき：localStorage キャッシュから直接
       try {
-        var c = JSON.parse(localStorage.getItem('manoha-cache:' + KEY) || 'null');
+        var c = JSON.parse(localStorage.getItem('store-cache:asanoha:' + KEY) || 'null');
         if (c) applyDataToForm(c);
       } catch (_) {}
     }
@@ -120,7 +120,7 @@
     // オフライン（API未設定）→ ローカル保存のみ
     if (!isOnline()) {
       try {
-        localStorage.setItem('manoha-cache:' + KEY, JSON.stringify({
+        localStorage.setItem('store-cache:asanoha:' + KEY, JSON.stringify({
           value: payload, updatedAt: payload.updatedAt
         }));
         lastUpdated.textContent = '最終更新：' + formatDate(payload.updatedAt);

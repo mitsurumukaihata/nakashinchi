@@ -51,7 +51,7 @@
       if (!raw) return;
       var data = JSON.parse(raw);
       if (data && typeof data === 'object') {
-        localStorage.setItem('manoha-cache:' + KEY, JSON.stringify({
+        localStorage.setItem('store-cache:asanoha:' + KEY, JSON.stringify({
           value: data,
           updatedAt: new Date().toISOString()
         }));
@@ -83,7 +83,7 @@
   // ---- 永続化 (debounced) ----
   function persistLocal() {
     try {
-      localStorage.setItem('manoha-cache:' + KEY, JSON.stringify({
+      localStorage.setItem('store-cache:asanoha:' + KEY, JSON.stringify({
         value: captureState(),
         updatedAt: new Date().toISOString()
       }));
@@ -221,7 +221,7 @@
     }
     if (!data) {
       try {
-        var c = JSON.parse(localStorage.getItem('manoha-cache:' + KEY) || 'null');
+        var c = JSON.parse(localStorage.getItem('store-cache:asanoha:' + KEY) || 'null');
         if (c && c.value) data = c.value;
       } catch (_) {}
     }
@@ -233,7 +233,7 @@
 
   // ---- cross-tab sync ----
   window.addEventListener('storage', function (e) {
-    if (e.key === 'manoha-cache:' + KEY) load();
+    if (e.key === 'store-cache:asanoha:' + KEY) load();
     else if (e.key === THEME_STORAGE_KEY) applyTheme(e.newValue || 'light');
   });
 
