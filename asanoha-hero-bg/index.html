@@ -343,11 +343,28 @@
 </section>
 
 <style>
+/* ===== STORE INFO セクション (テーマ追従) ===== */
 .info-section {
-  background: linear-gradient(180deg, #0a0604 0%, #1a0c08 100%);
-  color: #f5efe6;
+  /* ライト (デフォルト) */
+  --info-bg-1: #faf6ee;
+  --info-bg-2: #f0e8d8;
+  --info-text: #1a1410;
+  --info-text-dim: rgba(26,20,16,0.55);
+  --info-text-soft: rgba(26,20,16,0.78);
+  --info-line: rgba(180,160,140,0.32);
+  background: linear-gradient(180deg, var(--info-bg-1) 0%, var(--info-bg-2) 100%);
+  color: var(--info-text);
   padding: clamp(60px, 10vh, 100px) 24px clamp(70px, 12vh, 120px);
   position: relative;
+  transition: background 0.4s, color 0.4s;
+}
+body[data-theme="dark"] .info-section {
+  --info-bg-1: #0a0604;
+  --info-bg-2: #1a0c08;
+  --info-text: #f5efe6;
+  --info-text-dim: rgba(245,239,230,0.5);
+  --info-text-soft: rgba(245,239,230,0.85);
+  --info-line: rgba(245,239,230,0.12);
 }
 .info-section[hidden] { display: none; }
 .info-section__inner { max-width: 720px; margin: 0 auto; }
@@ -355,7 +372,7 @@
   font-family: 'Cormorant Garamond', Georgia, serif;
   font-size: 10px;
   letter-spacing: 0.5em;
-  color: rgba(245,239,230,0.5);
+  color: var(--info-text-dim);
   text-align: center;
   text-indent: 0.5em;
   margin-bottom: 8px;
@@ -370,34 +387,35 @@
   letter-spacing: 0.08em;
   text-align: center;
   margin-bottom: 36px;
+  color: var(--info-text);
 }
 .info-section__about {
   font-size: 14px;
   letter-spacing: 0.1em;
   line-height: 2.2;
   text-align: center;
-  color: rgba(245,239,230,0.85);
+  color: var(--info-text-soft);
   margin: 0 auto 38px;
   max-width: 28em;
   white-space: pre-wrap;
 }
 .info-list {
   display: flex; flex-direction: column;
-  border-top: 1px solid rgba(245,239,230,0.12);
+  border-top: 1px solid var(--info-line);
 }
 .info-row {
   display: grid;
   grid-template-columns: 100px 1fr;
   gap: 18px;
   padding: 18px 4px;
-  border-bottom: 1px solid rgba(245,239,230,0.12);
+  border-bottom: 1px solid var(--info-line);
   align-items: start;
 }
 .info-row dt {
   font-family: 'Cormorant Garamond', Georgia, serif;
   font-size: 11px;
   letter-spacing: 0.35em;
-  color: rgba(245,239,230,0.55);
+  color: var(--info-text-dim);
   text-transform: uppercase;
   padding-top: 3px;
 }
@@ -405,7 +423,7 @@
   font-size: 14px;
   letter-spacing: 0.06em;
   line-height: 2;
-  color: #f5efe6;
+  color: var(--info-text);
   white-space: pre-wrap;
 }
 .info-row dd a {
@@ -418,8 +436,8 @@
   font-size: 12px;
   letter-spacing: 0.15em;
 }
-.info-row dd a:hover { color: #fff; border-color: #fff; }
-.info-row #info-zip { display: inline-block; margin-right: 8px; color: rgba(245,239,230,0.6); }
+.info-row dd a:hover { color: var(--info-text); border-color: var(--info-text); }
+.info-row #info-zip { display: inline-block; margin-right: 8px; color: var(--info-text-dim); }
 @media (max-width: 600px) {
   .info-row { grid-template-columns: 80px 1fr; gap: 12px; }
   .info-row dt { font-size: 10px; letter-spacing: 0.25em; }
