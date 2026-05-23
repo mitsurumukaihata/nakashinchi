@@ -1,18 +1,21 @@
 /* ===========================================
-   麻ノ葉 — 席管理 UI
-   - タップで個別 toggle
-   - ゾーン一括 (BOX / カウンター)
-   - 全体一括 (空 / 着)
+   麻ノ葉 — 席管理 UI (D1 連携版)
+   - タップで個別 toggle (即時 UI 更新 + デバウンス API 保存)
+   - ゾーン一括 / 全体一括
    - 元に戻す (直前 1 回、上部トースト、4秒で自動消滅)
-   - 昼/夜テーマ切替 (localStorage 'manoha-theme' で同期)
-   - localStorage で席状態永続化
+   - 昼/夜テーマ切替 (manoha-theme で同期)
+   - API 連携: nakashinchiApi 経由で D1 へ書込/読取
+     - API 未設定なら localStorage キャッシュのみ（オフラインモード）
+     - 1秒のデバウンスで連打を1回にまとめて送信
    =========================================== */
 (function () {
   'use strict';
 
-  var STORAGE_KEY       = 'manoha-seats-v1';
-  var THEME_STORAGE_KEY = 'manoha-theme';
-  var UNDO_TIMEOUT_MS   = 4000;
+  var KEY                = 'seats';
+  var LEGACY_KEY         = 'manoha-seats-v1';
+  var THEME_STORAGE_KEY  = 'manoha-theme';
+  var UNDO_TIMEOUT_MS    = 4000;
+  var SAVE_DEBOUNCE_MS   = 1000;
 
   var seats        = Array.prototype.slice.call(document.querySelectorAll('.seat'));
   var cntOpen      = document.getElementById('cnt-open');
@@ -26,35 +29,38 @@
 
   var previousState = null;
   var undoTimer     = null;
+  var saveTimer     = null;
 
-  // -------- THEME --------
-  function applyTheme(theme) {
-    document.body.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light');
-  }
-  function loadTheme() {
-    try { return localStorage.getItem(THEME_STORAGE_KEY) || 'light'; }
-    catch (_) { return 'light'; }
-  }
-  function saveTheme(theme) {
-    try { localStorage.setItem(THEME_STORAGE_KEY, theme); }
-    catch (_) {}
-  }
+  function api()      { return window.nakashinchiApi || null; }
+  function isOnline() { return api() && api().isOnline(); }
+
+  // ---- THEME ----
+  function applyTheme(theme) { document.body.setAttribute('data-theme', theme === 'dark' ? 'dark' : 'light'); }
+  function loadTheme() { try { return localStorage.getItem(THEME_STORAGE_KEY) || 'light'; } catch (_) { return 'light'; } }
+  function saveTheme(theme) { try { localStorage.setItem(THEME_STORAGE_KEY, theme); } catch (_) {} }
   themeToggle.addEventListener('click', function () {
     var current = document.body.getAttribute('data-theme') === 'dark' ? 'dark' : 'light';
     var next    = current === 'dark' ? 'light' : 'dark';
-    applyTheme(next);
-    saveTheme(next);
+    applyTheme(next); saveTheme(next);
   });
 
-  // -------- SEATS state I/O --------
-  function readState() {
-    try { return JSON.parse(localStorage.getItem(STORAGE_KEY) || '{}') || {}; }
-    catch (_) { return {}; }
+  // ---- 旧キー (manoha-seats-v1) からの自動移行 ----
+  function migrateLegacy() {
+    try {
+      var raw = localStorage.getItem(LEGACY_KEY);
+      if (!raw) return;
+      var data = JSON.parse(raw);
+      if (data && typeof data === 'object') {
+        localStorage.setItem('manoha-cache:' + KEY, JSON.stringify({
+          value: data,
+          updatedAt: new Date().toISOString()
+        }));
+      }
+      localStorage.removeItem(LEGACY_KEY);
+    } catch (_) {}
   }
-  function writeState(state) {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-    catch (_) {}
-  }
+
+  // ---- state ----
   function captureState() {
     var s = {};
     seats.forEach(function (el) {
@@ -67,17 +73,50 @@
       el.dataset.occupied = state[el.dataset.id] ? 'true' : 'false';
     });
   }
-
-  // -------- counter --------
   function updateCounter() {
     var taken = 0;
     seats.forEach(function (el) { if (el.dataset.occupied === 'true') taken++; });
     cntTaken.textContent = taken;
     cntOpen.textContent  = seats.length - taken;
   }
-  function persist() { writeState(captureState()); }
 
-  // -------- undo --------
+  // ---- 永続化 (debounced) ----
+  function persistLocal() {
+    try {
+      localStorage.setItem('manoha-cache:' + KEY, JSON.stringify({
+        value: captureState(),
+        updatedAt: new Date().toISOString()
+      }));
+    } catch (_) {}
+  }
+
+  function schedulePersistRemote() {
+    if (!isOnline()) return;
+    if (saveTimer) clearTimeout(saveTimer);
+    saveTimer = setTimeout(performRemoteSave, SAVE_DEBOUNCE_MS);
+  }
+
+  async function performRemoteSave() {
+    if (!isOnline()) return;
+    var snapshot = captureState();
+    try {
+      await api().saveKey(KEY, snapshot);
+    } catch (e) {
+      if (e.message === 'AUTH_REQUIRED') {
+        var token = await window.promptPin();
+        if (!token) { /* 認証されない間はローカルのみ */ return; }
+        try { await api().saveKey(KEY, snapshot); }
+        catch (_) { /* それでもダメなら静かに諦め */ }
+      }
+    }
+  }
+
+  function persist() {
+    persistLocal();         // ローカル即時
+    schedulePersistRemote(); // D1 デバウンス送信
+  }
+
+  // ---- undo ----
   function showUndo(message) {
     if (undoTimer) clearTimeout(undoTimer);
     undoText.textContent = message;
@@ -93,7 +132,6 @@
     if (!previousState) return;
     var currentState = captureState();
     applyState(previousState);
-    // 「元に戻す」で各席が空→着 or 着→空 になった方向を判定して個別にフラッシュ
     seats.forEach(function (el) {
       var id = el.dataset.id;
       if (previousState[id] !== currentState[id]) {
@@ -106,7 +144,7 @@
   });
   undoClose.addEventListener('click', hideUndo);
 
-  // -------- flash (方向別: clear/fill) --------
+  // ---- flash ----
   function flashSeat(el, direction) {
     el.classList.remove('is-flash', 'is-flash--clear', 'is-flash--fill');
     void el.offsetWidth;
@@ -121,7 +159,7 @@
     });
   }
 
-  // -------- individual toggle --------
+  // ---- individual toggle ----
   seats.forEach(function (el) {
     el.addEventListener('click', function () {
       var wasOccupied = el.dataset.occupied === 'true';
@@ -132,7 +170,7 @@
     });
   });
 
-  // -------- group / global --------
+  // ---- group / global ----
   function setZone(zone, occupied) {
     previousState = captureState();
     seats.forEach(function (el) {
@@ -164,7 +202,7 @@
     });
   });
 
-  // -------- live clock --------
+  // ---- live clock ----
   function tickTime() {
     var d  = new Date();
     var hh = String(d.getHours()).padStart(2, '0');
@@ -174,18 +212,46 @@
   tickTime();
   setInterval(tickTime, 30 * 1000);
 
-  // -------- cross-tab sync --------
-  window.addEventListener('storage', function (e) {
-    if (e.key === STORAGE_KEY) {
-      applyState(readState());
-      updateCounter();
-    } else if (e.key === THEME_STORAGE_KEY) {
-      applyTheme(e.newValue || 'light');
+  // ---- LOAD (API 優先) ----
+  async function load() {
+    var data = null;
+    if (api()) {
+      var res = await api().fetchKey(KEY);
+      if (res && res.value) data = res.value;
     }
+    if (!data) {
+      try {
+        var c = JSON.parse(localStorage.getItem('manoha-cache:' + KEY) || 'null');
+        if (c && c.value) data = c.value;
+      } catch (_) {}
+    }
+    if (data) {
+      applyState(data);
+      updateCounter();
+    }
+  }
+
+  // ---- cross-tab sync ----
+  window.addEventListener('storage', function (e) {
+    if (e.key === 'manoha-cache:' + KEY) load();
+    else if (e.key === THEME_STORAGE_KEY) applyTheme(e.newValue || 'light');
   });
 
-  // -------- init --------
+  // ---- 定期的に API から再取得 (他の端末で変更された分を取り込む) ----
+  function startPolling() {
+    if (!api()) return;
+    setInterval(async function () {
+      if (saveTimer) return;  // 保存中は取得しない (上書き競合回避)
+      var res = await api().fetchKey(KEY);
+      if (res && res.value) {
+        applyState(res.value);
+        updateCounter();
+      }
+    }, 30 * 1000);
+  }
+
+  // ---- INIT ----
   applyTheme(loadTheme());
-  applyState(readState());
-  updateCounter();
+  migrateLegacy();
+  load().then(function () { startPolling(); });
 })();

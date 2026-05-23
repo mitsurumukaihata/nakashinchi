@@ -92,13 +92,25 @@
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
   function readHours() {
+    // 新キャッシュ (API 経由) → 旧 key
+    try {
+      var c = JSON.parse(localStorage.getItem('manoha-cache:hours') || 'null');
+      if (c && c.value) {
+        var m1 = Object.assign({}, DEFAULT_HOURS, c.value);
+        if (m1.reception !== 'normal' && m1.receptionDate !== todayStr()) m1.reception = 'normal';
+        return m1;
+      }
+    } catch (_) {}
     try {
       var v = JSON.parse(localStorage.getItem(HOURS_STORAGE_KEY) || 'null');
       var m = Object.assign({}, DEFAULT_HOURS, v || {});
-      // 日付変わったら受付状態を通常に戻す
       if (m.reception !== 'normal' && m.receptionDate !== todayStr()) m.reception = 'normal';
       return m;
     } catch (_) { return Object.assign({}, DEFAULT_HOURS); }
+  }
+  async function refreshFromApi() {
+    if (!window.nakashinchiApi || !window.nakashinchiApi.isOnline()) return;
+    try { await window.nakashinchiApi.fetchAll(); } catch (_) {}
   }
   function isOpenNow(d, hours) {
     if (hours.reception === 'closed')  return { open: false, label: '本日終了' };
@@ -134,17 +146,26 @@
 
   // ---------- お知らせ ----------
   var cardNewsInfo = document.getElementById('card-news-info');
+  function readCacheOrLegacy(cacheKey, legacyKey) {
+    try {
+      var c = JSON.parse(localStorage.getItem('manoha-cache:' + cacheKey) || 'null');
+      if (c && c.value) return c.value;
+    } catch (_) {}
+    try {
+      var v = JSON.parse(localStorage.getItem(legacyKey) || 'null');
+      if (v) return v;
+    } catch (_) {}
+    return null;
+  }
   function refreshNews() {
     if (!cardNewsInfo) return;
-    try {
-      var data = JSON.parse(localStorage.getItem(NEWS_STORAGE_KEY) || 'null');
-      if (data && data.message) {
-        var t = data.message;
-        cardNewsInfo.textContent = t.length > 18 ? t.substring(0, 18) + '…' : t;
-      } else {
-        cardNewsInfo.textContent = '未投稿';
-      }
-    } catch (_) { cardNewsInfo.textContent = '未投稿'; }
+    var data = readCacheOrLegacy('news', NEWS_STORAGE_KEY);
+    if (data && data.message) {
+      var t = data.message;
+      cardNewsInfo.textContent = t.length > 18 ? t.substring(0, 18) + '…' : t;
+    } else {
+      cardNewsInfo.textContent = '未投稿';
+    }
   }
 
   // ---------- 席管理の状態を読込 ----------
@@ -152,11 +173,9 @@
   var seatsTaken    = document.getElementById('seats-taken');
   var cardSeatsInfo = document.getElementById('card-seats-info');
   function refreshSeats() {
+    var data = readCacheOrLegacy('seats', SEATS_STORAGE_KEY) || {};
     var taken = 0;
-    try {
-      var data = JSON.parse(localStorage.getItem(SEATS_STORAGE_KEY) || '{}') || {};
-      Object.keys(data).forEach(function (k) { if (data[k]) taken++; });
-    } catch (_) {}
+    Object.keys(data).forEach(function (k) { if (data[k]) taken++; });
     var open = TOTAL_SEATS - taken;
     seatsOpen.textContent  = open;
     seatsTaken.textContent = taken;
@@ -201,14 +220,19 @@
   tickTime();
   refreshSeats();
   refreshNews();
-  setInterval(tickTime,   30 * 1000);
-  setInterval(refreshSeats, 5 * 1000);
+  setInterval(tickTime,    30 * 1000);
+  setInterval(refreshSeats,  5 * 1000);
+  setInterval(refreshNews, 10 * 1000);
+
+  // API から最新を取得 (バックグラウンド)
+  refreshFromApi();
+  setInterval(refreshFromApi, 20 * 1000);
 
   // 別タブ更新の同期
   window.addEventListener('storage', function (e) {
-    if (e.key === SEATS_STORAGE_KEY)      refreshSeats();
-    else if (e.key === HOURS_STORAGE_KEY) tickTime();
-    else if (e.key === NEWS_STORAGE_KEY)  refreshNews();
+    if (e.key === SEATS_STORAGE_KEY || e.key === 'manoha-cache:seats')   refreshSeats();
+    else if (e.key === HOURS_STORAGE_KEY || e.key === 'manoha-cache:hours') { tickTime(); refreshSeats(); }
+    else if (e.key === NEWS_STORAGE_KEY  || e.key === 'manoha-cache:news')  refreshNews();
     else if (e.key === THEME_STORAGE_KEY) applyTheme(e.newValue || 'light');
   });
 })();

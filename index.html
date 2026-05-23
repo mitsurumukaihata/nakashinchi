@@ -16,6 +16,8 @@
 <meta name="apple-mobile-web-app-title"            content="中新地">
 <meta name="mobile-web-app-capable"                content="yes">
 <script src="pwa-register.js" defer></script>
+<script src="config.js"></script>
+<script src="api-client.js" defer></script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;700&family=Yuji+Syuku&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
@@ -569,21 +571,34 @@ img { display: block; max-width: 100%; height: auto; }
     var d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
-  function readHours() {
+  function readCacheOrLegacy(cacheKey, legacyKey, defaults) {
     try {
-      var v = JSON.parse(localStorage.getItem(HOURS_KEY) || 'null');
-      var m = Object.assign({}, DEFAULT_HOURS, v || {});
-      if (m.reception !== 'normal' && m.receptionDate !== todayStr()) m.reception = 'normal';
-      return m;
-    } catch (_) { return Object.assign({}, DEFAULT_HOURS); }
+      var c = JSON.parse(localStorage.getItem('manoha-cache:' + cacheKey) || 'null');
+      if (c && c.value) return Object.assign({}, defaults || {}, c.value);
+    } catch (_) {}
+    try {
+      var v = JSON.parse(localStorage.getItem(legacyKey) || 'null');
+      if (v) return Object.assign({}, defaults || {}, v);
+    } catch (_) {}
+    return Object.assign({}, defaults || {});
+  }
+  function readHours() {
+    var m = readCacheOrLegacy('hours', HOURS_KEY, DEFAULT_HOURS);
+    if (m.reception !== 'normal' && m.receptionDate !== todayStr()) m.reception = 'normal';
+    return m;
   }
   function readDisplay() {
-    try { return Object.assign({}, DEFAULT_DISPLAY, JSON.parse(localStorage.getItem(DISPLAY_KEY) || 'null') || {}); }
-    catch (_) { return Object.assign({}, DEFAULT_DISPLAY); }
+    return readCacheOrLegacy('display', DISPLAY_KEY, DEFAULT_DISPLAY);
   }
   function readSeats() {
-    try { return JSON.parse(localStorage.getItem(SEATS_KEY) || '{}') || {}; }
-    catch (_) { return {}; }
+    return readCacheOrLegacy('seats', SEATS_KEY, {});
+  }
+  async function refreshFromApi() {
+    if (!window.nakashinchiApi || !window.nakashinchiApi.isOnline()) return;
+    try {
+      await window.nakashinchiApi.fetchAll();
+      refreshAsanoha();
+    } catch (_) {}
   }
   function countTaken(seats) {
     var t = 0;
@@ -655,9 +670,14 @@ img { display: block; max-width: 100%; height: auto; }
   }
 
   refreshAsanoha();
+  refreshFromApi();
   setInterval(refreshAsanoha, 60 * 1000);
+  setInterval(refreshFromApi, 30 * 1000);
   window.addEventListener('storage', function (e) {
-    if (e.key === HOURS_KEY || e.key === DISPLAY_KEY || e.key === SEATS_KEY) refreshAsanoha();
+    if (e.key === HOURS_KEY || e.key === DISPLAY_KEY || e.key === SEATS_KEY
+        || e.key === 'manoha-cache:hours' || e.key === 'manoha-cache:display' || e.key === 'manoha-cache:seats') {
+      refreshAsanoha();
+    }
   });
 
   // ===========================================

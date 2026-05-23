@@ -18,7 +18,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;700&family=Yuji+Syuku&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="../pin-modal.css">
 <link rel="stylesheet" href="style.css">
+<script src="../config.js"></script>
+<script src="../api-client.js" defer></script>
+<script src="../pin-modal.js" defer></script>
 </head>
 <body>
 
@@ -146,6 +150,21 @@
     </div>
   </div>
 </footer>
+
+<!-- PIN 入力モーダル -->
+<div class="pin-modal" id="pin-modal" hidden role="dialog" aria-modal="true" aria-labelledby="pin-title">
+  <div class="pin-modal__backdrop" aria-hidden="true"></div>
+  <div class="pin-modal__panel">
+    <h3 class="pin-modal__title" id="pin-title">編集 PIN</h3>
+    <p class="pin-modal__desc">麻ノ葉の席を編集するには PIN が必要です。<br>店主から教わった数字を入力してください。</p>
+    <input type="password" id="pin-input" class="pin-modal__input" maxlength="8" inputmode="numeric" autocomplete="off" placeholder="• • • •">
+    <p class="pin-modal__error" id="pin-error" hidden></p>
+    <div class="pin-modal__actions">
+      <button class="btn btn--ghost"   id="pin-cancel" type="button">キャンセル</button>
+      <button class="btn btn--primary" id="pin-submit" type="button">認証</button>
+    </div>
+  </div>
+</div>
 
 <script src="script.js" defer></script>
 </body>

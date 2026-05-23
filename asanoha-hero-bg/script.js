@@ -53,33 +53,51 @@
     } catch (_) {}
   }
 
-  // ---- データ読込 ----
+  // ---- データ読込 (API キャッシュ優先 → 旧 localStorage フォールバック) ----
   function todayStr() {
     var d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
   }
-  function readHours() {
+  function readCacheOrLegacy(cacheKey, legacyKey, defaults) {
     try {
-      var v = JSON.parse(localStorage.getItem(HOURS_KEY) || 'null');
-      var merged = Object.assign({}, DEFAULT_HOURS, v || {});
-      // 日付が変わったら受付状態を通常に戻す（公開ページ側でも反映）
-      if (merged.reception !== 'normal' && merged.receptionDate !== todayStr()) {
-        merged.reception = 'normal';
-      }
-      return merged;
-    } catch (_) { return Object.assign({}, DEFAULT_HOURS); }
+      var c = JSON.parse(localStorage.getItem('manoha-cache:' + cacheKey) || 'null');
+      if (c && c.value) return Object.assign({}, defaults, c.value);
+    } catch (_) {}
+    try {
+      var v = JSON.parse(localStorage.getItem(legacyKey) || 'null');
+      if (v) return Object.assign({}, defaults, v);
+    } catch (_) {}
+    return Object.assign({}, defaults);
+  }
+  function readHours() {
+    var merged = readCacheOrLegacy('hours', HOURS_KEY, DEFAULT_HOURS);
+    if (merged.reception !== 'normal' && merged.receptionDate !== todayStr()) {
+      merged.reception = 'normal';
+    }
+    return merged;
   }
   function readDisplay() {
-    try {
-      var v = JSON.parse(localStorage.getItem(DISPLAY_KEY) || 'null');
-      return Object.assign({}, DEFAULT_DISPLAY, v || {});
-    } catch (_) { return Object.assign({}, DEFAULT_DISPLAY); }
+    return readCacheOrLegacy('display', DISPLAY_KEY, DEFAULT_DISPLAY);
   }
   function readSeats() {
     try {
+      var c = JSON.parse(localStorage.getItem('manoha-cache:seats') || 'null');
+      if (c && c.value) return c.value;
+    } catch (_) {}
+    try {
       var v = JSON.parse(localStorage.getItem(SEATS_KEY) || 'null');
-      return v || {};
-    } catch (_) { return {}; }
+      if (v) return v;
+    } catch (_) {}
+    return {};
+  }
+  // API から最新を取得しキャッシュ更新 (バックグラウンド)
+  async function refreshFromApi() {
+    if (!window.nakashinchiApi || !window.nakashinchiApi.isOnline()) return;
+    try {
+      var all = await window.nakashinchiApi.fetchAll();
+      // fetchAll はキャッシュも更新する。ここでは fresh data を即反映するだけ
+      refresh();
+    } catch (_) {}
   }
   function countSeats(seats) {
     var total = 0, taken = 0, boxTaken = 0, counterTaken = 0;
@@ -175,13 +193,18 @@
   // ---- 同じ端末の別タブ更新を反映 ----
   window.addEventListener('storage', function (e) {
     if (e.key === NEWS_KEY || e.key === 'manoha-cache:news') refreshNewsLocal();
-    if (e.key === HOURS_KEY || e.key === DISPLAY_KEY || e.key === SEATS_KEY) refresh();
+    if (e.key === HOURS_KEY || e.key === DISPLAY_KEY || e.key === SEATS_KEY
+        || e.key === 'manoha-cache:hours' || e.key === 'manoha-cache:display' || e.key === 'manoha-cache:seats') {
+      refresh();
+    }
   });
 
   // ---- INIT ----
   refreshNewsLocal();              // キャッシュ即時表示
   refreshNewsFromApi();             // 裏で API から最新取得
   refresh();
-  setInterval(refresh, 60 * 1000);  // 1分ごと営業判定更新
-  setInterval(refreshNewsFromApi, 60 * 1000);  // 1分ごとお知らせも再取得
+  refreshFromApi();                 // 裏で API から hours/display/seats も取得
+  setInterval(refresh, 60 * 1000);          // 1分ごと営業判定更新（キャッシュ参照）
+  setInterval(refreshNewsFromApi, 60 * 1000);
+  setInterval(refreshFromApi, 30 * 1000);   // 30秒ごとに API から最新取得
 })();

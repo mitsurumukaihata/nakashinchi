@@ -1,41 +1,42 @@
 /* ===========================================
    麻ノ葉 — 営業時間・定休日・受付状態・表示設定
-   - localStorage 'manoha-hours-v1'   : 営業時間 + 定休日 + 受付状態
-   - localStorage 'manoha-display-v1' : お客様向け表示設定
-   - 公開ページ (asanoha-hero-bg) で同じデータを読んで反映
-   - 「受付停止」「本日終了」は日付が変わると自動で「通常」に戻る
+   - API 連携あり (nakashinchiApi)、未設定ならローカルキャッシュのみで動作
+   - 「保存して公開」で D1 へ書込（PIN 認証）
+   - 日付が変わると受付状態は自動で「通常」に戻る
    =========================================== */
 (function () {
   'use strict';
 
-  var HOURS_KEY         = 'manoha-hours-v1';
-  var DISPLAY_KEY       = 'manoha-display-v1';
+  var KEY_HOURS         = 'hours';
+  var KEY_DISPLAY       = 'display';
   var THEME_STORAGE_KEY = 'manoha-theme';
+  var LEGACY_HOURS_KEY   = 'manoha-hours-v1';
+  var LEGACY_DISPLAY_KEY = 'manoha-display-v1';
   var DEFAULT_HOURS   = { open: '17:00', close: '01:00', crossDay: true, closedDays: [], reception: 'normal', receptionDate: '' };
   var DEFAULT_DISPLAY = { showBadge: true, showSeats: true, showSeatsDetail: false, showWhenFull: false };
   var DOW = ['日', '月', '火', '水', '木', '金', '土'];
 
-  // 営業時間 form
   var openInput     = document.getElementById('open-time');
   var closeInput    = document.getElementById('close-time');
   var crossDay      = document.getElementById('cross-day');
   var dayChecks     = document.querySelectorAll('[data-day]');
   var receptionRads = document.querySelectorAll('input[name="reception"]');
-  // 表示設定 form
   var showBadge       = document.getElementById('show-badge');
   var showSeats       = document.getElementById('show-seats');
   var showSeatsDetail = document.getElementById('show-seats-detail');
   var showWhenFull    = document.getElementById('show-when-full');
-  // プレビュー
   var statusPrev    = document.getElementById('status-preview');
   var statusTxt     = document.getElementById('status-text');
   var statusHours   = document.getElementById('status-hours');
   var statusReason  = document.getElementById('status-reason');
-  // ボタン・トースト
   var saveBtn       = document.getElementById('save-btn');
   var resetBtn      = document.getElementById('reset-btn');
   var toast         = document.getElementById('toast');
   var themeToggle   = document.getElementById('theme-toggle');
+  var noteText      = document.getElementById('note-text');
+
+  function api()      { return window.nakashinchiApi || null; }
+  function isOnline() { return api() && api().isOnline(); }
 
   // ---- THEME ----
   function applyTheme(t) { document.body.setAttribute('data-theme', t === 'dark' ? 'dark' : 'light'); }
@@ -48,7 +49,29 @@
   });
   applyTheme(loadTheme());
 
-  // ---- 受付状態の自動リセット（日付が変わったら通常に戻す） ----
+  // ---- 旧形式 localStorage からの移行 ----
+  function migrateLegacy() {
+    try {
+      var rawH = localStorage.getItem(LEGACY_HOURS_KEY);
+      if (rawH) {
+        var dh = JSON.parse(rawH);
+        if (dh) {
+          localStorage.setItem('manoha-cache:' + KEY_HOURS, JSON.stringify({ value: dh, updatedAt: dh.updatedAt || new Date().toISOString() }));
+        }
+        localStorage.removeItem(LEGACY_HOURS_KEY);
+      }
+      var rawD = localStorage.getItem(LEGACY_DISPLAY_KEY);
+      if (rawD) {
+        var dd = JSON.parse(rawD);
+        if (dd) {
+          localStorage.setItem('manoha-cache:' + KEY_DISPLAY, JSON.stringify({ value: dd, updatedAt: dd.updatedAt || new Date().toISOString() }));
+        }
+        localStorage.removeItem(LEGACY_DISPLAY_KEY);
+      }
+    } catch (_) {}
+  }
+
+  // ---- 受付状態の自動リセット ----
   function todayStr() {
     var d = new Date();
     return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
@@ -61,26 +84,7 @@
     return d;
   }
 
-  // ---- DATA ----
-  function readHours() {
-    try {
-      var v = JSON.parse(localStorage.getItem(HOURS_KEY) || 'null');
-      var merged = Object.assign({}, DEFAULT_HOURS, v || {});
-      return autoResetReception(merged);
-    } catch (_) { return Object.assign({}, DEFAULT_HOURS); }
-  }
-  function writeHours(d) {
-    try { localStorage.setItem(HOURS_KEY, JSON.stringify(d)); } catch (_) {}
-  }
-  function readDisplay() {
-    try {
-      var v = JSON.parse(localStorage.getItem(DISPLAY_KEY) || 'null');
-      return Object.assign({}, DEFAULT_DISPLAY, v || {});
-    } catch (_) { return Object.assign({}, DEFAULT_DISPLAY); }
-  }
-  function writeDisplay(d) {
-    try { localStorage.setItem(DISPLAY_KEY, JSON.stringify(d)); } catch (_) {}
-  }
+  // ---- フォーム読み書き ----
   function readForm() {
     var closed = [];
     for (var i = 0; i < dayChecks.length; i++) {
@@ -161,12 +165,84 @@
     statusReason.textContent = r.reason;
   }
 
-  // ---- TOAST ----
-  function showToast(msg) {
+  function showToast(msg, durMs) {
     toast.textContent = msg;
     toast.hidden = false;
     clearTimeout(showToast._t);
-    showToast._t = setTimeout(function () { toast.hidden = true; }, 2800);
+    showToast._t = setTimeout(function () { toast.hidden = true; }, durMs || 2800);
+  }
+  function updateNoteText() {
+    if (isOnline()) {
+      noteText.innerHTML = '✓ クラウド同期 ON。お客様の端末でも同じ設定が反映されます。';
+      noteText.style.color = 'var(--color-success)';
+    } else {
+      noteText.innerHTML = '※ API 接続先が未設定です。現在は同一端末のみに反映されます。';
+      noteText.style.color = '';
+    }
+  }
+
+  // ---- LOAD ----
+  async function load() {
+    var hours = DEFAULT_HOURS;
+    var display = DEFAULT_DISPLAY;
+    if (api()) {
+      var hRes = await api().fetchKey(KEY_HOURS);
+      var dRes = await api().fetchKey(KEY_DISPLAY);
+      if (hRes && hRes.value) hours = Object.assign({}, DEFAULT_HOURS, hRes.value);
+      if (dRes && dRes.value) display = Object.assign({}, DEFAULT_DISPLAY, dRes.value);
+    } else {
+      try {
+        var ch = JSON.parse(localStorage.getItem('manoha-cache:' + KEY_HOURS) || 'null');
+        if (ch && ch.value) hours = Object.assign({}, DEFAULT_HOURS, ch.value);
+        var cd = JSON.parse(localStorage.getItem('manoha-cache:' + KEY_DISPLAY) || 'null');
+        if (cd && cd.value) display = Object.assign({}, DEFAULT_DISPLAY, cd.value);
+      } catch (_) {}
+    }
+    autoResetReception(hours);
+    writeForms(hours, display);
+    updatePreview();
+  }
+
+  // ---- SAVE ----
+  async function save() {
+    var hours   = readForm();
+    var display = readDisplayForm();
+
+    // オフライン (API未設定) なら localStorage キャッシュのみ
+    if (!isOnline()) {
+      try {
+        localStorage.setItem('manoha-cache:' + KEY_HOURS,   JSON.stringify({ value: hours,   updatedAt: hours.updatedAt }));
+        localStorage.setItem('manoha-cache:' + KEY_DISPLAY, JSON.stringify({ value: display, updatedAt: display.updatedAt }));
+        showToast('保存しました（この端末のみ）');
+      } catch (_) { showToast('保存に失敗しました'); }
+      return;
+    }
+
+    saveBtn.disabled = true;
+    var orig = saveBtn.textContent;
+    saveBtn.textContent = '保存中…';
+
+    async function doSave() {
+      await api().saveKey(KEY_HOURS, hours);
+      await api().saveKey(KEY_DISPLAY, display);
+    }
+
+    try {
+      try { await doSave(); }
+      catch (e1) {
+        if (e1.message === 'AUTH_REQUIRED') {
+          var token = await window.promptPin();
+          if (!token) { showToast('キャンセルしました'); return; }
+          await doSave();
+        } else { throw e1; }
+      }
+      showToast('保存しました。公開ページに反映されます。');
+    } catch (e) {
+      showToast('保存できませんでした（' + (e.message || 'error') + '）', 4500);
+    } finally {
+      saveBtn.disabled = false;
+      saveBtn.textContent = orig;
+    }
   }
 
   // ---- EVENTS ----
@@ -181,37 +257,27 @@
     rd.addEventListener('change', updatePreview);
   });
 
-  saveBtn.addEventListener('click', function () {
-    writeHours(readForm());
-    writeDisplay(readDisplayForm());
-    showToast('設定を保存しました。公開ページに反映されます。');
-  });
+  saveBtn.addEventListener('click', save);
   resetBtn.addEventListener('click', function () {
-    writeForms(Object.assign({}, DEFAULT_HOURS, { receptionDate: '' }), Object.assign({}, DEFAULT_DISPLAY));
+    writeForms(JSON.parse(JSON.stringify(DEFAULT_HOURS)), JSON.parse(JSON.stringify(DEFAULT_DISPLAY)));
     updatePreview();
     showToast('初期値に戻しました（保存はまだ未実行）');
   });
 
-  // ---- INIT ----
-  var initHours = readHours();
-  var initDisplay = readDisplay();
-  // 自動リセットが起きていたら静かに永続化
-  if (initHours.receptionDate !== '' && initHours.receptionDate === todayStr()) {
-    /* keep */
-  } else if (initHours.reception !== 'normal') {
-    writeHours(initHours);  // reset を永続化
-  }
-  writeForms(initHours, initDisplay);
-  updatePreview();
-  setInterval(updatePreview, 60 * 1000);
-
   // 別タブ同期
   window.addEventListener('storage', function (e) {
-    if (e.key === HOURS_KEY || e.key === DISPLAY_KEY) {
-      writeForms(readHours(), readDisplay());
-      updatePreview();
-    } else if (e.key === THEME_STORAGE_KEY) {
-      applyTheme(e.newValue || 'light');
-    }
+    if (e.key === 'manoha-cache:' + KEY_HOURS || e.key === 'manoha-cache:' + KEY_DISPLAY) load();
+    else if (e.key === THEME_STORAGE_KEY) applyTheme(e.newValue || 'light');
   });
+
+  // ---- INIT ----
+  migrateLegacy();
+  updateNoteText();
+  function start() {
+    updateNoteText();
+    load();
+    setInterval(updatePreview, 60 * 1000);
+  }
+  if (api()) start();
+  else setTimeout(start, 100);
 })();
