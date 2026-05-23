@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1a0c08">
+<meta name="description" content="中新地 飲食店ガイド 店舗管理 ログイン">
+<title>店舗管理 ログイン — 中新地 飲食店ガイド</title>
+
+<!-- PWA -->
+<link rel="manifest"          href="../manifest.webmanifest">
+<link rel="icon"              href="../icons/icon-192.png" type="image/png">
+<link rel="apple-touch-icon"  href="../icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable"          content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title"            content="中新地 管理">
+<meta name="mobile-web-app-capable"                content="yes">
+<script src="../pwa-register.js" defer></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;700&family=Yuji+Syuku&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+
+<script src="../config.js"></script>
+</head>
+<body>
+
+<div class="login">
+  <div class="login__inner">
+
+    <a href="../" class="login__back" title="中新地 トップへ戻る">← 中新地</a>
+
+    <header class="login__head">
+      <p class="login__crumb">NAKASHINCHI · 店 舗 管 理</p>
+      <h1 class="login__title">店舗管理 ログイン</h1>
+      <p class="login__lead">登録されたメールアドレスでログインしてください。</p>
+    </header>
+
+    <div class="phase-badge">
+      <span class="phase-badge__dot"></span>
+      試 験 運 用 中
+    </div>
+
+    <form class="login__form" id="login-form" autocomplete="on" novalidate>
+      <div class="field">
+        <label for="store" class="field__label">店舗</label>
+        <select id="store" class="field__input field__input--select" required>
+          <option value="">店舗を選んでください</option>
+          <option value="asanoha">麻ノ葉 (まのは)</option>
+          <option value="ivory">Innocent Base Ivory</option>
+        </select>
+      </div>
+      <div class="field">
+        <label for="email" class="field__label">メールアドレス</label>
+        <input id="email" type="email" class="field__input" placeholder="store@example.com" autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="password" class="field__label">パスワード</label>
+        <input id="password" type="password" class="field__input" placeholder="••••••••" autocomplete="current-password">
+      </div>
+
+      <div class="form-meta">
+        <label class="check-row">
+          <input type="checkbox" id="remember">
+          <span>ログイン状態を保持する</span>
+        </label>
+        <a href="#" class="link-text" id="forgot">パスワードをお忘れですか？</a>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn--primary" id="login-btn">ログイン</button>
+        <button type="button" class="btn btn--skip" id="skip-btn">
+          スキップ <span class="skip-note">(試験段階)</span>
+        </button>
+      </div>
+
+      <p class="form-error" id="form-error" hidden></p>
+    </form>
+
+    <footer class="login__footer">
+      <p class="login__brand">中新地 飲食店ガイド</p>
+      <p class="login__note">© 2026 nakashinchi</p>
+    </footer>
+
+  </div>
+</div>
+
+<div class="toast" id="toast" hidden></div>
+
+<script src="script.js" defer></script>
+</body>
+</html>
