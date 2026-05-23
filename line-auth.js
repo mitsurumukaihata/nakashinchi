@@ -50,9 +50,14 @@
     }
     var state = randomState();
     var ret   = returnTo || (location.pathname + location.search + location.hash);
+    // スマホ (特に iOS Safari + LINEアプリ経由) では sessionStorage が
+    // コンテキスト切替で消えるため localStorage を使う。コールバック側で即削除する。
     try {
-      sessionStorage.setItem(STATE_KEY, state);
-      sessionStorage.setItem(RETURN_KEY, ret);
+      localStorage.setItem(STATE_KEY, state);
+      localStorage.setItem(RETURN_KEY, ret);
+      // 古い sessionStorage 値が残っていたら掃除
+      sessionStorage.removeItem(STATE_KEY);
+      sessionStorage.removeItem(RETURN_KEY);
     } catch (_) {}
     var params = new URLSearchParams({
       response_type: 'code',
