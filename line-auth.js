@@ -65,7 +65,10 @@
       redirect_uri:  LINE_CALLBACK,
       state:         state,
       scope:         'profile openid',
-      nonce:         state
+      nonce:         state,
+      // iOS で LINE アプリが起動して別ブラウザに戻ってくると localStorage が
+      // 引き継げず state mismatch になるため、同一ブラウザ内の Web ログインに固定
+      disable_ios_app_login: 'true'
     });
     window.location.href = 'https://access.line.me/oauth2/v2.1/authorize?' + params.toString();
   }
