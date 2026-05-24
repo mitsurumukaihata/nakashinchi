@@ -889,6 +889,27 @@ img { display: block; max-width: 100%; height: auto; }
   justify-content: center;
   flex-wrap: wrap;
 }
+.favs-filter-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 8px 14px;
+  background: transparent;
+  border: 1px solid rgba(180,160,140,0.4);
+  border-radius: 999px;
+  font-family: inherit;
+  font-size: 11px;
+  letter-spacing: 0.15em;
+  color: var(--color-text-soft);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.favs-filter-btn:hover { color: var(--color-ink); border-color: var(--color-ink); }
+.favs-filter-btn[aria-pressed="true"] {
+  background: var(--color-ink);
+  color: var(--color-paper);
+  border-color: var(--color-ink);
+}
+.favs-filter-btn svg { width: 12px; height: 12px; opacity: 0.6; }
+.favs-filter-btn[aria-pressed="true"] svg { opacity: 1; }
 .favs-section__crumb {
   font-size: 10px;
   letter-spacing: 0.5em;
@@ -907,17 +928,20 @@ img { display: block; max-width: 100%; height: auto; }
   color: var(--color-text-soft);
   letter-spacing: 0.2em;
 }
-.favs-list {
+.favs-list-viewport {
   max-width: 1100px; margin: 0 auto;
-  display: flex; gap: 14px;
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: none;
-  padding: 4px 24px 16px;
-  scroll-snap-type: none;
-  margin-left: -24px; margin-right: -24px;
+  overflow: hidden;
+  padding: 4px 0 16px;
 }
-.favs-list::-webkit-scrollbar { display: none; }
+.favs-list {
+  display: flex; gap: 14px;
+  width: max-content;
+  will-change: transform;
+}
+.favs-list[data-static="true"] {
+  width: 100%;
+  justify-content: center;
+}
 
 /* お気に入りカード (掲載店舗カードのミニ版) */
 .fav-card {
@@ -1039,8 +1063,16 @@ img { display: block; max-width: 100%; height: auto; }
     <span class="favs-section__crumb">F A V O R I T E S</span>
     <h2 class="favs-section__title">お気に入りの店</h2>
     <span class="favs-section__count" id="favs-count">0</span>
+    <button class="favs-filter-btn" id="favs-filter-btn" type="button" aria-pressed="false">
+      <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+        <path d="M5 12l5 5L20 7" stroke="currentColor" stroke-width="2.4" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      </svg>
+      <span id="favs-filter-label">空席のある店だけ</span>
+    </button>
   </div>
-  <div class="favs-list" id="favs-list"></div>
+  <div class="favs-list-viewport">
+    <div class="favs-list" id="favs-list"></div>
+  </div>
 </section>
 
 <!-- ============ STORES ============ -->
@@ -2083,11 +2115,42 @@ img { display: block; max-width: 100%; height: auto; }
     return labels.join(' / ');
   }
 
-  function renderFavsSection(list) {
+  // お気に入り内 空席フィルタ
+  var FAVS_FILTER_KEY = 'landing-favs-filter-available';
+  var favsFilterOn = false;
+  try { favsFilterOn = localStorage.getItem(FAVS_FILTER_KEY) === '1'; } catch (_) {}
+  var favsFilterBtn   = document.getElementById('favs-filter-btn');
+  var favsFilterLabel = document.getElementById('favs-filter-label');
+
+  function applyFavsFilterUI() {
+    if (!favsFilterBtn) return;
+    favsFilterBtn.setAttribute('aria-pressed', favsFilterOn ? 'true' : 'false');
+    favsFilterLabel.textContent = favsFilterOn ? '空席のある店だけ ON' : '空席のある店だけ';
+  }
+  applyFavsFilterUI();
+  if (favsFilterBtn) {
+    favsFilterBtn.addEventListener('click', function () {
+      favsFilterOn = !favsFilterOn;
+      try { localStorage.setItem(FAVS_FILTER_KEY, favsFilterOn ? '1' : '0'); } catch (_) {}
+      applyFavsFilterUI();
+      if (window.nakashinchiFavorites) {
+        renderFavsSection(window.nakashinchiFavorites.list());
+      }
+    });
+  }
+
+  function renderFavsSection(rawList) {
     var section = document.getElementById('favs-section');
     var listEl  = document.getElementById('favs-list');
     var countEl = document.getElementById('favs-count');
     if (!section || !listEl) return;
+
+    // フィルタ適用 (空席フィルタ ON のとき)
+    var list = (rawList || []).filter(function (sid) {
+      if (!favsFilterOn) return true;
+      return storeHasAvailability(sid);
+    });
+
     listEl.innerHTML = '';
     list.forEach(function (sid) {
       var s = STORE_BY_ID[sid];
@@ -2123,60 +2186,63 @@ img { display: block; max-width: 100%; height: auto; }
   }
 
   // ===========================================
-  // お気に入り 自動スライド (掲載店舗カードと同じマルキー方式)
+  // お気に入り 自動スライド (translateX マルキー方式・viewport で overflow:hidden)
   // ===========================================
   var _favsMarqueeCancel = null;
   function initFavsMarquee() {
     var grid = document.getElementById('favs-list');
-    if (!grid) return;
-    // 既存のマルキー停止
+    var viewport = grid && grid.parentElement;
+    if (!grid || !viewport) return;
     if (_favsMarqueeCancel) { _favsMarqueeCancel(); _favsMarqueeCancel = null; }
-    // 既存のクローン削除
     Array.prototype.forEach.call(grid.querySelectorAll('.fav-card--clone'), function (c) { c.remove(); });
+    grid.style.transform = '';
+    grid.removeAttribute('data-static');
 
     var originals = Array.prototype.slice.call(grid.querySelectorAll('.fav-card:not(.fav-card--clone)'));
-    if (originals.length < 2) return;  // 1枚以下なら回さない
-
-    // クローン (半周分作る)
-    originals.forEach(function (card) {
-      var clone = card.cloneNode(true);
-      clone.classList.add('fav-card--clone');
-      clone.setAttribute('aria-hidden', 'true');
-      clone.querySelectorAll('a, button').forEach(function (el) { el.setAttribute('tabindex', '-1'); });
-      grid.appendChild(clone);
-    });
-
-    var halfWidth = 0;
-    function recalcHalf() {
-      var gapPx = parseInt(getComputedStyle(grid).gap) || 0;
-      var w = 0;
-      originals.forEach(function (c) { w += c.offsetWidth + gapPx; });
-      halfWidth = w;
+    if (originals.length < 2) {
+      // 0-1 枚なら静止 + センター
+      grid.setAttribute('data-static', 'true');
+      return;
     }
-    recalcHalf();
 
-    var SPEED = 28;  // px/sec (掲載店舗より少し遅め)
+    function gapPx() { return parseInt(getComputedStyle(grid).gap) || 0; }
+    function measureSetWidth() {
+      var w = 0;
+      originals.forEach(function (c) { w += c.offsetWidth + gapPx(); });
+      return w;  // 末尾の gap は次のセット境界として使うのでそのまま含める
+    }
+
+    var setWidth = measureSetWidth();
+    var viewWidth = viewport.clientWidth;
+
+    // ビューポートに収まる場合、複数セットクローンしてビューを溢れさせる
+    // 最低 1 セット (シームレスループ用) + ビュー充填分
+    var clonesToAdd = Math.max(1, Math.ceil((viewWidth + setWidth) / setWidth));
+    for (var i = 0; i < clonesToAdd; i++) {
+      originals.forEach(function (card) {
+        var clone = card.cloneNode(true);
+        clone.classList.add('fav-card--clone');
+        clone.setAttribute('aria-hidden', 'true');
+        clone.querySelectorAll('a, button').forEach(function (el) { el.setAttribute('tabindex', '-1'); });
+        grid.appendChild(clone);
+      });
+    }
+
+    var SPEED = 26;             // px/sec
     var IDLE_RESUME_MS = 1500;
-    var paused = false, lastT = 0, accum = 0, idleTimer = null;
+    var paused = false, lastT = 0, pos = 0, idleTimer = null;
     var rafId;
 
     function step(now) {
       if (!lastT) lastT = now;
       var dt = now - lastT;
       lastT = now;
-      if (!paused && halfWidth > 4) {
-        accum += SPEED * dt / 1000;
-        if (accum >= 1) {
-          var add = Math.floor(accum);
-          accum -= add;
-          grid.scrollLeft = grid.scrollLeft + add;
-          if (grid.scrollLeft >= halfWidth) {
-            grid.scrollLeft = grid.scrollLeft - halfWidth;
-          }
-        }
-      } else {
-        accum = 0;
-        if (paused) lastT = 0;
+      if (!paused && setWidth > 4) {
+        pos += SPEED * dt / 1000;
+        if (pos >= setWidth) pos -= setWidth;  // 半周境界で巻き戻し (シームレス)
+        grid.style.transform = 'translate3d(' + (-pos) + 'px, 0, 0)';
+      } else if (paused) {
+        lastT = 0;
       }
       rafId = requestAnimationFrame(step);
     }
@@ -2189,23 +2255,27 @@ img { display: block; max-width: 100%; height: auto; }
     }
     function onEnter() { paused = true; }
     function onLeave() { paused = false; lastT = 0; }
-    grid.addEventListener('mouseenter', onEnter);
-    grid.addEventListener('mouseleave', onLeave);
-    grid.addEventListener('touchstart', pauseTemp, { passive: true });
-    grid.addEventListener('wheel',      pauseTemp, { passive: true });
-    grid.addEventListener('pointerdown',pauseTemp, { passive: true });
-    var onResize = function () { recalcHalf(); };
+    viewport.addEventListener('mouseenter', onEnter);
+    viewport.addEventListener('mouseleave', onLeave);
+    viewport.addEventListener('touchstart', pauseTemp, { passive: true });
+    viewport.addEventListener('wheel',      pauseTemp, { passive: true });
+    viewport.addEventListener('pointerdown',pauseTemp, { passive: true });
+    var onResize = function () {
+      setWidth  = measureSetWidth();
+      viewWidth = viewport.clientWidth;
+    };
     window.addEventListener('resize', onResize);
 
     _favsMarqueeCancel = function () {
       cancelAnimationFrame(rafId);
-      grid.removeEventListener('mouseenter', onEnter);
-      grid.removeEventListener('mouseleave', onLeave);
-      grid.removeEventListener('touchstart', pauseTemp);
-      grid.removeEventListener('wheel', pauseTemp);
-      grid.removeEventListener('pointerdown', pauseTemp);
+      viewport.removeEventListener('mouseenter', onEnter);
+      viewport.removeEventListener('mouseleave', onLeave);
+      viewport.removeEventListener('touchstart', pauseTemp);
+      viewport.removeEventListener('wheel', pauseTemp);
+      viewport.removeEventListener('pointerdown', pauseTemp);
       window.removeEventListener('resize', onResize);
       clearTimeout(idleTimer);
+      grid.style.transform = '';
     };
   }
 
