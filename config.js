@@ -20,6 +20,7 @@ window.NAKASHINCHI_LINE_CALLBACK = window.location.origin + '/nakashinchi/auth/l
 window.NAKASHINCHI_BOT_BASIC_ID = '';  // 例: '@123abcde'
 
 // 店舗マスタ（landing 等から参照可能）
+// categories: ['bar', 'lounge', 'standing', 'darts', 'snack', 'izakaya', 'club', 'other'] から複数選択可
 window.NAKASHINCHI_STORES = [
   {
     id:       'asanoha',
@@ -32,6 +33,7 @@ window.NAKASHINCHI_STORES = [
     lat: 34.3925, lng: 132.4541,
     hours:    { open: '17:00', close: '01:00', crossDay: true, closedDays: [] },
     seats:    { box: 5, counter: 6, total: 11 },
+    categories: ['snack', 'bar'],
     heroUrl:  'asanoha-hero-bg/',
     adminUrl: 'asanoha-admin/'
   },
@@ -47,9 +49,23 @@ window.NAKASHINCHI_STORES = [
     lat: 34.39163, lng: 132.46220,
     hours:    { open: '21:00', close: '05:00', crossDay: true, closedDays: [2] },
     seats:    null,  // Gun Arena + Bar (席管理は今後検討)
+    categories: ['bar', 'darts'],   // Bar + Gun Arena
     heroUrl:  'ivory-hero-bg/',
     adminUrl: null   // 管理画面は今後対応
   }
+];
+
+// ジャンル定義 (タブ表示順 + ラベル)
+window.NAKASHINCHI_CATEGORIES = [
+  { id: 'all',      label: '全て',         romaji: 'ALL' },
+  { id: 'bar',      label: 'バー',         romaji: 'BAR' },
+  { id: 'lounge',   label: 'ラウンジ',     romaji: 'LOUNGE' },
+  { id: 'standing', label: 'スタンド',     romaji: 'STANDING' },
+  { id: 'darts',    label: 'ダーツバー',   romaji: 'DARTS' },
+  { id: 'snack',    label: 'スナック',     romaji: 'SNACK' },
+  { id: 'izakaya',  label: '居酒屋',       romaji: 'IZAKAYA' },
+  { id: 'club',     label: 'クラブ',       romaji: 'CLUB' },
+  { id: 'other',    label: 'その他',       romaji: 'OTHER' }
 ];
 
 // STORE_ID の自動判定 (URL パスから)
