@@ -909,18 +909,86 @@ img { display: block; max-width: 100%; height: auto; }
 }
 .favs-list {
   max-width: 1100px; margin: 0 auto;
-  display: flex; gap: 12px;
+  display: flex; gap: 14px;
   overflow-x: auto;
   -webkit-overflow-scrolling: touch;
   scrollbar-width: none;
   padding: 4px 24px 16px;
-  scroll-snap-type: x proximity;
+  scroll-snap-type: none;
   margin-left: -24px; margin-right: -24px;
 }
 .favs-list::-webkit-scrollbar { display: none; }
-.favs-list__item {
-  flex-shrink: 0;
-  scroll-snap-align: start;
+
+/* お気に入りカード (掲載店舗カードのミニ版) */
+.fav-card {
+  flex: 0 0 240px;
+  background: #fff;
+  border: 1px solid rgba(180,160,140,0.25);
+  border-radius: 6px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  display: flex; flex-direction: column;
+  transition: transform 0.3s cubic-bezier(.2,.7,.2,1), box-shadow 0.3s, border-color 0.3s;
+}
+.fav-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 36px rgba(0,0,0,0.10);
+  border-color: var(--color-ink);
+}
+.fav-card__media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: #1a0c08;
+  overflow: hidden;
+}
+.fav-card__media img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center 40%;
+  transition: transform 0.6s cubic-bezier(.2,.7,.2,1);
+}
+.fav-card:hover .fav-card__media img { transform: scale(1.04); }
+.fav-card__media::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.4) 100%);
+}
+.fav-card__heart {
+  position: absolute; top: 10px; right: 10px;
+  font-size: 14px; color: var(--color-accent);
+  background: rgba(255,255,255,0.95);
+  width: 28px; height: 28px;
+  border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  z-index: 2;
+}
+.fav-card__body { padding: 14px 14px 16px; }
+.fav-card__yomi {
+  font-family: var(--font-num);
+  font-size: 9px;
+  letter-spacing: 0.32em;
+  color: var(--color-text-soft);
+  margin-bottom: 2px;
+}
+.fav-card__name {
+  font-family: var(--font-brush);
+  font-weight: 400;
+  font-size: 26px;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+  color: var(--color-ink);
+  margin-bottom: 6px;
+}
+.fav-card__name .ja-accent { color: var(--color-accent); }
+.fav-card__sub {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--color-text-soft);
+}
+@media (max-width: 600px) {
+  .fav-card { flex: 0 0 200px; }
+  .fav-card__name { font-size: 22px; }
 }
 .favs-list__item {
   display: inline-flex; align-items: center; gap: 10px;
@@ -1994,6 +2062,27 @@ img { display: block; max-width: 100%; height: auto; }
     renderFavsSection(list);
   }
 
+  // 各店舗カードの画像URLを取得 (掲載店舗グリッドから流用)
+  function findStoreImageUrl(storeId) {
+    var card = document.querySelector('.store-card[data-store-id="' + storeId + '"] .store-card__media img');
+    if (card && card.src) return card.src;
+    // フォールバック
+    if (storeId === 'asanoha') return 'asanoha-hero-bg/public/images/hero-japanese.jpg';
+    if (storeId === 'ivory')   return 'ivory-hero-bg/public/images/hero-ivory.jpg';
+    return '';
+  }
+  // 店舗の主要ジャンル名 (タブ定義から)
+  function findStoreGenreLabel(storeId) {
+    var s = STORE_BY_ID[storeId];
+    if (!s || !s.categories || !s.categories.length) return '';
+    var defs = window.NAKASHINCHI_CATEGORIES || [];
+    var labels = s.categories.map(function (c) {
+      var d = defs.find(function (x) { return x.id === c; });
+      return d ? d.label : c;
+    });
+    return labels.join(' / ');
+  }
+
   function renderFavsSection(list) {
     var section = document.getElementById('favs-section');
     var listEl  = document.getElementById('favs-list');
@@ -2004,16 +2093,120 @@ img { display: block; max-width: 100%; height: auto; }
       var s = STORE_BY_ID[sid];
       if (!s) return;
       var a = document.createElement('a');
-      a.className = 'favs-list__item';
+      a.className = 'fav-card';
       a.href = s.heroUrl || ('#' + sid);
+      a.dataset.favCardFor = sid;
+
+      var name = s.name || sid;
+      // 既存掲載カードの名前装飾 (ja-accent) と揃える
+      if (sid === 'asanoha') name = '麻<span class="ja-accent">ノ</span>葉';
+      var romaji = s.romaji || '';
+      var img = findStoreImageUrl(sid);
+      var genre = findStoreGenreLabel(sid);
+
       a.innerHTML =
-        '<span class="favs-list__item__heart">♥</span>' +
-        '<span>' + (s.name || sid) + '</span>' +
-        '<span class="favs-list__item__yomi">' + (s.romaji || '') + '</span>';
+        '<div class="fav-card__media">' +
+          '<span class="fav-card__heart">♥</span>' +
+          (img ? '<img src="' + img + '" alt="">' : '') +
+        '</div>' +
+        '<div class="fav-card__body">' +
+          '<div class="fav-card__yomi">' + romaji + '</div>' +
+          '<div class="fav-card__name">' + name + '</div>' +
+          (genre ? '<div class="fav-card__sub">' + genre + '</div>' : '') +
+        '</div>';
       listEl.appendChild(a);
     });
     if (countEl) countEl.textContent = String(list.length);
     section.setAttribute('data-has-items', list.length > 0 ? 'true' : 'false');
+    // 描画後にマルキー再構築
+    initFavsMarquee();
+  }
+
+  // ===========================================
+  // お気に入り 自動スライド (掲載店舗カードと同じマルキー方式)
+  // ===========================================
+  var _favsMarqueeCancel = null;
+  function initFavsMarquee() {
+    var grid = document.getElementById('favs-list');
+    if (!grid) return;
+    // 既存のマルキー停止
+    if (_favsMarqueeCancel) { _favsMarqueeCancel(); _favsMarqueeCancel = null; }
+    // 既存のクローン削除
+    Array.prototype.forEach.call(grid.querySelectorAll('.fav-card--clone'), function (c) { c.remove(); });
+
+    var originals = Array.prototype.slice.call(grid.querySelectorAll('.fav-card:not(.fav-card--clone)'));
+    if (originals.length < 2) return;  // 1枚以下なら回さない
+
+    // クローン (半周分作る)
+    originals.forEach(function (card) {
+      var clone = card.cloneNode(true);
+      clone.classList.add('fav-card--clone');
+      clone.setAttribute('aria-hidden', 'true');
+      clone.querySelectorAll('a, button').forEach(function (el) { el.setAttribute('tabindex', '-1'); });
+      grid.appendChild(clone);
+    });
+
+    var halfWidth = 0;
+    function recalcHalf() {
+      var gapPx = parseInt(getComputedStyle(grid).gap) || 0;
+      var w = 0;
+      originals.forEach(function (c) { w += c.offsetWidth + gapPx; });
+      halfWidth = w;
+    }
+    recalcHalf();
+
+    var SPEED = 28;  // px/sec (掲載店舗より少し遅め)
+    var IDLE_RESUME_MS = 1500;
+    var paused = false, lastT = 0, accum = 0, idleTimer = null;
+    var rafId;
+
+    function step(now) {
+      if (!lastT) lastT = now;
+      var dt = now - lastT;
+      lastT = now;
+      if (!paused && halfWidth > 4) {
+        accum += SPEED * dt / 1000;
+        if (accum >= 1) {
+          var add = Math.floor(accum);
+          accum -= add;
+          grid.scrollLeft = grid.scrollLeft + add;
+          if (grid.scrollLeft >= halfWidth) {
+            grid.scrollLeft = grid.scrollLeft - halfWidth;
+          }
+        }
+      } else {
+        accum = 0;
+        if (paused) lastT = 0;
+      }
+      rafId = requestAnimationFrame(step);
+    }
+    rafId = requestAnimationFrame(step);
+
+    function pauseTemp() {
+      paused = true;
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(function () { paused = false; lastT = 0; }, IDLE_RESUME_MS);
+    }
+    function onEnter() { paused = true; }
+    function onLeave() { paused = false; lastT = 0; }
+    grid.addEventListener('mouseenter', onEnter);
+    grid.addEventListener('mouseleave', onLeave);
+    grid.addEventListener('touchstart', pauseTemp, { passive: true });
+    grid.addEventListener('wheel',      pauseTemp, { passive: true });
+    grid.addEventListener('pointerdown',pauseTemp, { passive: true });
+    var onResize = function () { recalcHalf(); };
+    window.addEventListener('resize', onResize);
+
+    _favsMarqueeCancel = function () {
+      cancelAnimationFrame(rafId);
+      grid.removeEventListener('mouseenter', onEnter);
+      grid.removeEventListener('mouseleave', onLeave);
+      grid.removeEventListener('touchstart', pauseTemp);
+      grid.removeEventListener('wheel', pauseTemp);
+      grid.removeEventListener('pointerdown', pauseTemp);
+      window.removeEventListener('resize', onResize);
+      clearTimeout(idleTimer);
+    };
   }
 
   document.addEventListener('click', function (e) {
