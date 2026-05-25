@@ -1604,6 +1604,35 @@ img { display: block; max-width: 100%; height: auto; }
     refreshAsanoha();
     refreshIvory();
     refreshHeadingCounts();
+    // 各店舗の info.categories を反映してジャンル棚を再構築
+    applyDynamicCategories();
+  }
+
+  // localStorage キャッシュから info.categories を読んで STORE_BY_ID を上書き
+  function applyDynamicCategories() {
+    var changed = false;
+    (window.NAKASHINCHI_STORES || []).forEach(function (s) {
+      try {
+        var c = JSON.parse(localStorage.getItem('store-cache:' + s.id + ':info') || 'null');
+        if (c && c.value && Array.isArray(c.value.categories) && c.value.categories.length > 0) {
+          var same = s.categories && s.categories.length === c.value.categories.length
+            && s.categories.every(function (x, i) { return x === c.value.categories[i]; });
+          if (!same) {
+            s.categories = c.value.categories.slice();
+            if (STORE_BY_ID[s.id]) STORE_BY_ID[s.id].categories = s.categories.slice();
+            changed = true;
+          }
+        }
+      } catch (_) {}
+    });
+    if (changed) {
+      renderGenreTabs();
+      renderGenreRows();
+      applyFilter();
+      // refresh は再描画後にもう一度バッジを当てる
+      refreshAsanoha();
+      refreshIvory();
+    }
   }
 
   // 各店舗の「向かい中」人数を取得して、カードに表示

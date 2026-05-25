@@ -214,6 +214,33 @@ body {
 }
 .toast[data-show="true"] { opacity: 1; }
 
+.cat-grid {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  margin-top: 4px;
+}
+.cat-chip {
+  padding: 9px 14px;
+  background: transparent;
+  border: 1px solid var(--paper-faint);
+  border-radius: 999px;
+  color: var(--paper-soft);
+  font-family: inherit;
+  font-size: 12px;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.cat-chip:hover { color: var(--paper); border-color: var(--paper); }
+.cat-chip[aria-pressed="true"] {
+  background: var(--paper);
+  color: #1a1410;
+  border-color: var(--paper);
+}
+body[data-theme="light"] .cat-chip[aria-pressed="true"] {
+  background: var(--paper);
+  color: #faf6ee;
+}
+
 .preview {
   background: var(--preview-bg);
   border: 1px dashed var(--paper-faint);
@@ -300,6 +327,15 @@ body {
   </div>
 
   <div class="card">
+    <div class="card__title">C A T E G O R I E S</div>
+    <div class="field">
+      <div class="field__label">ジ ャ ン ル ( 複 数 選 択 可 )</div>
+      <div class="cat-grid" id="cat-grid"></div>
+      <div class="field__hint">トップページの「ジャンル別棚」に反映されます。複数所属可 (Bar + ダーツバー など)。</div>
+    </div>
+  </div>
+
+  <div class="card">
     <div class="card__title">A B O U T &nbsp; ( 任 意 )</div>
     <label class="field">
       <div class="field__label">お 店 紹 介 ( 1 〜 3 文 )</div>
@@ -362,6 +398,33 @@ body {
     about:     document.getElementById('f-about'),
     notes:     document.getElementById('f-notes')
   };
+  var catGridEl = document.getElementById('cat-grid');
+  var selectedCategories = [];  // 配列で保持
+
+  // ジャンル候補 (all を除く)
+  var CATEGORIES = (window.NAKASHINCHI_CATEGORIES || []).filter(function (c) { return c.id !== 'all'; });
+
+  function renderCatGrid() {
+    if (!catGridEl) return;
+    catGridEl.innerHTML = '';
+    CATEGORIES.forEach(function (c) {
+      var b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'cat-chip';
+      b.dataset.cat = c.id;
+      var on = selectedCategories.indexOf(c.id) !== -1;
+      b.setAttribute('aria-pressed', on ? 'true' : 'false');
+      b.textContent = c.label;
+      b.addEventListener('click', function () {
+        var idx = selectedCategories.indexOf(c.id);
+        if (idx >= 0) selectedCategories.splice(idx, 1);
+        else selectedCategories.push(c.id);
+        b.setAttribute('aria-pressed', selectedCategories.indexOf(c.id) !== -1 ? 'true' : 'false');
+      });
+      catGridEl.appendChild(b);
+    });
+  }
+  renderCatGrid();
   var btnSave   = document.getElementById('btn-save');
   var btnReload = document.getElementById('btn-reload');
   var toast     = document.getElementById('toast');
@@ -424,7 +487,8 @@ body {
       instagram: fields.instagram.value.trim().replace(/^@/, ''),
       website:   fields.website.value.trim(),
       about:     fields.about.value.trim(),
-      notes:     fields.notes.value.trim()
+      notes:     fields.notes.value.trim(),
+      categories: selectedCategories.slice()
     };
   }
   function applyValues(v) {
@@ -432,6 +496,15 @@ body {
     Object.keys(fields).forEach(function (k) {
       if (fields[k]) fields[k].value = v[k] || '';
     });
+    // categories
+    if (Array.isArray(v.categories)) {
+      selectedCategories = v.categories.slice();
+    } else {
+      // 未設定なら config.js のデフォルトを使う
+      var s = (window.NAKASHINCHI_STORES || []).find(function (x) { return x.id === STORE_ID; });
+      selectedCategories = (s && s.categories) ? s.categories.slice() : [];
+    }
+    renderCatGrid();
     updatePreview();
   }
 
