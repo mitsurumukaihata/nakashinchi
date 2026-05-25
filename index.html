@@ -1798,6 +1798,11 @@ img { display: block; max-width: 100%; height: auto; }
           '<span class="dot"></span>' +
           '<span class="genre-card__badge-text">確認中…</span>' +
         '</span>' +
+        '<button class="fav-btn" type="button" data-fav-for="' + s.id + '" aria-label="お気に入り" aria-pressed="false">' +
+          '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+            '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>' +
+          '</svg>' +
+        '</button>' +
         (s.imageUrl ? '<img src="' + s.imageUrl + '" alt="' + s.name + '">' : '') +
       '</div>' +
       '<div class="genre-card__body">' +
@@ -1845,6 +1850,18 @@ img { display: block; max-width: 100%; height: auto; }
       // マルキー初期化
       initRowMarquee(g.id, row.querySelector('.genre-row__viewport'), listEl);
     });
+    // レンダー後にお気に入り状態を再同期
+    if (window.nakashinchiFavorites && typeof window.nakashinchiFavorites.list === 'function') {
+      try {
+        var favList = window.nakashinchiFavorites.list();
+        document.querySelectorAll('.fav-btn[data-fav-for]').forEach(function (btn) {
+          var sid = btn.getAttribute('data-fav-for');
+          var on = favList.indexOf(sid) !== -1;
+          btn.setAttribute('data-active', on ? 'true' : 'false');
+          btn.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+      } catch (_) {}
+    }
   }
 
   // 棚ごとのマルキー (translate3d 方式)
