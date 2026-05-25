@@ -781,6 +781,156 @@ img { display: block; max-width: 100%; height: auto; }
   text-decoration: underline;
 }
 
+/* ============ ジャンル別 棚 (Netflix風) ============ */
+.genre-rows {
+  display: flex; flex-direction: column;
+  gap: 44px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.genre-row {
+  scroll-margin-top: 100px;
+}
+.genre-row__head {
+  display: flex; align-items: baseline; gap: 14px;
+  margin-bottom: 14px;
+  padding: 0 24px;
+  flex-wrap: wrap;
+}
+.genre-row__crumb {
+  font-family: var(--font-num);
+  font-size: 10px;
+  letter-spacing: 0.4em;
+  color: var(--color-accent);
+  text-indent: 0.4em;
+}
+.genre-row__title {
+  font-family: var(--font-brush);
+  font-weight: 400;
+  font-size: 22px;
+  letter-spacing: 0.06em;
+  color: var(--color-ink);
+  margin: 0;
+}
+.genre-row__count {
+  font-family: var(--font-num);
+  font-size: 11px;
+  color: var(--color-text-soft);
+  letter-spacing: 0.2em;
+}
+.genre-row__viewport {
+  overflow: hidden;
+  padding: 4px 24px 12px;
+}
+.genre-row__list {
+  display: flex;
+  gap: 16px;
+  width: max-content;
+  will-change: transform;
+}
+.genre-row__list[data-static="true"] {
+  width: 100%;
+  justify-content: center;
+}
+
+.genre-card {
+  flex: 0 0 280px;
+  background: #fff;
+  border: 1px solid rgba(180,160,140,0.25);
+  border-radius: 6px;
+  overflow: hidden;
+  text-decoration: none;
+  color: inherit;
+  display: flex; flex-direction: column;
+  transition: transform 0.3s cubic-bezier(.2,.7,.2,1), box-shadow 0.3s, border-color 0.3s;
+}
+.genre-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 18px 36px rgba(0,0,0,0.10);
+  border-color: var(--color-ink);
+}
+.genre-card[data-hidden="true"] { display: none; }
+.genre-card__media {
+  position: relative;
+  aspect-ratio: 16 / 10;
+  background: #1a0c08;
+  overflow: hidden;
+}
+.genre-card__media img {
+  position: absolute; inset: 0;
+  width: 100%; height: 100%;
+  object-fit: cover; object-position: center 40%;
+  transition: transform 0.6s cubic-bezier(.2,.7,.2,1);
+}
+.genre-card:hover .genre-card__media img { transform: scale(1.04); }
+.genre-card__media::after {
+  content: '';
+  position: absolute; inset: 0;
+  background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.4) 100%);
+  pointer-events: none;
+}
+.genre-card__badge {
+  position: absolute;
+  top: 12px; left: 12px;
+  z-index: 2;
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 10px;
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  background: rgba(0,0,0,0.55);
+  color: rgba(245,239,230,0.95);
+  border: 1px solid rgba(245,239,230,0.25);
+  backdrop-filter: blur(6px);
+  border-radius: 999px;
+}
+.genre-card__badge[data-status="open"]    { color: #d8f4dc; border-color: rgba(74,222,128,0.5); }
+.genre-card__badge[data-status="open"]    .dot { background: var(--color-success); box-shadow: 0 0 8px rgba(90,208,110,0.7); }
+.genre-card__badge[data-status="closed"]  .dot { background: rgba(245,239,230,0.45); }
+.genre-card__badge[data-status="stopped"] { color: #ffd8a8; border-color: rgba(232,148,80,0.5); }
+.genre-card__badge[data-status="stopped"] .dot { background: #f08c40; box-shadow: 0 0 8px rgba(240,140,64,0.6); }
+.genre-card__badge[data-status="ended"]   { color: rgba(245,239,230,0.65); }
+.genre-card__badge[data-status="ended"]   .dot { background: rgba(245,239,230,0.55); }
+.genre-card__badge[data-status="full"]    { color: #ffb8c0; border-color: rgba(232,80,96,0.6); }
+.genre-card__badge[data-status="full"]    .dot { background: var(--color-accent); box-shadow: 0 0 8px rgba(200,16,46,0.6); }
+.genre-card__badge .dot { width: 6px; height: 6px; border-radius: 50%; }
+
+.genre-card__body { padding: 16px 16px 18px; }
+.genre-card__yomi {
+  font-family: var(--font-num);
+  font-size: 9px;
+  letter-spacing: 0.32em;
+  color: var(--color-text-soft);
+  margin-bottom: 2px;
+}
+.genre-card__name {
+  font-family: var(--font-brush);
+  font-weight: 400;
+  font-size: 30px;
+  line-height: 1.1;
+  letter-spacing: 0.04em;
+  color: var(--color-ink);
+  margin-bottom: 6px;
+}
+.genre-card__name .ja-accent { color: var(--color-accent); }
+.genre-card__name--latin {
+  font-family: 'Bebas Neue', serif;
+  font-size: 26px;
+  letter-spacing: 0.06em;
+}
+.genre-card__sub {
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--color-text-soft);
+}
+
+@media (max-width: 600px) {
+  .genre-rows { gap: 32px; }
+  .genre-row__head { gap: 10px; }
+  .genre-row__title { font-size: 20px; }
+  .genre-card { flex: 0 0 220px; }
+  .genre-card__name { font-size: 26px; }
+}
+
 /* ============ AUTH PILL (右上ログイン導線) ============ */
 .auth-pill {
   position: absolute;
@@ -1100,7 +1250,11 @@ img { display: block; max-width: 100%; height: auto; }
   <!-- ジャンルタブ -->
   <div class="genre-tabs" id="genre-tabs" role="tablist"></div>
 
-  <div class="store-grid">
+  <!-- ジャンル別棚 (動的生成) -->
+  <div class="genre-rows" id="genre-rows"></div>
+
+  <!-- 隠し: 既存 refresh 関数のための旧カード DOM (display:none) -->
+  <div class="store-grid" style="display:none" aria-hidden="true">
 
     <!-- 麻ノ葉 -->
     <a href="asanoha-hero-bg/" class="store-card" data-store-id="asanoha">
@@ -1373,6 +1527,8 @@ img { display: block; max-width: 100%; height: auto; }
       badge.setAttribute('data-status', state);
       badgeTxt.textContent = label;
     }
+    // ジャンル棚のカードにも反映
+    updateGenreCardBadges('asanoha', state, label);
 
     // 営業時間
     hoursEl.textContent = h.open + ' — ' + h.close;
@@ -1423,6 +1579,8 @@ img { display: block; max-width: 100%; height: auto; }
       badgeTxt.textContent = label;
     }
     hoursEl.textContent = h.open + ' — ' + h.close;
+    // ジャンル棚のカードにも反映
+    updateGenreCardBadges('ivory', state, label);
   }
 
   // 複数店舗の API フェッチ (raw fetch、api-client は単一店舗用なので)
@@ -1523,22 +1681,16 @@ img { display: block; max-width: 100%; height: auto; }
     return cats.indexOf(genreId) !== -1;
   }
   function applyFilter() {
-    document.querySelectorAll('.store-card[data-store-id]').forEach(function (card) {
+    // genre-card に空席フィルタを適用 (タブはスクロールなので filter は空席のみ)
+    document.querySelectorAll('.genre-card[data-store-id]').forEach(function (card) {
       var storeId = card.dataset.storeId;
-      var hideByAvail = filterOn && !storeHasAvailability(storeId);
-      var hideByGenre = !storeMatchesGenre(storeId, currentGenre);
-      card.setAttribute('data-hidden', (hideByAvail || hideByGenre) ? 'true' : 'false');
-    });
-    // プレースホルダーカード: "all" 以外を選んだら隠す
-    document.querySelectorAll('.store-card--placeholder').forEach(function (c) {
-      c.setAttribute('data-hidden', currentGenre === 'all' ? 'false' : 'true');
+      var hide = filterOn && !storeHasAvailability(storeId);
+      card.setAttribute('data-hidden', hide ? 'true' : 'false');
     });
     if (filterBtn) {
       filterBtn.setAttribute('aria-pressed', filterOn ? 'true' : 'false');
       filterLabel.textContent = filterOn ? '空席のある店だけ ON' : '空席のある店だけ';
     }
-    updateTabAria();
-    updateTabCounts();
   }
   if (filterBtn) {
     filterBtn.addEventListener('click', function () {
@@ -1548,49 +1700,210 @@ img { display: block; max-width: 100%; height: auto; }
     });
   }
 
-  // タブ生成
+  // タブ生成 (クリックでジャンル棚にスクロール)
   function renderGenreTabs() {
     if (!genreTabsEl) return;
     var defs = window.NAKASHINCHI_CATEGORIES || [{id:'all',label:'全て',romaji:'ALL'}];
     genreTabsEl.innerHTML = '';
     defs.forEach(function (g) {
+      var n;
+      var allStores = (window.NAKASHINCHI_STORES || []);
+      if (g.id === 'all') n = allStores.length;
+      else n = allStores.filter(function (s) { return (s.categories || []).indexOf(g.id) !== -1; }).length;
+      if (n === 0 && g.id !== 'all') return;  // 0件のジャンルはタブも非表示
+
       var b = document.createElement('button');
       b.className = 'genre-tab';
       b.type = 'button';
       b.dataset.genre = g.id;
-      b.setAttribute('aria-pressed', g.id === currentGenre ? 'true' : 'false');
       b.innerHTML =
         '<span>' + g.label + '</span>' +
         '<span class="genre-tab__romaji">' + g.romaji + '</span>' +
-        '<span class="genre-tab__count" data-count-for="' + g.id + '">·</span>';
+        '<span class="genre-tab__count" data-count-for="' + g.id + '">' + n + '</span>';
       b.addEventListener('click', function () {
         currentGenre = g.id;
         try { localStorage.setItem(GENRE_KEY, g.id); } catch (_) {}
-        applyFilter();
+        // タブハイライト
+        genreTabsEl.querySelectorAll('.genre-tab').forEach(function (x) {
+          x.setAttribute('aria-pressed', x.dataset.genre === g.id ? 'true' : 'false');
+        });
+        // 該当棚にスクロール
+        var target = document.getElementById('genre-row-' + g.id);
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
       });
       genreTabsEl.appendChild(b);
     });
-  }
-  function updateTabAria() {
-    genreTabsEl && genreTabsEl.querySelectorAll('.genre-tab').forEach(function (b) {
-      b.setAttribute('aria-pressed', b.dataset.genre === currentGenre ? 'true' : 'false');
+    // 初期ハイライト
+    genreTabsEl.querySelectorAll('.genre-tab').forEach(function (x) {
+      x.setAttribute('aria-pressed', x.dataset.genre === currentGenre ? 'true' : 'false');
     });
   }
-  function updateTabCounts() {
+
+  // ジャンル棚 1行分の HTML を構築
+  function buildGenreCard(s) {
+    var name;
+    if (s.id === 'asanoha') {
+      name = '麻<span class="ja-accent">ノ</span>葉';
+    } else if (s.id === 'ivory') {
+      name = '<span class="genre-card__name--latin">Ivory</span>';
+    } else {
+      name = s.name;
+    }
+    var defs = window.NAKASHINCHI_CATEGORIES || [];
+    var labels = (s.categories || []).map(function (c) {
+      var d = defs.find(function (x) { return x.id === c; });
+      return d ? d.label : c;
+    });
+    var sub = labels.join(' / ');
+    var yomi = (s.romaji || '') + (s.yomi ? ' / ' + s.yomi : '');
+
+    var a = document.createElement('a');
+    a.className = 'genre-card';
+    a.href = s.heroUrl || '#';
+    a.dataset.storeId = s.id;
+    a.innerHTML =
+      '<div class="genre-card__media">' +
+        '<span class="genre-card__badge" data-status-badge="' + s.id + '" data-status="loading">' +
+          '<span class="dot"></span>' +
+          '<span class="genre-card__badge-text">確認中…</span>' +
+        '</span>' +
+        (s.imageUrl ? '<img src="' + s.imageUrl + '" alt="' + s.name + '">' : '') +
+      '</div>' +
+      '<div class="genre-card__body">' +
+        '<p class="genre-card__yomi">' + yomi + '</p>' +
+        '<h3 class="genre-card__name">' + name + '</h3>' +
+        (sub ? '<p class="genre-card__sub">' + sub + '</p>' : '') +
+      '</div>';
+    return a;
+  }
+
+  // ジャンル棚 全部レンダリング
+  var _rowMarqueeCancel = {};   // genre.id → cancel fn
+  function renderGenreRows() {
+    var container = document.getElementById('genre-rows');
+    if (!container) return;
+    Object.keys(_rowMarqueeCancel).forEach(function (k) { _rowMarqueeCancel[k] && _rowMarqueeCancel[k](); });
+    _rowMarqueeCancel = {};
+    container.innerHTML = '';
+
     var defs = window.NAKASHINCHI_CATEGORIES || [];
     var allStores = (window.NAKASHINCHI_STORES || []);
+
     defs.forEach(function (g) {
-      var n;
-      if (g.id === 'all') {
-        n = allStores.length;
-      } else {
-        n = allStores.filter(function (s) { return (s.categories || []).indexOf(g.id) !== -1; }).length;
+      var stores;
+      if (g.id === 'all') stores = allStores.slice();
+      else stores = allStores.filter(function (s) { return (s.categories || []).indexOf(g.id) !== -1; });
+      if (stores.length === 0 && g.id !== 'all') return;
+
+      var row = document.createElement('div');
+      row.className = 'genre-row';
+      row.id = 'genre-row-' + g.id;
+      row.innerHTML =
+        '<header class="genre-row__head">' +
+          '<span class="genre-row__crumb">' + g.romaji + '</span>' +
+          '<h3 class="genre-row__title">' + g.label + '</h3>' +
+          '<span class="genre-row__count">' + stores.length + ' 軒</span>' +
+        '</header>' +
+        '<div class="genre-row__viewport">' +
+          '<div class="genre-row__list" data-row-list="' + g.id + '"></div>' +
+        '</div>';
+      var listEl = row.querySelector('.genre-row__list');
+      stores.forEach(function (s) { listEl.appendChild(buildGenreCard(s)); });
+      container.appendChild(row);
+
+      // マルキー初期化
+      initRowMarquee(g.id, row.querySelector('.genre-row__viewport'), listEl);
+    });
+  }
+
+  // 棚ごとのマルキー (translate3d 方式)
+  function initRowMarquee(rowId, viewport, list) {
+    if (!viewport || !list) return;
+    if (_rowMarqueeCancel[rowId]) { _rowMarqueeCancel[rowId](); }
+    Array.prototype.forEach.call(list.querySelectorAll('.genre-card--clone'), function (c) { c.remove(); });
+    list.style.transform = '';
+    list.removeAttribute('data-static');
+
+    var originals = Array.prototype.slice.call(list.querySelectorAll('.genre-card:not(.genre-card--clone)'));
+    if (originals.length < 2) {
+      list.setAttribute('data-static', 'true');
+      return;
+    }
+
+    function gapPx() { return parseInt(getComputedStyle(list).gap) || 0; }
+    function measureSetWidth() {
+      var w = 0;
+      originals.forEach(function (c) { w += c.offsetWidth + gapPx(); });
+      return w;
+    }
+    var setWidth = measureSetWidth();
+    var viewWidth = viewport.clientWidth;
+    var clonesToAdd = Math.max(1, Math.ceil((viewWidth + setWidth) / setWidth));
+    for (var i = 0; i < clonesToAdd; i++) {
+      originals.forEach(function (card) {
+        var clone = card.cloneNode(true);
+        clone.classList.add('genre-card--clone');
+        clone.setAttribute('aria-hidden', 'true');
+        clone.querySelectorAll('a, button').forEach(function (el) { el.setAttribute('tabindex', '-1'); });
+        list.appendChild(clone);
+      });
+    }
+
+    var SPEED = 24;
+    var IDLE_RESUME_MS = 1500;
+    var paused = false, lastT = 0, pos = 0, idleTimer = null, rafId;
+    function step(now) {
+      if (!lastT) lastT = now;
+      var dt = now - lastT; lastT = now;
+      if (!paused && setWidth > 4) {
+        pos += SPEED * dt / 1000;
+        if (pos >= setWidth) pos -= setWidth;
+        list.style.transform = 'translate3d(' + (-pos) + 'px, 0, 0)';
+      } else if (paused) {
+        lastT = 0;
       }
-      var el = genreTabsEl && genreTabsEl.querySelector('[data-count-for="' + g.id + '"]');
-      if (el) el.textContent = n > 0 ? n : '0';
+      rafId = requestAnimationFrame(step);
+    }
+    rafId = requestAnimationFrame(step);
+    function pauseTemp() {
+      paused = true;
+      clearTimeout(idleTimer);
+      idleTimer = setTimeout(function () { paused = false; lastT = 0; }, IDLE_RESUME_MS);
+    }
+    function onEnter() { paused = true; }
+    function onLeave() { paused = false; lastT = 0; }
+    viewport.addEventListener('mouseenter', onEnter);
+    viewport.addEventListener('mouseleave', onLeave);
+    viewport.addEventListener('touchstart', pauseTemp, { passive: true });
+    viewport.addEventListener('wheel',      pauseTemp, { passive: true });
+    viewport.addEventListener('pointerdown',pauseTemp, { passive: true });
+    var onResize = function () { setWidth = measureSetWidth(); viewWidth = viewport.clientWidth; };
+    window.addEventListener('resize', onResize);
+    _rowMarqueeCancel[rowId] = function () {
+      cancelAnimationFrame(rafId);
+      viewport.removeEventListener('mouseenter', onEnter);
+      viewport.removeEventListener('mouseleave', onLeave);
+      viewport.removeEventListener('touchstart', pauseTemp);
+      viewport.removeEventListener('wheel', pauseTemp);
+      viewport.removeEventListener('pointerdown', pauseTemp);
+      window.removeEventListener('resize', onResize);
+      clearTimeout(idleTimer);
+      list.style.transform = '';
+    };
+  }
+
+  // 全カードのステータスバッジを更新 (genre-card 横断)
+  function updateGenreCardBadges(storeId, state, label) {
+    document.querySelectorAll('.genre-card[data-store-id="' + storeId + '"] [data-status-badge="' + storeId + '"]').forEach(function (badge) {
+      badge.setAttribute('data-status', state);
+      var t = badge.querySelector('.genre-card__badge-text');
+      if (t) t.textContent = label;
     });
   }
   renderGenreTabs();
+  renderGenreRows();
   applyFilter();
 
   // ===========================================
