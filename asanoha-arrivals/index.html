@@ -45,15 +45,15 @@
   --bg-1: #f5efe6;
   --bg-2: #faf6ee;
   --paper:#1a1410;
-  --paper-soft: rgba(26,20,16,0.78);
-  --paper-dim:  rgba(26,20,16,0.50);
-  --paper-faint:rgba(26,20,16,0.16);
+  --paper-soft: rgba(26,20,16,0.82);
+  --paper-dim:  rgba(26,20,16,0.58);
+  --paper-faint:rgba(26,20,16,0.22);
   --ink:#1a1410;
   --accent: #c8102e;
   --accent-soft: #e85060;
   --green:  #06c755;
   --amber:  #ffb648;
-  --panel-bg: rgba(0,0,0,0.04);
+  --panel-bg: rgba(0,0,0,0.05);
   --panel-bg-2: #fff;
   --body-bg:
     radial-gradient(ellipse at 50% 0%, rgba(200,16,46,0.06) 0%, transparent 55%),
@@ -65,15 +65,15 @@
 }
 /* ダークモード (manoha-theme=dark で発動) */
 body[data-theme="dark"] {
-  --bg-1: #1a0c08;
-  --bg-2: #0a0604;
+  --bg-1: #1f1310;
+  --bg-2: #120a07;
   --paper:#f5efe6;
-  --paper-soft: rgba(245,239,230,0.78);
-  --paper-dim:  rgba(245,239,230,0.42);
-  --paper-faint:rgba(245,239,230,0.16);
+  --paper-soft: rgba(245,239,230,0.88);
+  --paper-dim:  rgba(245,239,230,0.62);
+  --paper-faint:rgba(245,239,230,0.22);
   --ink:  #1a1410;
-  --panel-bg: rgba(245,239,230,0.045);
-  --panel-bg-2: #15090d;
+  --panel-bg: rgba(245,239,230,0.08);
+  --panel-bg-2: rgba(245,239,230,0.10);
   --body-bg:
     radial-gradient(ellipse at 50% 0%, rgba(200,16,46,0.10) 0%, transparent 55%),
     linear-gradient(180deg, #1a0c08 0%, #0a0604 60%, #050201 100%);
@@ -158,6 +158,8 @@ body {
   border-radius: 12px;
   padding: 16px 18px;
   text-align: center;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
 }
 .summary__label {
   font-size: 10px;
@@ -213,7 +215,7 @@ body {
 
 .arr {
   position: relative;
-  background: rgba(245,239,230,0.05);
+  background: var(--panel-bg);
   border: 1px solid var(--paper-faint);
   border-radius: 14px;
   padding: 18px 18px 16px;
@@ -223,6 +225,8 @@ body {
   gap: 18px;
   align-items: start;
   transition: border-color 0.3s, background 0.3s;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
 }
 .arr--new {
   border-color: rgba(200,16,46,0.55);

@@ -17,11 +17,13 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 [hidden] { display: none !important; }
 :root {
-  --bg-1:#1a0c08; --bg-2:#0a0604; --bg-3:#050201;
+  --bg-1:#1f1310; --bg-2:#120a07; --bg-3:#080403;
   --paper:#f5efe6;
-  --paper-soft:rgba(245,239,230,0.78);
-  --paper-dim:rgba(245,239,230,0.45);
-  --paper-faint:rgba(245,239,230,0.16);
+  --paper-soft:rgba(245,239,230,0.88);
+  --paper-dim:rgba(245,239,230,0.62);
+  --paper-faint:rgba(245,239,230,0.22);
+  --panel-bg:rgba(245,239,230,0.08);
+  --panel-bg-hi:rgba(245,239,230,0.12);
   --accent:#c8102e;
   --green:#06c755;
   --font-jp:'Shippori Mincho B1','Yu Mincho',serif;
@@ -83,8 +85,10 @@ body {
 }
 
 .profile-card {
-  background: rgba(245,239,230,0.045);
+  background: var(--panel-bg);
   border: 1px solid var(--paper-faint);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-radius: 14px;
   padding: 22px;
   display: flex; align-items: center; gap: 16px;
@@ -100,8 +104,10 @@ body {
 .profile-card__id { font-size: 9px; color: var(--paper-dim); letter-spacing: 0.04em; word-break: break-all; }
 
 .section {
-  background: rgba(245,239,230,0.045);
+  background: var(--panel-bg);
   border: 1px solid var(--paper-faint);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
   border-radius: 14px;
   padding: 22px 22px 24px;
   margin-bottom: 16px;
@@ -152,7 +158,8 @@ body {
 .score-row {
   display: flex; justify-content: space-between;
   padding: 8px 12px;
-  background: rgba(0,0,0,0.20);
+  background: rgba(0,0,0,0.12);
+  border: 1px solid var(--paper-faint);
   border-radius: 8px;
   font-size: 11px;
   letter-spacing: 0.08em;
@@ -179,7 +186,7 @@ body {
 .privacy-option {
   display: flex; align-items: flex-start; gap: 14px;
   padding: 16px 18px;
-  background: rgba(0,0,0,0.25);
+  background: rgba(0,0,0,0.18);
   border: 1px solid var(--paper-faint);
   border-radius: 10px;
   cursor: pointer;

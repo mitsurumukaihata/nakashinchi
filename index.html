@@ -118,7 +118,7 @@ img { display: block; max-width: 100%; height: auto; }
 .intro__sub {
   position: relative; z-index: 2;
   font-size: clamp(12px, 1.4vw, 14px);
-  color: var(--color-text-muted);
+  color: rgba(245,239,230,0.85);
   letter-spacing: 0.12em;
   line-height: 2;
   max-width: 28em;
@@ -2528,6 +2528,7 @@ img { display: block; max-width: 100%; height: auto; }
     var countEl = document.getElementById('favs-count');
     if (!section || !listEl) return;
 
+    var rawCount = (rawList || []).length;
     // フィルタ適用 (空席フィルタ ON のとき)
     var list = (rawList || []).filter(function (sid) {
       if (!favsFilterOn) return true;
@@ -2562,8 +2563,24 @@ img { display: block; max-width: 100%; height: auto; }
         '</div>';
       listEl.appendChild(a);
     });
-    if (countEl) countEl.textContent = String(list.length);
-    section.setAttribute('data-has-items', list.length > 0 ? 'true' : 'false');
+    if (countEl) countEl.textContent = String(rawCount);
+    // 「お気に入りがある」事実はフィルタ前の生件数で判定する
+    section.setAttribute('data-has-items', rawCount > 0 ? 'true' : 'false');
+    // フィルタで全部隠れた時の説明
+    var emptyEl = section.querySelector('.favs-section__empty');
+    if (rawCount > 0 && list.length === 0 && favsFilterOn) {
+      if (emptyEl) {
+        emptyEl.style.display = 'block';
+        emptyEl.innerHTML = 'お気に入り <strong>' + rawCount + '</strong> 軒のうち<br>' +
+                            '今すぐ行ける店はありません（営業時間外 / 満席）。<br>' +
+                            '<span style="font-size:10px; color:var(--color-text-soft);">「空席のある店だけ」フィルタを外すと表示されます。</span>';
+      }
+    } else if (emptyEl && rawCount > 0) {
+      emptyEl.style.display = 'none';
+    } else if (emptyEl) {
+      emptyEl.style.display = '';
+      emptyEl.innerHTML = '気になるお店のカード右上の <strong>♡</strong> を押すと<br>ここにお気に入りとして並びます。';
+    }
     // 描画後にマルキー再構築
     initFavsMarquee();
   }
