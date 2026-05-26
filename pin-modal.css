@@ -68,3 +68,13 @@
 
 @keyframes pinFadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes pinModalSlide { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+
+/* ===== 全ページ共通 フォントウェイト底上げ (酔客向け視認性) ===== */
+body { font-weight: 500; }
+h1, h2, h3, h4 { font-weight: 600; }
+strong, b { font-weight: 700; }
+input, button, select, textarea { font-weight: 500; }
+.fav-card__name, .genre-card__name, .store-card__name,
+.brand, .hero__brand, .topbar__brand, .topbar__brand-name { font-weight: 500; }
+
