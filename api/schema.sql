@@ -29,9 +29,12 @@ CREATE TABLE IF NOT EXISTS customers (
   id            TEXT PRIMARY KEY,                              -- LINE user_id (U... 形式)
   display_name  TEXT NOT NULL,
   picture_url   TEXT,
+  privacy_mode  TEXT NOT NULL DEFAULT 'public',                -- 'public' | 'anonymous'
   created_at    TEXT NOT NULL DEFAULT (datetime('now')),
   last_seen_at  TEXT NOT NULL DEFAULT (datetime('now'))
 );
+-- 既存DB 向け一回限り migration (実行済なら NOOP の代わりにエラーになる、その場合は無視):
+-- ALTER TABLE customers ADD COLUMN privacy_mode TEXT NOT NULL DEFAULT 'public';
 
 CREATE INDEX IF NOT EXISTS idx_customers_last_seen ON customers(last_seen_at);
 

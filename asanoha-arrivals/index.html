@@ -249,6 +249,30 @@ body[data-theme="light"] .arr--new { background: rgba(200,16,46,0.08); }
   font-size: 22px;
 }
 .arr__avatar img { width: 100%; height: 100%; object-fit: cover; }
+.arr__avatar--anon { color: var(--paper-dim); }
+.arr__avatar--anon svg { stroke: currentColor; stroke-width: 1.5; fill: none; }
+.arr__avatar--anon svg circle, .arr__avatar--anon svg path { stroke: currentColor; }
+.arr__anon-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  font-size: 10px;
+  letter-spacing: 0.15em;
+  background: rgba(245,239,230,0.12);
+  color: var(--paper-soft);
+  border-radius: 999px;
+}
+.arr__visit-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  background: rgba(6,199,85,0.18);
+  color: var(--green);
+  border-radius: 999px;
+  font-family: var(--font-num);
+}
 
 .arr__body { min-width: 0; }
 .arr__name {
@@ -698,10 +722,22 @@ body[data-theme="light"] .arr--new { background: rgba(200,16,46,0.08); }
     if (a.status === 'cancelled' || a.status === 'timeout') cls += ' arr--cancel';
     if (!prevPendingIds.has(a.id) && a.status === 'pending') cls += ' arr--new';
 
-    var picture = a.customerPicture
-      ? '<img src="' + escapeHtml(a.customerPicture) + '" referrerpolicy="no-referrer" alt="">'
-      : escapeHtml((a.customerName || '？').slice(0,1));
+    var isAnon = a.privacyMode === 'anonymous';
+    var picture;
+    if (a.customerPicture) {
+      picture = '<img src="' + escapeHtml(a.customerPicture) + '" referrerpolicy="no-referrer" alt="">';
+    } else if (isAnon) {
+      // 匿名モード用シルエット
+      picture = '<svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">' +
+                  '<circle cx="12" cy="9" r="4"/><path d="M4 21c0-4 4-7 8-7s8 3 8 7"/>' +
+                '</svg>';
+    } else {
+      picture = escapeHtml((a.customerName || '？').slice(0,1));
+    }
     var name = a.customerName || '匿名';
+    var visitTag = (a.visitCount && a.visitCount > 0)
+      ? '<span class="arr__visit-tag">来店 ' + a.visitCount + ' 回</span>'
+      : '';
 
     var statusTag = '';
     if (a.status === 'arrived')   statusTag = '<span class="arr__status-tag">来 店 済</span>';
@@ -719,9 +755,12 @@ body[data-theme="light"] .arr--new { background: rgba(200,16,46,0.08); }
 
     return '' +
       '<div class="' + cls + '" data-arr-id="' + escapeHtml(a.id) + '">' +
-        '<div class="arr__avatar">' + picture + '</div>' +
+        '<div class="arr__avatar' + (isAnon ? ' arr__avatar--anon' : '') + '">' + picture + '</div>' +
         '<div class="arr__body">' +
-          '<div class="arr__name">' + escapeHtml(name) + '</div>' +
+          '<div class="arr__name">' + escapeHtml(name) +
+            (isAnon ? ' <span class="arr__anon-tag">匿名</span>' : '') +
+            ' ' + visitTag +
+          '</div>' +
           '<div class="arr__meta">' +
             '<span>到着予定<strong>' + fmtHm(a.arrivingAt) + '</strong></span>' +
             '<span>あと<strong>' + a.etaMinutes + '</strong> 分</span>' +

@@ -520,12 +520,34 @@ export default {
         const userId = await verifyCustomerToken(token, env.JWT_SECRET);
         if (!userId) return json({ error: '認証されていません' }, 401, cors);
         const row = await env.DB
-          .prepare('SELECT id, display_name, picture_url FROM customers WHERE id = ?')
+          .prepare("SELECT id, display_name, picture_url, COALESCE(privacy_mode,'public') AS privacy_mode FROM customers WHERE id = ?")
           .bind(userId).first();
         if (!row) return json({ error: '客が見つかりません' }, 404, cors);
         return json({
-          customer: { id: row.id, name: row.display_name, picture: row.picture_url }
+          customer: {
+            id: row.id, name: row.display_name, picture: row.picture_url,
+            privacyMode: row.privacy_mode
+          }
         }, 200, cors);
+      }
+
+      // PATCH /api/customer/me — プロフィール設定変更 (現状は privacy_mode のみ)
+      if (path === '/api/customer/me' && request.method === 'PATCH') {
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        const userId = await verifyCustomerToken(token, env.JWT_SECRET);
+        if (!userId) return json({ error: '認証されていません' }, 401, cors);
+        const body = await request.json().catch(() => ({}));
+        const allowed = ['public', 'anonymous'];
+        if (body.privacyMode === undefined) {
+          return json({ error: '更新項目が指定されていません' }, 400, cors);
+        }
+        if (!allowed.includes(body.privacyMode)) {
+          return json({ error: 'privacyMode は public か anonymous' }, 400, cors);
+        }
+        await env.DB.prepare('UPDATE customers SET privacy_mode = ? WHERE id = ?')
+          .bind(body.privacyMode, userId).run();
+        return json({ ok: true, privacyMode: body.privacyMode }, 200, cors);
       }
 
       // ===== 来店通知 (arrivals) =====
@@ -563,13 +585,14 @@ export default {
 
         // 客側に返す
         const cust = await env.DB
-          .prepare('SELECT display_name, picture_url FROM customers WHERE id = ?')
+          .prepare("SELECT display_name, picture_url, COALESCE(privacy_mode,'public') AS privacy_mode FROM customers WHERE id = ?")
           .bind(userId).first();
 
         // 店舗管理者の LINE に push 通知 (設定されていれば)
         const storeRow = await env.DB.prepare('SELECT name FROM stores WHERE id = ?').bind(storeId).first();
         const storeName = (storeRow && storeRow.name) || storeId;
-        const custName  = (cust && cust.display_name) || 'お客様';
+        const isAnonCust = cust && cust.privacy_mode === 'anonymous';
+        const custName  = isAnonCust ? '匿名のお客様' : ((cust && cust.display_name) || 'お客様');
         const arrHHMM   = new Date(arrAt).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit', hour12: false, timeZone: 'Asia/Tokyo' });
         const msg = '【' + storeName + '】来店通知\n'
                   + custName + ' さんが向かっています\n'
@@ -580,8 +603,9 @@ export default {
         return json({
           arrival: {
             id, storeId, customerId: userId,
-            customerName: cust ? cust.display_name : null,
-            customerPicture: cust ? cust.picture_url : null,
+            customerName:    isAnonCust ? '匿名さん' : (cust ? cust.display_name : null),
+            customerPicture: isAnonCust ? null      : (cust ? cust.picture_url  : null),
+            privacyMode:     cust ? cust.privacy_mode : 'public',
             etaMinutes: eta, arrivingAt: arrAt, note, status: 'pending',
             createdAt: now.toISOString(), updatedAt: now.toISOString()
           }
@@ -619,7 +643,12 @@ export default {
         let q = `
           SELECT a.id, a.store_id, a.customer_id, a.eta_minutes, a.arriving_at,
                  a.note, a.seat_id, a.status, a.created_at, a.updated_at,
-                 c.display_name AS customer_name, c.picture_url AS customer_picture
+                 c.display_name AS customer_name, c.picture_url AS customer_picture,
+                 COALESCE(c.privacy_mode, 'public') AS privacy_mode,
+                 (SELECT COUNT(*) FROM arrivals a2
+                   WHERE a2.customer_id = a.customer_id
+                     AND a2.store_id = a.store_id
+                     AND a2.status = 'arrived') AS visit_count
           FROM arrivals a
           LEFT JOIN customers c ON c.id = a.customer_id
           WHERE a.store_id = ?
@@ -629,17 +658,22 @@ export default {
           q += ' AND a.status = ? ';
           args.push('pending');
         }
-        // 今日以降のものを優先 (古い完了済みは載せない)
         q += ' ORDER BY a.created_at DESC LIMIT 50';
         const rows = await env.DB.prepare(q).bind(...args).all();
         return json({
-          arrivals: (rows.results || []).map(r => ({
-            id: r.id, storeId: r.store_id, customerId: r.customer_id,
-            customerName: r.customer_name, customerPicture: r.customer_picture,
-            etaMinutes: r.eta_minutes, arrivingAt: r.arriving_at,
-            note: r.note, seatId: r.seat_id, status: r.status,
-            createdAt: r.created_at, updatedAt: r.updated_at
-          }))
+          arrivals: (rows.results || []).map(r => {
+            const isAnon = r.privacy_mode === 'anonymous';
+            return {
+              id: r.id, storeId: r.store_id, customerId: r.customer_id,
+              customerName:    isAnon ? '匿名さん' : r.customer_name,
+              customerPicture: isAnon ? null      : r.customer_picture,
+              privacyMode:     r.privacy_mode,
+              visitCount:      r.visit_count || 0,
+              etaMinutes: r.eta_minutes, arrivingAt: r.arriving_at,
+              note: r.note, seatId: r.seat_id, status: r.status,
+              createdAt: r.created_at, updatedAt: r.updated_at
+            };
+          })
         }, 200, cors);
       }
 

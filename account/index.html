@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0a0604">
+<meta name="robots" content="noindex">
+<title>プロフィール設定 — 中新地</title>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600&family=Yuji+Syuku&family=Cormorant+Garamond:wght@400;500;600&display=swap" rel="stylesheet">
+<script src="../config.js"></script>
+<script src="../line-auth.js" defer></script>
+
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+[hidden] { display: none !important; }
+:root {
+  --bg-1:#1a0c08; --bg-2:#0a0604; --bg-3:#050201;
+  --paper:#f5efe6;
+  --paper-soft:rgba(245,239,230,0.78);
+  --paper-dim:rgba(245,239,230,0.45);
+  --paper-faint:rgba(245,239,230,0.16);
+  --accent:#c8102e;
+  --green:#06c755;
+  --font-jp:'Shippori Mincho B1','Yu Mincho',serif;
+  --font-brush:'Yuji Syuku',serif;
+  --font-num:'Cormorant Garamond',Georgia,serif;
+}
+html,body { height:100%; background: var(--bg-2); }
+body {
+  font-family: var(--font-jp);
+  color: var(--paper);
+  padding: calc(28px + env(safe-area-inset-top,0px)) 20px calc(40px + env(safe-area-inset-bottom,0px));
+  background:
+    radial-gradient(ellipse at 50% 0%, rgba(200,16,46,0.10) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 100%, rgba(40,20,15,0.5) 0%, transparent 65%),
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 60%, var(--bg-3) 100%);
+  -webkit-font-smoothing: antialiased;
+}
+.wrap { max-width: 480px; margin: 0 auto; }
+
+.back-link {
+  display: inline-block;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--paper-dim);
+  text-decoration: none;
+  margin-bottom: 18px;
+  padding: 6px 12px;
+  border: 1px solid var(--paper-faint);
+  border-radius: 999px;
+}
+.back-link:hover { color: var(--paper); border-color: var(--paper); }
+
+.crumb {
+  text-align:center;
+  font-family: var(--font-num);
+  font-size: 10px;
+  letter-spacing: 0.5em;
+  color: var(--paper-dim);
+  text-indent: 0.5em;
+  margin-bottom: 6px;
+}
+.crumb::before, .crumb::after { content: '·'; color: var(--accent); margin: 0 8px; }
+.brand {
+  font-family: var(--font-brush);
+  font-weight: 400;
+  font-size: 30px;
+  text-align: center;
+  letter-spacing: 0.08em;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+.brand .ac { color: var(--accent); }
+.lead {
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.2em;
+  color: var(--paper-dim);
+  margin-bottom: 30px;
+}
+
+.profile-card {
+  background: rgba(245,239,230,0.045);
+  border: 1px solid var(--paper-faint);
+  border-radius: 14px;
+  padding: 22px;
+  display: flex; align-items: center; gap: 16px;
+  margin-bottom: 22px;
+}
+.profile-card img {
+  width: 60px; height: 60px;
+  border-radius: 50%;
+  border: 1px solid var(--paper-faint);
+  object-fit: cover;
+}
+.profile-card__name { font-size: 16px; font-weight: 600; letter-spacing: 0.05em; margin-bottom: 4px; }
+.profile-card__id { font-size: 9px; color: var(--paper-dim); letter-spacing: 0.04em; word-break: break-all; }
+
+.section {
+  background: rgba(245,239,230,0.045);
+  border: 1px solid var(--paper-faint);
+  border-radius: 14px;
+  padding: 22px 22px 24px;
+  margin-bottom: 16px;
+}
+.section__num {
+  font-family: var(--font-num);
+  font-size: 11px;
+  letter-spacing: 0.4em;
+  color: var(--accent);
+  text-indent: 0.4em;
+  margin-bottom: 12px;
+}
+
+.privacy-options {
+  display: flex; flex-direction: column; gap: 10px;
+  margin: 12px 0 14px;
+}
+.privacy-option {
+  display: flex; align-items: flex-start; gap: 14px;
+  padding: 16px 18px;
+  background: rgba(0,0,0,0.25);
+  border: 1px solid var(--paper-faint);
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.privacy-option:hover { border-color: var(--paper-dim); }
+.privacy-option[aria-pressed="true"] {
+  background: rgba(200,16,46,0.10);
+  border-color: var(--accent);
+}
+.privacy-option__radio {
+  flex-shrink: 0;
+  width: 18px; height: 18px;
+  border-radius: 50%;
+  border: 1.5px solid var(--paper-faint);
+  margin-top: 2px;
+  position: relative;
+}
+.privacy-option[aria-pressed="true"] .privacy-option__radio {
+  border-color: var(--accent);
+}
+.privacy-option[aria-pressed="true"] .privacy-option__radio::after {
+  content: '';
+  position: absolute; inset: 3px;
+  background: var(--accent);
+  border-radius: 50%;
+}
+.privacy-option__body { flex: 1; }
+.privacy-option__label {
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  margin-bottom: 4px;
+}
+.privacy-option__desc {
+  font-size: 11px;
+  color: var(--paper-dim);
+  letter-spacing: 0.04em;
+  line-height: 1.8;
+}
+
+.btn {
+  display: block; width: 100%;
+  padding: 14px;
+  border-radius: 999px;
+  border: none;
+  font-family: inherit;
+  font-size: 12px; font-weight: 600;
+  letter-spacing: 0.25em;
+  cursor: pointer;
+  transition: all 0.18s;
+}
+.btn--primary { background: var(--accent); color: #fff; }
+.btn--primary:hover { background: #8e0e1c; transform: translateY(-1px); }
+.btn--primary:disabled { opacity: 0.5; cursor: default; transform: none; }
+.btn--ghost {
+  background: transparent;
+  color: var(--paper-soft);
+  border: 1px solid var(--paper-faint);
+  margin-top: 10px;
+}
+.btn--ghost:hover { color: var(--paper); border-color: var(--paper); }
+
+.toast {
+  position: fixed; left: 50%; bottom: 28px;
+  transform: translateX(-50%);
+  padding: 12px 22px;
+  background: rgba(6,199,85,0.92);
+  color: #fff;
+  border-radius: 999px;
+  font-size: 12px; letter-spacing: 0.18em;
+  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  opacity: 0; transition: opacity 0.3s ease;
+  z-index: 50;
+}
+.toast[data-show="true"] { opacity: 1; }
+
+.note {
+  margin-top: 22px;
+  font-size: 10px;
+  color: var(--paper-dim);
+  letter-spacing: 0.06em;
+  line-height: 1.9;
+  text-align: center;
+}
+
+.login-prompt {
+  text-align: center;
+  padding: 40px 20px;
+}
+.login-prompt p {
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  line-height: 2;
+  margin-bottom: 18px;
+  color: var(--paper-soft);
+}
+.login-prompt .btn {
+  background: var(--green); color: #fff;
+  max-width: 280px; margin: 0 auto;
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <a class="back-link" href="../">← トップへ戻る</a>
+  <p class="crumb">A C C O U N T</p>
+  <h1 class="brand">中<span class="ac">新</span>地</h1>
+  <p class="lead">プロフィール設定</p>
+
+  <!-- ログイン前 -->
+  <div class="login-prompt" id="login-prompt" hidden>
+    <p>プロフィール設定には<br>LINE ログインが必要です。</p>
+    <button class="btn" id="btn-login" type="button">LINE で ログイン</button>
+  </div>
+
+  <!-- ログイン後 -->
+  <div id="logged-in" hidden>
+    <div class="profile-card">
+      <img id="prof-img" src="" referrerpolicy="no-referrer" alt="">
+      <div>
+        <div class="profile-card__name" id="prof-name">—</div>
+        <div class="profile-card__id" id="prof-id">—</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="section__num">P R I V A C Y</div>
+      <div class="privacy-options" id="privacy-options" role="radiogroup">
+        <div class="privacy-option" data-mode="public" role="radio" tabindex="0">
+          <div class="privacy-option__radio"></div>
+          <div class="privacy-option__body">
+            <div class="privacy-option__label">通常公開</div>
+            <div class="privacy-option__desc">予約時に店主にあなたの LINE 名・プロフィール画像が表示されます。常連として認識してもらえます。</div>
+          </div>
+        </div>
+        <div class="privacy-option" data-mode="anonymous" role="radio" tabindex="0">
+          <div class="privacy-option__radio"></div>
+          <div class="privacy-option__body">
+            <div class="privacy-option__label">匿名モード</div>
+            <div class="privacy-option__desc">店主には「匿名さん」と表示され、来店実績だけが見えます。名前・写真は隠せますが、運営者には実名が分かるためトラブル時の対応は可能です。</div>
+          </div>
+        </div>
+      </div>
+      <button class="btn btn--primary" id="btn-save" type="button" disabled>保 存</button>
+    </div>
+
+    <button class="btn btn--ghost" id="btn-logout" type="button">ログアウト</button>
+
+    <p class="note">
+      設定は予約・お気に入り含めて即座に反映されます。<br>
+      過去の予約も匿名扱いに切り替わります。
+    </p>
+  </div>
+</div>
+
+<div class="toast" id="toast">保存しました</div>
+
+<script>
+(function () {
+  'use strict';
+  var API = (window.NAKASHINCHI_API || '').replace(/\/$/, '');
+
+  var loginPrompt = document.getElementById('login-prompt');
+  var loggedIn   = document.getElementById('logged-in');
+  var btnLogin   = document.getElementById('btn-login');
+  var btnLogout  = document.getElementById('btn-logout');
+  var btnSave    = document.getElementById('btn-save');
+  var profImg    = document.getElementById('prof-img');
+  var profName   = document.getElementById('prof-name');
+  var profId     = document.getElementById('prof-id');
+  var optsEl     = document.getElementById('privacy-options');
+  var toast      = document.getElementById('toast');
+
+  var currentMode = 'public';
+  var selectedMode = 'public';
+
+  function showToast(msg, ok) {
+    toast.textContent = msg || '保存しました';
+    toast.style.background = ok === false ? 'rgba(232,80,96,0.94)' : 'rgba(6,199,85,0.92)';
+    toast.setAttribute('data-show', 'true');
+    setTimeout(function () { toast.removeAttribute('data-show'); }, 2200);
+  }
+
+  function applyOptionUI() {
+    optsEl.querySelectorAll('.privacy-option').forEach(function (el) {
+      el.setAttribute('aria-pressed', el.dataset.mode === selectedMode ? 'true' : 'false');
+    });
+    btnSave.disabled = (selectedMode === currentMode);
+  }
+  optsEl.addEventListener('click', function (e) {
+    var el = e.target.closest('.privacy-option');
+    if (!el) return;
+    selectedMode = el.dataset.mode;
+    applyOptionUI();
+  });
+
+  async function loadProfile() {
+    var auth = window.nakashinchiLineAuth;
+    if (!auth || !auth.isLoggedIn()) {
+      loginPrompt.hidden = false;
+      loggedIn.hidden = true;
+      return;
+    }
+    var c = auth.getCustomer();
+    if (c) {
+      profName.textContent = c.name || '—';
+      profId.textContent   = c.id || '';
+      if (c.picture) { profImg.src = c.picture; profImg.style.display = ''; }
+      else profImg.style.display = 'none';
+    }
+    // /api/auth/me で privacyMode を取得
+    try {
+      var r = await fetch(API + '/api/auth/me', {
+        headers: { 'Authorization': 'Bearer ' + auth.getToken() }
+      });
+      if (r.ok) {
+        var data = await r.json();
+        currentMode  = data.customer.privacyMode || 'public';
+        selectedMode = currentMode;
+        applyOptionUI();
+      }
+    } catch (_) {}
+    loginPrompt.hidden = true;
+    loggedIn.hidden = false;
+  }
+
+  btnLogin.addEventListener('click', function () {
+    if (window.nakashinchiLineAuth) {
+      window.nakashinchiLineAuth.login(location.pathname + location.search);
+    }
+  });
+  btnLogout.addEventListener('click', function () {
+    if (window.nakashinchiLineAuth) window.nakashinchiLineAuth.logout();
+    location.href = '../';
+  });
+
+  btnSave.addEventListener('click', async function () {
+    var auth = window.nakashinchiLineAuth;
+    if (!auth || !auth.isLoggedIn()) return;
+    btnSave.disabled = true;
+    btnSave.textContent = '保存中…';
+    try {
+      var r = await fetch(API + '/api/customer/me', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + auth.getToken() },
+        body: JSON.stringify({ privacyMode: selectedMode })
+      });
+      if (!r.ok) throw new Error('http_' + r.status);
+      currentMode = selectedMode;
+      showToast('保存しました');
+      applyOptionUI();
+    } catch (e) {
+      showToast('保存に失敗しました', false);
+    } finally {
+      btnSave.textContent = '保 存';
+    }
+  });
+
+  function waitAuth(cb) {
+    if (window.nakashinchiLineAuth) cb();
+    else setTimeout(function () { waitAuth(cb); }, 50);
+  }
+  waitAuth(loadProfile);
+})();
+</script>
+
+</body>
+</html>
