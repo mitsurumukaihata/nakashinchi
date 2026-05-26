@@ -115,6 +115,63 @@ body {
   margin-bottom: 12px;
 }
 
+.score-card {
+  text-align: center;
+}
+.score-card__main {
+  padding: 18px 0 14px;
+  border-bottom: 1px dashed var(--paper-faint);
+  margin-bottom: 14px;
+}
+.score-card__label {
+  font-size: 10px;
+  letter-spacing: 0.25em;
+  color: var(--paper-dim);
+  margin-bottom: 8px;
+}
+.score-card__stars {
+  font-family: var(--font-num);
+  font-size: 28px;
+  letter-spacing: 0.04em;
+  color: var(--accent);
+  line-height: 1;
+  margin-bottom: 6px;
+}
+.score-card__num {
+  font-family: var(--font-num);
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--paper);
+}
+.score-card__breakdown {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  text-align: left;
+}
+.score-row {
+  display: flex; justify-content: space-between;
+  padding: 8px 12px;
+  background: rgba(0,0,0,0.20);
+  border-radius: 8px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  color: var(--paper-soft);
+}
+.score-row strong {
+  font-family: var(--font-num);
+  font-size: 14px;
+  color: var(--paper);
+  font-weight: 600;
+}
+.score-card__note {
+  margin-top: 14px;
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  color: var(--paper-dim);
+  line-height: 1.9;
+}
+
 .privacy-options {
   display: flex; flex-direction: column; gap: 10px;
   margin: 12px 0 14px;
@@ -250,6 +307,27 @@ body {
       </div>
     </div>
 
+    <!-- 予約実績 -->
+    <div class="section" id="score-section" hidden>
+      <div class="section__num">B O O K I N G &nbsp; H I S T O R Y</div>
+      <div class="score-card">
+        <div class="score-card__main">
+          <div class="score-card__label">予約信用度</div>
+          <div class="score-card__stars" id="score-stars">★★★★★</div>
+          <div class="score-card__num" id="score-num">5.0</div>
+        </div>
+        <div class="score-card__breakdown" id="score-breakdown">
+          <div class="score-row"><span>来店成功</span><strong id="cnt-arrived">0</strong></div>
+          <div class="score-row"><span>キャンセル</span><strong id="cnt-cancelled">0</strong></div>
+          <div class="score-row"><span>ノーショー</span><strong id="cnt-timeout">0</strong></div>
+          <div class="score-row"><span>お気に入り</span><strong id="cnt-favs">0</strong></div>
+        </div>
+        <p class="score-card__note" id="score-note">
+          まだ予約履歴がありません。
+        </p>
+      </div>
+    </div>
+
     <div class="section">
       <div class="section__num">P R I V A C Y</div>
       <div class="privacy-options" id="privacy-options" role="radiogroup">
@@ -349,6 +427,40 @@ body {
     } catch (_) {}
     loginPrompt.hidden = true;
     loggedIn.hidden = false;
+    loadScore();
+  }
+
+  async function loadScore() {
+    var auth = window.nakashinchiLineAuth;
+    if (!auth || !auth.isLoggedIn()) return;
+    try {
+      var r = await fetch(API + '/api/customer/score', {
+        headers: { 'Authorization': 'Bearer ' + auth.getToken() }
+      });
+      if (!r.ok) return;
+      var s = await r.json();
+      document.getElementById('score-section').hidden = false;
+      var filled = '★'.repeat(s.stars || 0);
+      var empty  = '☆'.repeat(5 - (s.stars || 0));
+      document.getElementById('score-stars').textContent = filled + empty;
+      document.getElementById('score-num').textContent   = (s.score != null) ? s.score.toFixed(1) : '5.0';
+      document.getElementById('cnt-arrived').textContent   = s.arrived   || 0;
+      document.getElementById('cnt-cancelled').textContent = s.cancelled || 0;
+      document.getElementById('cnt-timeout').textContent   = s.timeout   || 0;
+      document.getElementById('cnt-favs').textContent      = s.favoritesCount || 0;
+
+      var note = document.getElementById('score-note');
+      var total = (s.arrived || 0) + (s.cancelled || 0) + (s.timeout || 0);
+      if (total === 0) {
+        note.textContent = 'まだ予約履歴がありません。お店を予約してみると ★ が積み上がります。';
+      } else if (s.score >= 4.5) {
+        note.textContent = 'あなたは「信頼できる予約客」です。店主は安心してお迎えできます。';
+      } else if (s.score >= 3.5) {
+        note.textContent = 'もう少し ★ を保つには、行けない時は早めにキャンセル連絡をしましょう。';
+      } else {
+        note.textContent = 'ノーショーやキャンセルが続いています。店主に迷惑がかからないよう、無理な予約は控えましょう。';
+      }
+    } catch (_) {}
   }
 
   btnLogin.addEventListener('click', function () {

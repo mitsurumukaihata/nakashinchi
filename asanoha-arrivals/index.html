@@ -264,7 +264,6 @@ body[data-theme="light"] .arr--new { background: rgba(200,16,46,0.08); }
 }
 .arr__visit-tag {
   display: inline-block;
-  margin-left: 6px;
   padding: 1px 7px;
   font-size: 10px;
   letter-spacing: 0.1em;
@@ -272,6 +271,37 @@ body[data-theme="light"] .arr--new { background: rgba(200,16,46,0.08); }
   color: var(--green);
   border-radius: 999px;
   font-family: var(--font-num);
+}
+.arr__sub {
+  margin: 4px 0 6px;
+  display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
+}
+.arr__trust {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 1px 8px;
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  border-radius: 999px;
+  font-family: var(--font-num);
+}
+.arr__trust-stars { font-family: 'Cormorant Garamond', serif; letter-spacing: 0; }
+.arr__trust-num { font-weight: 600; }
+.arr__trust.trust--high { background: rgba(6,199,85,0.18);  color: var(--green); }
+.arr__trust.trust--mid  { background: rgba(255,182,72,0.18); color: var(--amber); }
+.arr__trust.trust--low  { background: rgba(232,80,96,0.20); color: var(--accent-soft); }
+.arr__totals {
+  font-size: 10px;
+  color: var(--paper-dim);
+  letter-spacing: 0.06em;
+  margin-bottom: 6px;
+}
+.arr-btn--noshow {
+  background: rgba(255,182,72,0.18);
+  color: var(--amber);
+  border: 1px solid rgba(255,182,72,0.4);
+}
+.arr-btn--noshow:hover {
+  background: rgba(255,182,72,0.30);
 }
 
 .arr__body { min-width: 0; }
@@ -736,8 +766,28 @@ body[data-theme="light"] .arr--new { background: rgba(200,16,46,0.08); }
     }
     var name = a.customerName || '匿名';
     var visitTag = (a.visitCount && a.visitCount > 0)
-      ? '<span class="arr__visit-tag">来店 ' + a.visitCount + ' 回</span>'
+      ? '<span class="arr__visit-tag">当店 ' + a.visitCount + ' 回</span>'
       : '';
+    var trustTag = '';
+    if (a.trustScore != null) {
+      var filled = '★'.repeat(a.trustStars || 0);
+      var empty  = '☆'.repeat(5 - (a.trustStars || 0));
+      var scoreCls = a.trustScore >= 4.5 ? 'trust--high'
+                   : a.trustScore >= 3.5 ? 'trust--mid'
+                   : 'trust--low';
+      trustTag = '<span class="arr__trust ' + scoreCls + '">' +
+                   '<span class="arr__trust-stars">' + filled + empty + '</span>' +
+                   '<span class="arr__trust-num">' + a.trustScore.toFixed(1) + '</span>' +
+                 '</span>';
+    }
+    var totalsTag = '';
+    if ((a.arrivedTotal || 0) + (a.cancelledTotal || 0) + (a.timeoutTotal || 0) > 0) {
+      var bits = [];
+      if (a.arrivedTotal > 0)   bits.push('来店 ' + a.arrivedTotal);
+      if (a.cancelledTotal > 0) bits.push('キャンセル ' + a.cancelledTotal);
+      if (a.timeoutTotal > 0)   bits.push('ノーショー ' + a.timeoutTotal);
+      totalsTag = '<div class="arr__totals">' + bits.join(' / ') + '</div>';
+    }
 
     var statusTag = '';
     if (a.status === 'arrived')   statusTag = '<span class="arr__status-tag">来 店 済</span>';
@@ -748,8 +798,9 @@ body[data-theme="light"] .arr--new { background: rgba(200,16,46,0.08); }
     if (a.status === 'pending') {
       actions =
         '<div class="arr__actions">' +
-          '<button class="arr-btn arr-btn--accept" data-act="arrived" data-id="' + escapeHtml(a.id) + '">来店確認</button>' +
-          '<button class="arr-btn arr-btn--cancel" data-act="cancelled" data-id="' + escapeHtml(a.id) + '">キャンセル</button>' +
+          '<button class="arr-btn arr-btn--accept"  data-act="arrived"   data-id="' + escapeHtml(a.id) + '">来店確認</button>' +
+          '<button class="arr-btn arr-btn--noshow"  data-act="timeout"   data-id="' + escapeHtml(a.id) + '">ノーショー</button>' +
+          '<button class="arr-btn arr-btn--cancel"  data-act="cancelled" data-id="' + escapeHtml(a.id) + '">キャンセル</button>' +
         '</div>';
     }
 
@@ -759,8 +810,9 @@ body[data-theme="light"] .arr--new { background: rgba(200,16,46,0.08); }
         '<div class="arr__body">' +
           '<div class="arr__name">' + escapeHtml(name) +
             (isAnon ? ' <span class="arr__anon-tag">匿名</span>' : '') +
-            ' ' + visitTag +
           '</div>' +
+          '<div class="arr__sub">' + trustTag + ' ' + visitTag + '</div>' +
+          totalsTag +
           '<div class="arr__meta">' +
             '<span>到着予定<strong>' + fmtHm(a.arrivingAt) + '</strong></span>' +
             '<span>あと<strong>' + a.etaMinutes + '</strong> 分</span>' +
@@ -976,6 +1028,7 @@ body[data-theme="light"] .arr--new { background: rgba(200,16,46,0.08); }
     }
 
     if (act === 'cancelled' && !confirm('この通知をキャンセル扱いにしますか？')) return;
+    if (act === 'timeout' && !confirm('この通知を「ノーショー」(連絡なしで来店せず) として記録しますか？\nお客様の信用度に影響します。')) return;
 
     var token = window.nakashinchiApi.getToken();
     if (!token) { token = await ensureAuth(); if (!token) return; }

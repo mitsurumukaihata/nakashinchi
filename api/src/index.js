@@ -26,6 +26,17 @@ const LINE_PROFILE_URL = 'https://api.line.me/v2/profile';
 //   env.STORE_ADMIN_LINE_IDS_JSON = '{"asanoha":["U...","U..."], "ivory":[...]}' のJSON
 const LINE_PUSH_URL = 'https://api.line.me/v2/bot/message/push';
 
+// 客の予約信用度を計算 (Phase 0: シンプル線形式)
+// 基準 5.0 から cancelled は -0.1、timeout は -0.5、下限 1.0
+function computeTrustScore(arrivedN, cancelledN, timeoutN) {
+  const penalty = (cancelledN || 0) * 0.1 + (timeoutN || 0) * 0.5;
+  const raw = Math.max(1.0, Math.min(5.0, 5.0 - penalty));
+  return {
+    score: Math.round(raw * 10) / 10,    // 5.0 / 4.9 / 4.8 …
+    stars: Math.round(raw)                // 整数 1〜5
+  };
+}
+
 async function pushLineNotification(env, storeId, text) {
   if (!env.LINE_BOT_TOKEN) return;            // 未設定なら何もしない
 
@@ -531,6 +542,36 @@ export default {
         }, 200, cors);
       }
 
+      // GET /api/customer/score — 自分の予約信用度・実績集計
+      if (path === '/api/customer/score' && request.method === 'GET') {
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        const userId = await verifyCustomerToken(token, env.JWT_SECRET);
+        if (!userId) return json({ error: '認証されていません' }, 401, cors);
+
+        const row = await env.DB.prepare(`
+          SELECT
+            (SELECT COUNT(*) FROM arrivals WHERE customer_id = ? AND status = 'arrived')   AS arrived,
+            (SELECT COUNT(*) FROM arrivals WHERE customer_id = ? AND status = 'cancelled') AS cancelled,
+            (SELECT COUNT(*) FROM arrivals WHERE customer_id = ? AND status = 'timeout')   AS timeout,
+            (SELECT COUNT(*) FROM arrivals WHERE customer_id = ? AND status = 'pending')   AS pending,
+            (SELECT COUNT(*) FROM favorites WHERE customer_id = ?)                          AS favorites_count,
+            (SELECT MAX(created_at) FROM arrivals WHERE customer_id = ?)                    AS last_arrival_at
+        `).bind(userId, userId, userId, userId, userId, userId).first();
+
+        const score = computeTrustScore(row.arrived || 0, row.cancelled || 0, row.timeout || 0);
+        return json({
+          score: score.score,
+          stars: score.stars,
+          arrived:        row.arrived || 0,
+          cancelled:      row.cancelled || 0,
+          timeout:        row.timeout || 0,
+          pending:        row.pending || 0,
+          favoritesCount: row.favorites_count || 0,
+          lastArrivalAt:  row.last_arrival_at
+        }, 200, cors);
+      }
+
       // PATCH /api/customer/me — プロフィール設定変更 (現状は privacy_mode のみ)
       if (path === '/api/customer/me' && request.method === 'PATCH') {
         const authHeader = request.headers.get('Authorization') || '';
@@ -639,6 +680,17 @@ export default {
         if (!verifiedStoreId || verifiedStoreId !== storeId) {
           return json({ error: '認証が必要です' }, 401, cors);
         }
+        // lazy timeout: ETA + 30分過ぎても pending のまま → timeout に変更
+        const cutoff = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+        const nowIso = new Date().toISOString();
+        await env.DB.prepare(`
+          UPDATE arrivals
+             SET status = 'timeout', updated_at = ?
+           WHERE store_id = ?
+             AND status = 'pending'
+             AND arriving_at < ?
+        `).bind(nowIso, storeId, cutoff).run();
+
         const statusParam = (url.searchParams.get('status') || 'pending').toLowerCase();
         let q = `
           SELECT a.id, a.store_id, a.customer_id, a.eta_minutes, a.arriving_at,
@@ -648,7 +700,16 @@ export default {
                  (SELECT COUNT(*) FROM arrivals a2
                    WHERE a2.customer_id = a.customer_id
                      AND a2.store_id = a.store_id
-                     AND a2.status = 'arrived') AS visit_count
+                     AND a2.status = 'arrived') AS visit_count,
+                 (SELECT COUNT(*) FROM arrivals a3
+                   WHERE a3.customer_id = a.customer_id
+                     AND a3.status = 'arrived') AS arrived_total,
+                 (SELECT COUNT(*) FROM arrivals a4
+                   WHERE a4.customer_id = a.customer_id
+                     AND a4.status = 'cancelled') AS cancelled_total,
+                 (SELECT COUNT(*) FROM arrivals a5
+                   WHERE a5.customer_id = a.customer_id
+                     AND a5.status = 'timeout') AS timeout_total
           FROM arrivals a
           LEFT JOIN customers c ON c.id = a.customer_id
           WHERE a.store_id = ?
@@ -663,12 +724,18 @@ export default {
         return json({
           arrivals: (rows.results || []).map(r => {
             const isAnon = r.privacy_mode === 'anonymous';
+            const score = computeTrustScore(r.arrived_total || 0, r.cancelled_total || 0, r.timeout_total || 0);
             return {
               id: r.id, storeId: r.store_id, customerId: r.customer_id,
               customerName:    isAnon ? '匿名さん' : r.customer_name,
               customerPicture: isAnon ? null      : r.customer_picture,
               privacyMode:     r.privacy_mode,
               visitCount:      r.visit_count || 0,
+              trustScore:      score.score,
+              trustStars:      score.stars,
+              arrivedTotal:    r.arrived_total || 0,
+              cancelledTotal:  r.cancelled_total || 0,
+              timeoutTotal:    r.timeout_total || 0,
               etaMinutes: r.eta_minutes, arrivingAt: r.arriving_at,
               note: r.note, seatId: r.seat_id, status: r.status,
               createdAt: r.created_at, updatedAt: r.updated_at
