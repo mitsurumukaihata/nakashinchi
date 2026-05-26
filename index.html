@@ -578,6 +578,22 @@ img { display: block; max-width: 100%; height: auto; }
   border-color: var(--color-paper);
   background: rgba(245,239,230,0.05);
 }
+.footer__version {
+  margin-top: 14px !important;
+  font-family: var(--font-num);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: rgba(168,152,136,0.6);
+  display: flex; gap: 8px; justify-content: center; align-items: center;
+  flex-wrap: wrap;
+}
+.footer__version #sw-version-tag {
+  font-style: italic;
+}
+.footer__version #sw-version-tag[data-mismatch="true"] {
+  color: var(--color-accent);
+  font-weight: 600;
+}
 
 @media (max-width: 600px) {
   .store-grid { gap: 18px; }
@@ -1437,6 +1453,10 @@ img { display: block; max-width: 100%; height: auto; }
   <p>広島市中新地 &nbsp;·&nbsp; nakashinchi</p>
   <p style="margin-top:14px"><a href="login/" class="footer__login">店舗関係者 ログイン →</a></p>
   <p style="margin-top:18px">© 2026 nakashinchi</p>
+  <p class="footer__version" id="footer-version">
+    <span data-build="v38">v38 · 2026-05-26 13:50</span>
+    <span id="sw-version-tag"></span>
+  </p>
 </footer>
 
 <script>
@@ -1447,6 +1467,28 @@ img { display: block; max-width: 100%; height: auto; }
 // ===========================================
 (function () {
   'use strict';
+
+  // フッターにSW実バージョン表示 (キャッシュ問題の見える化)
+  (function showSwVersion() {
+    function update() {
+      var tag = document.getElementById('sw-version-tag');
+      var buildSpan = document.querySelector('#footer-version [data-build]');
+      if (!tag || !buildSpan) { setTimeout(update, 100); return; }
+      var buildVer = buildSpan.getAttribute('data-build') || '';
+      if (!('caches' in window)) return;
+      caches.keys().then(function (keys) {
+        var swKey = keys.find(function (k) { return k.indexOf('nakashinchi-') === 0; });
+        if (!swKey) { tag.textContent = '· SW: 未登録'; return; }
+        var swVer = swKey.replace('nakashinchi-', '');
+        tag.textContent = '· SW: ' + swVer;
+        if (buildVer && swVer !== buildVer) {
+          tag.setAttribute('data-mismatch', 'true');
+          tag.textContent += ' ⚠ 古いキャッシュ';
+        }
+      }).catch(function(){});
+    }
+    update();
+  })();
 
   // 到着時にじんわりフェードイン
   function markReady() { document.body.classList.add('is-ready'); }
