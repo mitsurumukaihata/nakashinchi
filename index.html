@@ -240,7 +240,13 @@ strong, b { font-weight: 700; }
   border-color: var(--color-brand);
 }
 .genre-tab__romaji { display: none; }   /* クリーン版では非表示 */
-.genre-tab { touch-action: pan-x; }      /* 横スクロールは許可、縦は親へ */
+.genre-tab {
+  touch-action: pan-x;                   /* 横スクロールは許可、縦は親へ */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;           /* iOS 長押しメニュー抑止 */
+}
+.genre-tab span { pointer-events: none; }  /* 子要素を選択対象にしない */
 .genre-tab--dragging {
   opacity: 0.85;
   transform: scale(1.08);
@@ -1523,7 +1529,7 @@ input, button, select, textarea { font-weight: 600; }
   <p style="margin-top:14px"><a href="login/" class="footer__login">店舗関係者 ログイン →</a></p>
   <p style="margin-top:18px">© 2026 nakashinchi</p>
   <p class="footer__version" id="footer-version">
-    <span data-build="v47">v47 · 2026-05-26 17:25</span>
+    <span data-build="v48">v48 · 2026-05-26 17:40</span>
     <span id="sw-version-tag"></span>
   </p>
 </footer>
@@ -2226,8 +2232,14 @@ input, button, select, textarea { font-weight: 600; }
         dragging = tab; didDrag = true;
         tab.classList.add('genre-tab--dragging');
         try { tab.setPointerCapture(pid); } catch (_) {}
+        // 長押しで発生した文字選択を解除
+        try { var sel = window.getSelection(); if (sel) sel.removeAllRanges(); } catch (_) {}
         if (navigator.vibrate) { try { navigator.vibrate(18); } catch (_) {} }
       }, 320);
+    });
+    // 長押し中の選択開始を抑止
+    genreTabsEl.addEventListener('selectstart', function (e) {
+      if (dragging || holdTimer) e.preventDefault();
     });
 
     genreTabsEl.addEventListener('pointermove', function (e) {
