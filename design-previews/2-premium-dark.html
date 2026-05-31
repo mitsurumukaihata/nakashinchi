@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#15131a">
+<title>案2 上質ダーク — デザインプレビュー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#14121a; --bg2:#1b1822; --surface:rgba(255,255,255,.05); --surface-hi:rgba(255,255,255,.08);
+  --ink:#f3efe9; --muted:rgba(243,239,233,.62); --soft:rgba(243,239,233,.4);
+  --line:rgba(243,239,233,.14); --gold:#cBA56b; --gold-bright:#e2c388; --green:#5ad07a;
+  --r:14px;
+  --serif:'Shippori Mincho B1',serif; --num:'Cormorant Garamond',serif; --sans:'Noto Sans JP',sans-serif;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.6;padding-bottom:60px;
+  background:radial-gradient(ellipse at 50% -5%,rgba(203,165,107,.12)0%,transparent 55%),radial-gradient(ellipse at 80% 100%,rgba(120,90,60,.18)0%,transparent 60%),linear-gradient(180deg,var(--bg)0%,#100e15 100%);}
+.preview-tag{position:fixed;top:0;left:0;right:0;z-index:99;background:#cBA56b;color:#1a1410;text-align:center;font-size:11px;letter-spacing:.1em;padding:6px;font-weight:700;}
+
+.appbar{position:sticky;top:0;z-index:50;background:rgba(20,18,26,.7);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:calc(34px + env(safe-area-inset-top,0)) 20px 14px;display:flex;align-items:center;justify-content:space-between;}
+.appbar__brand{font-family:var(--serif);font-weight:700;font-size:19px;letter-spacing:.08em;}
+.appbar__brand .ac{color:var(--gold-bright);}
+.appbar__login{font-family:var(--num);font-size:13px;letter-spacing:.15em;color:var(--gold-bright);border:1px solid var(--line);padding:8px 16px;border-radius:999px;background:transparent;}
+
+.hero{padding:38px 22px 26px;text-align:center;}
+.hero__eyebrow{font-family:var(--num);font-size:11px;letter-spacing:.5em;color:var(--gold);margin-bottom:14px;text-indent:.5em;}
+.hero__title{font-family:var(--serif);font-weight:700;font-size:30px;line-height:1.45;letter-spacing:.04em;margin-bottom:12px;}
+.hero__lead{font-size:13px;color:var(--muted);letter-spacing:.05em;max-width:24em;margin:0 auto;line-height:2;}
+.hero__divider{width:30px;height:1px;background:var(--gold);margin:22px auto 0;}
+
+.toolbar{display:flex;gap:8px;padding:8px 22px 20px;overflow-x:auto;scrollbar-width:none;}
+.toolbar::-webkit-scrollbar{display:none;}
+.chip{flex-shrink:0;font-size:12px;letter-spacing:.08em;padding:9px 17px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--muted);white-space:nowrap;}
+.chip--on{background:var(--gold);color:#1a1410;border-color:var(--gold);font-weight:700;}
+
+.section{padding:8px 22px 0;}
+.section__head{display:flex;align-items:baseline;gap:12px;margin-bottom:16px;}
+.section__crumb{font-family:var(--num);font-size:10px;letter-spacing:.4em;color:var(--gold);}
+.section__title{font-family:var(--serif);font-weight:600;font-size:18px;letter-spacing:.05em;}
+
+.grid{display:grid;gap:16px;grid-template-columns:1fr;}
+.card{background:linear-gradient(180deg,var(--surface-hi)0%,var(--surface)100%);border:1px solid var(--line);border-radius:var(--r);overflow:hidden;backdrop-filter:blur(10px);box-shadow:inset 0 1px 0 rgba(255,255,255,.12),0 14px 30px rgba(0,0,0,.4);}
+.card__media{position:relative;aspect-ratio:16/10;background:#0e0c12;}
+.card__media img{width:100%;height:100%;object-fit:cover;display:block;}
+.card__media::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 45%,rgba(0,0,0,.55)100%);}
+.card__status{position:absolute;top:13px;left:13px;z-index:2;display:inline-flex;align-items:center;gap:7px;font-size:11px;letter-spacing:.1em;padding:6px 12px;border-radius:999px;background:rgba(0,0,0,.55);border:1px solid rgba(90,208,122,.5);color:#cdf5d6;backdrop-filter:blur(6px);}
+.card__status .dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px rgba(90,208,122,.7);}
+.card__fav{position:absolute;top:11px;right:11px;z-index:2;width:34px;height:34px;border-radius:50%;background:rgba(0,0,0,.5);border:1px solid var(--line);color:var(--gold-bright);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+.card__fav svg{width:15px;height:15px;}
+.card__body{padding:16px 18px 18px;}
+.card__name{font-family:var(--serif);font-weight:700;font-size:24px;letter-spacing:.04em;margin-bottom:6px;}
+.card__name .ac{color:var(--gold-bright);}
+.card__tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.tag{font-family:var(--num);font-size:11px;letter-spacing:.18em;color:var(--gold);border:1px solid var(--line);padding:3px 10px;border-radius:999px;}
+.card__meta{display:flex;gap:18px;font-size:11px;color:var(--muted);letter-spacing:.08em;border-top:1px solid var(--line);padding-top:12px;}
+.card__meta strong{display:block;font-family:var(--num);font-size:16px;color:var(--ink);font-weight:600;margin-top:2px;}
+.card__cta{margin-top:14px;display:block;text-align:center;background:linear-gradient(135deg,var(--gold-bright),var(--gold));color:#1a1410;font-weight:700;font-size:12px;letter-spacing:.2em;padding:13px;border-radius:999px;text-decoration:none;}
+
+@media(min-width:680px){.grid{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+<div class="preview-tag">案 2 ／ 上質ダーク（夜の高級感・ゴールド）</div>
+
+<header class="appbar">
+  <div class="appbar__brand">広島 飲み屋街<span class="ac"> guide</span></div>
+  <button class="appbar__login">L O G I N</button>
+</header>
+
+<section class="hero">
+  <p class="hero__eyebrow">H I R O S H I M A &nbsp; N I G H T</p>
+  <h1 class="hero__title">大人の夜に、<br>もう一軒を。</h1>
+  <p class="hero__lead">広島・中新地〜流川。<br>いま開いている上質な一軒を、静かにご案内。</p>
+  <div class="hero__divider"></div>
+</section>
+
+<div class="toolbar">
+  <span class="chip chip--on">すべて</span>
+  <span class="chip">バー</span>
+  <span class="chip">スナック</span>
+  <span class="chip">ダーツバー</span>
+  <span class="chip">ラウンジ</span>
+</div>
+
+<section class="section">
+  <div class="section__head">
+    <span class="section__crumb">OPEN NOW</span>
+    <h2 class="section__title">いま行ける店</h2>
+  </div>
+  <div class="grid">
+    <article class="card">
+      <div class="card__media">
+        <span class="card__status"><span class="dot"></span>営業中・空席あり</span>
+        <button class="card__fav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+        <img src="../asanoha-hero-bg/public/images/hero-japanese.jpg" alt="麻ノ葉">
+      </div>
+      <div class="card__body">
+        <h3 class="card__name">麻<span class="ac">ノ</span>葉</h3>
+        <div class="card__tags"><span class="tag">SNACK</span><span class="tag">BAR</span></div>
+        <div class="card__meta">
+          <div>営業<strong>17:00–25:00</strong></div>
+          <div>空席<strong>残り 7 席</strong></div>
+        </div>
+        <a class="card__cta" href="#">今 か ら 向 か う</a>
+      </div>
+    </article>
+    <article class="card">
+      <div class="card__media">
+        <span class="card__status"><span class="dot"></span>営業中</span>
+        <button class="card__fav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+        <img src="../ivory-hero-bg/public/images/hero-ivory.jpg" alt="Ivory">
+      </div>
+      <div class="card__body">
+        <h3 class="card__name">Innocent Base Ivory</h3>
+        <div class="card__tags"><span class="tag">BAR</span><span class="tag">DARTS</span></div>
+        <div class="card__meta">
+          <div>営業<strong>21:00–05:00</strong></div>
+          <div>定休<strong>火曜</strong></div>
+        </div>
+        <a class="card__cta" href="#">今 か ら 向 か う</a>
+      </div>
+    </article>
+  </div>
+</section>
+</body>
+</html>

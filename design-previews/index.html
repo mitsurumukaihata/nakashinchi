@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#1f2233">
+<title>デザイン案 比較 — 中新地</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&family=Zen+Kaku+Gothic+New:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{--bg:#eef0f3;--ink:#1f2328;--muted:#6b7280;--line:#e2e5ea;--accent:#d4365a;--brand:#1f2233;}
+body{font-family:'Noto Sans JP',sans-serif;background:var(--bg);color:var(--ink);padding:calc(28px + env(safe-area-inset-top,0)) 18px 50px;line-height:1.6;}
+.wrap{max-width:560px;margin:0 auto;}
+h1{font-family:'Zen Kaku Gothic New',sans-serif;font-weight:900;font-size:24px;margin-bottom:6px;}
+.lead{font-size:13px;color:var(--muted);margin-bottom:26px;}
+.opt{display:block;background:#fff;border:1px solid var(--line);border-radius:16px;padding:18px 20px;margin-bottom:14px;text-decoration:none;color:inherit;box-shadow:0 1px 2px rgba(0,0,0,.04),0 8px 22px rgba(0,0,0,.05);transition:transform .15s,box-shadow .15s;}
+.opt:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(0,0,0,.1);}
+.opt__no{font-family:'Zen Kaku Gothic New',sans-serif;font-weight:900;font-size:13px;color:var(--accent);letter-spacing:.1em;}
+.opt__title{font-family:'Zen Kaku Gothic New',sans-serif;font-weight:900;font-size:19px;margin:4px 0 6px;display:flex;align-items:center;gap:10px;}
+.opt__swatch{display:flex;gap:4px;}
+.opt__swatch span{width:16px;height:16px;border-radius:4px;border:1px solid rgba(0,0,0,.1);}
+.opt__desc{font-size:13px;color:var(--muted);}
+.opt__arrow{float:right;color:var(--muted);font-weight:700;}
+.note{margin-top:24px;padding:16px 18px;background:#fff;border:1px dashed var(--line);border-radius:12px;font-size:12px;color:var(--muted);line-height:1.9;}
+.note strong{color:var(--ink);}
+.badge{display:inline-block;font-size:10px;font-weight:700;color:#fff;background:var(--accent);padding:2px 8px;border-radius:999px;margin-left:6px;vertical-align:middle;}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>デザイン案 比較</h1>
+  <p class="lead">同じ内容（麻ノ葉 + Ivory）を 5 つのデザインで。タップで実物を確認できます。</p>
+
+  <a class="opt" href="1-clean.html">
+    <span class="opt__arrow">→</span>
+    <div class="opt__no">CANDIDATE 01</div>
+    <div class="opt__title">クリーン・万人受け<span class="badge">あなたの希望に近い</span></div>
+    <div class="opt__title" style="font-size:0;margin:0;"><span class="opt__swatch"><span style="background:#fff"></span><span style="background:#1f2233"></span><span style="background:#d4365a"></span></span></div>
+    <div class="opt__desc">白基調・余白広め・モダン SaaS 風。誰でもすっと入れる。月額課金サービスとして最も信頼感が出る王道。</div>
+  </a>
+
+  <a class="opt" href="2-premium-dark.html">
+    <span class="opt__arrow">→</span>
+    <div class="opt__no">CANDIDATE 02</div>
+    <div class="opt__title">上質ダーク <span class="opt__swatch"><span style="background:#14121a"></span><span style="background:#cBA56b"></span><span style="background:#5ad07a"></span></span></div>
+    <div class="opt__desc">深いダーク + ゴールド。大人の夜の高級感。バー・ラウンジ系の店が「載りたい」と思う上品さ。</div>
+  </a>
+
+  <a class="opt" href="3-vibrant.html">
+    <span class="opt__arrow">→</span>
+    <div class="opt__no">CANDIDATE 03</div>
+    <div class="opt__title">ネオンポップ <span class="opt__swatch"><span style="background:#ff3d8b"></span><span style="background:#a855f7"></span><span style="background:#22d3ee"></span></span></div>
+    <div class="opt__desc">ネオン・グラデ・賑やか。若者向けで親しみやすい。SNS 映え重視のエリアに強い。</div>
+  </a>
+
+  <a class="opt" href="4-utility.html">
+    <span class="opt__arrow">→</span>
+    <div class="opt__no">CANDIDATE 04</div>
+    <div class="opt__title">実用ユーティリティ <span class="opt__swatch"><span style="background:#fff"></span><span style="background:#e8533b"></span><span style="background:#2563eb"></span></span></div>
+    <div class="opt__desc">地図中心・情報密度高め。食べログ / Google マップ的な実用ツール感。距離・空席をすぐ判断。</div>
+  </a>
+
+  <a class="opt" href="5-editorial.html">
+    <span class="opt__arrow">→</span>
+    <div class="opt__no">CANDIDATE 05</div>
+    <div class="opt__title">エディトリアル <span class="opt__swatch"><span style="background:#f3eee4"></span><span style="background:#9a2828"></span><span style="background:#1c1a17"></span></span></div>
+    <div class="opt__desc">雑誌風・大きな写真と明朝。街ガイド誌のような上質さ。「中新地らしさ」を残しつつ洗練。</div>
+  </a>
+
+  <div class="note">
+    <strong>選び方のヒント:</strong><br>
+    ・月額課金で「店が誇れる」… 01 か 02<br>
+    ・万人がすっと使える信頼感 … <strong>01</strong>（あなたの希望）<br>
+    ・夜の高級店も巻き込みたい … 02<br>
+    ・若い街・SNS 世代狙い … 03<br>
+    ・とにかく実用性・情報量 … 04<br>
+    ・今の麻ノ葉の世界観を洗練して残す … 05<br><br>
+    気に入った案 or「01 のここを 02 風に」みたいな組み合わせ指定でも OK。決まったら本実装します。
+  </div>
+</div>
+</body>
+</html>

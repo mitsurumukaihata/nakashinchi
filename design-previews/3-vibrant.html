@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#0e0b1a">
+<title>案3 ネオンポップ — デザインプレビュー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@500;700;800;900&family=Zen+Kaku+Gothic+New:wght@700;900&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0e0b1a; --surface:rgba(255,255,255,.06); --ink:#f5f3ff; --muted:rgba(245,243,255,.6);
+  --line:rgba(255,255,255,.12);
+  --p1:#ff3d8b; --p2:#a855f7; --p3:#22d3ee; --green:#34e89e;
+  --r:18px;
+  --sans:'Zen Kaku Gothic New','Outfit',sans-serif; --num:'Outfit',sans-serif;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.55;padding-bottom:60px;overflow-x:hidden;}
+body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(circle at 15% 10%,rgba(255,61,139,.25)0%,transparent 40%),radial-gradient(circle at 85% 25%,rgba(168,85,247,.22)0%,transparent 42%),radial-gradient(circle at 50% 95%,rgba(34,211,238,.18)0%,transparent 45%);}
+.preview-tag{position:fixed;top:0;left:0;right:0;z-index:99;background:linear-gradient(90deg,var(--p1),var(--p2),var(--p3));color:#fff;text-align:center;font-size:11px;letter-spacing:.1em;padding:6px;font-weight:800;}
+.appbar,.hero,.toolbar,.section{position:relative;z-index:1;}
+
+.appbar{position:sticky;top:0;z-index:50;background:rgba(14,11,26,.7);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);padding:calc(34px + env(safe-area-inset-top,0)) 20px 14px;display:flex;align-items:center;justify-content:space-between;}
+.appbar__brand{font-weight:900;font-size:18px;letter-spacing:-.01em;}
+.appbar__brand .ac{background:linear-gradient(90deg,var(--p1),var(--p3));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.appbar__login{font-weight:800;font-size:12px;color:#fff;background:linear-gradient(135deg,var(--p1),var(--p2));padding:9px 16px;border:none;border-radius:999px;}
+
+.hero{padding:36px 20px 22px;text-align:center;}
+.hero__eyebrow{font-family:var(--num);font-weight:800;font-size:11px;letter-spacing:.25em;background:linear-gradient(90deg,var(--p1),var(--p3));-webkit-background-clip:text;background-clip:text;color:transparent;margin-bottom:12px;}
+.hero__title{font-weight:900;font-size:34px;line-height:1.25;letter-spacing:-.01em;margin-bottom:12px;}
+.hero__title .grad{background:linear-gradient(90deg,var(--p1),var(--p2),var(--p3));-webkit-background-clip:text;background-clip:text;color:transparent;}
+.hero__lead{font-size:14px;color:var(--muted);max-width:22em;margin:0 auto;}
+
+.toolbar{display:flex;gap:8px;padding:8px 20px 18px;overflow-x:auto;scrollbar-width:none;}
+.toolbar::-webkit-scrollbar{display:none;}
+.chip{flex-shrink:0;font-weight:700;font-size:13px;padding:9px 17px;border-radius:999px;background:var(--surface);border:1px solid var(--line);color:var(--muted);white-space:nowrap;}
+.chip--on{background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff;border-color:transparent;}
+
+.section{padding:8px 20px 0;}
+.section__head{display:flex;align-items:center;gap:10px;margin-bottom:16px;}
+.section__title{font-weight:900;font-size:19px;}
+.section__pill{font-family:var(--num);font-weight:800;font-size:11px;color:#fff;background:linear-gradient(135deg,var(--green),var(--p3));padding:3px 10px;border-radius:999px;}
+
+.grid{display:grid;gap:16px;grid-template-columns:1fr;}
+.card{position:relative;border-radius:var(--r);overflow:hidden;background:var(--surface);border:1px solid var(--line);}
+.card::before{content:'';position:absolute;inset:0;padding:1.5px;border-radius:var(--r);background:linear-gradient(135deg,var(--p1),var(--p2),var(--p3));-webkit-mask:linear-gradient(#000 0 0) content-box,linear-gradient(#000 0 0);-webkit-mask-composite:xor;mask-composite:exclude;pointer-events:none;opacity:.7;}
+.card__media{position:relative;aspect-ratio:16/10;background:#1a1530;}
+.card__media img{width:100%;height:100%;object-fit:cover;display:block;}
+.card__status{position:absolute;top:12px;left:12px;display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:11px;padding:6px 12px;border-radius:999px;background:rgba(52,232,158,.92);color:#06281a;}
+.card__status .dot{width:7px;height:7px;border-radius:50%;background:#06281a;}
+.card__fav{position:absolute;top:10px;right:10px;width:36px;height:36px;border-radius:50%;background:rgba(0,0,0,.4);border:1px solid var(--line);color:var(--p1);display:flex;align-items:center;justify-content:center;backdrop-filter:blur(6px);}
+.card__fav svg{width:17px;height:17px;}
+.card__body{padding:15px 17px 17px;}
+.card__name{font-weight:900;font-size:22px;margin-bottom:8px;}
+.card__tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:12px;}
+.tag{font-weight:700;font-size:11px;color:var(--ink);background:var(--surface);border:1px solid var(--line);padding:4px 10px;border-radius:999px;}
+.card__cta{margin-top:4px;display:block;text-align:center;background:linear-gradient(135deg,var(--p1),var(--p2));color:#fff;font-weight:800;font-size:14px;padding:13px;border-radius:12px;text-decoration:none;}
+
+@media(min-width:680px){.grid{grid-template-columns:1fr 1fr;}}
+</style>
+</head>
+<body>
+<div class="preview-tag">案 3 ／ ネオンポップ（楽しい・若者ノリ）</div>
+
+<header class="appbar">
+  <div class="appbar__brand">広島 飲み屋街<span class="ac">GUIDE</span></div>
+  <button class="appbar__login">ログイン</button>
+</header>
+
+<section class="hero">
+  <p class="hero__eyebrow">HIROSHIMA NIGHT GUIDE</p>
+  <h1 class="hero__title">今夜、<span class="grad">どこ行く？</span></h1>
+  <p class="hero__lead">中新地も流川も。いま開いてる・空いてる店が秒でわかる。</p>
+</section>
+
+<div class="toolbar">
+  <span class="chip chip--on">すべて</span>
+  <span class="chip">バー</span>
+  <span class="chip">スナック</span>
+  <span class="chip">ダーツ</span>
+  <span class="chip">ラウンジ</span>
+</div>
+
+<section class="section">
+  <div class="section__head">
+    <h2 class="section__title">いま行ける店</h2>
+    <span class="section__pill">2軒 空席あり</span>
+  </div>
+  <div class="grid">
+    <article class="card">
+      <div class="card__media">
+        <span class="card__status"><span class="dot"></span>空席あり</span>
+        <button class="card__fav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+        <img src="../asanoha-hero-bg/public/images/hero-japanese.jpg" alt="麻ノ葉">
+      </div>
+      <div class="card__body">
+        <h3 class="card__name">麻ノ葉</h3>
+        <div class="card__tags"><span class="tag">🍶 スナック</span><span class="tag">🍸 バー</span></div>
+        <a class="card__cta" href="#">今から向かう 🚶</a>
+      </div>
+    </article>
+    <article class="card">
+      <div class="card__media">
+        <span class="card__status"><span class="dot"></span>営業中</span>
+        <button class="card__fav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
+        <img src="../ivory-hero-bg/public/images/hero-ivory.jpg" alt="Ivory">
+      </div>
+      <div class="card__body">
+        <h3 class="card__name">Ivory</h3>
+        <div class="card__tags"><span class="tag">🍸 バー</span><span class="tag">🎯 ダーツ</span></div>
+        <a class="card__cta" href="#">今から向かう 🚶</a>
+      </div>
+    </article>
+  </div>
+</section>
+</body>
+</html>

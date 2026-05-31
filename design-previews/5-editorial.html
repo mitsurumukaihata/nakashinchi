@@ -1,0 +1,119 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#f3eee4">
+<title>案5 エディトリアル — デザインプレビュー</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@500;600;700;800&family=Cormorant+Garamond:wght@500;600;700&family=Noto+Sans+JP:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#f3eee4; --surface:#fbf8f1; --ink:#1c1a17; --muted:#6e665a; --soft:#9c9384;
+  --line:#ddd4c4; --accent:#9a2828; --green:#3a7d44;
+  --serif:'Shippori Mincho B1',serif; --num:'Cormorant Garamond',serif; --sans:'Noto Sans JP',sans-serif;
+}
+body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased;line-height:1.6;padding-bottom:60px;}
+.preview-tag{position:fixed;top:0;left:0;right:0;z-index:99;background:var(--ink);color:var(--bg);text-align:center;font-size:11px;letter-spacing:.1em;padding:6px;font-weight:600;}
+
+.appbar{padding:calc(36px + env(safe-area-inset-top,0)) 22px 16px;display:flex;align-items:center;justify-content:space-between;border-bottom:1.5px solid var(--ink);}
+.appbar__brand{font-family:var(--serif);font-weight:800;font-size:18px;letter-spacing:.04em;}
+.appbar__login{font-family:var(--num);font-size:14px;letter-spacing:.1em;color:var(--ink);text-decoration:underline;text-underline-offset:3px;}
+
+/* masthead */
+.mast{padding:30px 22px 26px;text-align:center;border-bottom:1.5px solid var(--ink);}
+.mast__kicker{font-family:var(--num);font-size:12px;letter-spacing:.45em;color:var(--accent);margin-bottom:16px;text-indent:.45em;}
+.mast__title{font-family:var(--serif);font-weight:800;font-size:40px;line-height:1.15;letter-spacing:.02em;margin-bottom:14px;}
+.mast__lead{font-size:13px;color:var(--muted);letter-spacing:.04em;line-height:2;max-width:26em;margin:0 auto;}
+.mast__rule{display:flex;align-items:center;gap:12px;max-width:200px;margin:20px auto 0;}
+.mast__rule::before,.mast__rule::after{content:'';flex:1;height:1px;background:var(--soft);}
+.mast__rule span{font-family:var(--num);font-size:11px;letter-spacing:.3em;color:var(--soft);}
+
+/* index nav */
+.toolbar{display:flex;gap:18px;padding:14px 22px;justify-content:center;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none;}
+.toolbar::-webkit-scrollbar{display:none;}
+.chip{flex-shrink:0;font-family:var(--serif);font-size:14px;color:var(--muted);white-space:nowrap;padding-bottom:3px;}
+.chip--on{color:var(--accent);border-bottom:2px solid var(--accent);font-weight:700;}
+
+.section{padding:24px 22px 0;}
+.section__num{font-family:var(--num);font-size:13px;letter-spacing:.3em;color:var(--accent);margin-bottom:4px;}
+.section__title{font-family:var(--serif);font-weight:700;font-size:20px;margin-bottom:20px;letter-spacing:.04em;}
+
+/* editorial cards - large image, magazine layout */
+.feature{margin-bottom:32px;}
+.feature__media{position:relative;aspect-ratio:3/2;overflow:hidden;background:#e5ddcd;margin-bottom:14px;}
+.feature__media img{width:100%;height:100%;object-fit:cover;display:block;filter:saturate(1.02);}
+.feature__status{position:absolute;top:14px;left:14px;font-family:var(--num);font-size:12px;letter-spacing:.15em;padding:6px 13px;background:var(--surface);color:var(--green);border:1px solid var(--ink);}
+.feature__status--full{color:var(--accent);}
+.feature__no{font-family:var(--num);font-size:13px;letter-spacing:.3em;color:var(--soft);margin-bottom:4px;}
+.feature__name{font-family:var(--serif);font-weight:800;font-size:30px;line-height:1.2;letter-spacing:.03em;margin-bottom:6px;}
+.feature__name .ac{color:var(--accent);}
+.feature__cat{font-size:12px;color:var(--muted);letter-spacing:.1em;margin-bottom:12px;}
+.feature__cat::before{content:'—  ';color:var(--soft);}
+.feature__meta{display:flex;gap:24px;padding:12px 0;border-top:1px solid var(--line);border-bottom:1px solid var(--line);margin-bottom:14px;}
+.feature__meta dt{font-family:var(--num);font-size:10px;letter-spacing:.25em;color:var(--soft);text-transform:uppercase;margin-bottom:2px;}
+.feature__meta dd{font-family:var(--serif);font-size:16px;font-weight:600;}
+.feature__cta{display:inline-block;font-family:var(--serif);font-size:14px;font-weight:700;letter-spacing:.15em;color:var(--ink);border-bottom:2px solid var(--accent);padding-bottom:3px;text-decoration:none;}
+</style>
+</head>
+<body>
+<div class="preview-tag">案 5 ／ エディトリアル（雑誌風・写真で魅せる）</div>
+
+<header class="appbar">
+  <div class="appbar__brand">広島 飲み屋街ガイド</div>
+  <a class="appbar__login" href="#">Sign in</a>
+</header>
+
+<section class="mast">
+  <p class="mast__kicker">H I R O S H I M A &nbsp; N I G H T &nbsp; G U I D E</p>
+  <h1 class="mast__title">夜の街を、<br>編集する。</h1>
+  <p class="mast__lead">中新地から流川まで。<br>その夜にふさわしい一軒を、いまの空席とともに。</p>
+  <div class="mast__rule"><span>EST. 2026</span></div>
+</section>
+
+<nav class="toolbar">
+  <span class="chip chip--on">すべて</span>
+  <span class="chip">バー</span>
+  <span class="chip">スナック</span>
+  <span class="chip">ダーツバー</span>
+  <span class="chip">ラウンジ</span>
+</nav>
+
+<section class="section">
+  <p class="section__num">01</p>
+  <h2 class="section__title">いま行ける店</h2>
+
+  <article class="feature">
+    <div class="feature__media">
+      <span class="feature__status">営業中・空席あり</span>
+      <img src="../asanoha-hero-bg/public/images/hero-japanese.jpg" alt="麻ノ葉">
+    </div>
+    <p class="feature__no">No. 01</p>
+    <h3 class="feature__name">麻<span class="ac">ノ</span>葉</h3>
+    <p class="feature__cat">スナック・バー / 中新地</p>
+    <dl class="feature__meta">
+      <div><dt>Hours</dt><dd>17:00–25:00</dd></div>
+      <div><dt>Seats</dt><dd>残り 7 席</dd></div>
+    </dl>
+    <a class="feature__cta" href="#">今から向かう →</a>
+  </article>
+
+  <article class="feature">
+    <div class="feature__media">
+      <span class="feature__status">営業中</span>
+      <img src="../ivory-hero-bg/public/images/hero-ivory.jpg" alt="Ivory">
+    </div>
+    <p class="feature__no">No. 02</p>
+    <h3 class="feature__name">Innocent Base Ivory</h3>
+    <p class="feature__cat">バー・ダーツバー / 流川</p>
+    <dl class="feature__meta">
+      <div><dt>Hours</dt><dd>21:00–05:00</dd></div>
+      <div><dt>Closed</dt><dd>火曜</dd></div>
+    </dl>
+    <a class="feature__cta" href="#">今から向かう →</a>
+  </article>
+</section>
+</body>
+</html>
