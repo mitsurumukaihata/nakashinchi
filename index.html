@@ -1509,7 +1509,7 @@ input, button, select, textarea { font-weight: 600; }
   <p style="margin-top:14px"><a href="login/" class="footer__login">店舗関係者 ログイン →</a></p>
   <p style="margin-top:18px">© 2026 nakashinchi</p>
   <p class="footer__version" id="footer-version">
-    <span data-build="v44">v44 · 2026-05-26 16:00</span>
+    <span data-build="v45">v45 · 2026-05-26 16:30</span>
     <span id="sw-version-tag"></span>
   </p>
 </footer>
@@ -1723,6 +1723,25 @@ input, button, select, textarea { font-weight: 600; }
     updateGenreCardBadges('ivory', state, label);
   }
 
+  // demo 店舗 (config の hours のみ) のバッジを時刻から計算して表示
+  function updateDemoBadges() {
+    (window.NAKASHINCHI_STORES || []).forEach(function (s) {
+      if (!s.demo || !s.hours) return;
+      var h = {
+        open: s.hours.open, close: s.hours.close,
+        crossDay: s.hours.crossDay, closedDays: s.hours.closedDays || [],
+        reception: 'normal'
+      };
+      var st = isOpenNow(new Date(), h);
+      var state, label;
+      if (!st.open) {
+        if ((h.closedDays || []).indexOf(new Date().getDay()) !== -1) { state = 'closed'; label = '本日定休'; }
+        else { state = 'closed'; label = '営業時間外'; }
+      } else { state = 'open'; label = '営業中'; }
+      updateGenreCardBadges(s.id, state, label);
+    });
+  }
+
   // 複数店舗の API フェッチ (raw fetch、api-client は単一店舗用なので)
   async function fetchStoreAll(storeId) {
     if (!window.NAKASHINCHI_API) return;
@@ -1743,6 +1762,7 @@ input, button, select, textarea { font-weight: 600; }
     await Promise.all(STORES.map(function (s) { return fetchStoreAll(s.id); }));
     refreshAsanoha();
     refreshIvory();
+    updateDemoBadges();
     refreshHeadingCounts();
     // 各店舗の info.categories を反映してジャンル棚を再構築
     applyDynamicCategories();
@@ -1772,6 +1792,7 @@ input, button, select, textarea { font-weight: 600; }
       // refresh は再描画後にもう一度バッジを当てる
       refreshAsanoha();
       refreshIvory();
+      updateDemoBadges();
     }
   }
 
@@ -1805,8 +1826,9 @@ input, button, select, textarea { font-weight: 600; }
 
   refreshAsanoha();
   refreshIvory();
+  updateDemoBadges();
   refreshFromApiAll();
-  setInterval(function () { refreshAsanoha(); refreshIvory(); applyFilter(); }, 60 * 1000);
+  setInterval(function () { refreshAsanoha(); refreshIvory(); updateDemoBadges(); applyFilter(); }, 60 * 1000);
   setInterval(refreshFromApiAll, 30 * 1000);
   window.addEventListener('storage', function (e) {
     if (!e.key) return;
@@ -1832,7 +1854,12 @@ input, button, select, textarea { font-weight: 600; }
   try { currentGenre = localStorage.getItem(GENRE_KEY) || 'all'; } catch (_) {}
 
   function storeHasAvailability(storeId) {
-    var h = readHours(storeId, storeId === 'ivory' ? IVORY_DEFAULT_HOURS : DEFAULT_HOURS);
+    var s = STORE_BY_ID[storeId];
+    // demo / その他店舗は config の hours を既定値に使う
+    var defHours = (s && s.hours)
+      ? { open: s.hours.open, close: s.hours.close, crossDay: s.hours.crossDay, closedDays: s.hours.closedDays || [], reception: 'normal' }
+      : (storeId === 'ivory' ? IVORY_DEFAULT_HOURS : DEFAULT_HOURS);
+    var h = readHours(storeId, defHours);
     var st = isOpenNow(new Date(), h);
     if (!st.open) return false;
     if (storeId === 'asanoha') {

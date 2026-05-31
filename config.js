@@ -56,7 +56,65 @@ window.NAKASHINCHI_STORES = [
     imageUrl: 'ivory-hero-bg/public/images/hero-ivory.jpg',
     heroUrl:  'ivory-hero-bg/',
     adminUrl: null   // 管理画面は今後対応
-  }
+  },
+
+  /* ==========================================================
+     ↓↓↓ デモ用テスト店舗 13件 (demo:true) ↓↓↓
+     本番公開前に この demo:true の店を一括削除すること。
+     写真は Unsplash (バー系)、heroUrl は未設定 (カードは '#')
+     ========================================================== */
+  { demo:true, id:'tsukuyomi', name:'BAR 月読', yomi:'つくよみ', romaji:'TSUKUYOMI',
+    lat:34.3918, lng:132.4648, hours:{open:'19:00',close:'03:00',crossDay:true,closedDays:[]},
+    seats:null, categories:['bar'], area:'薬研堀',
+    imageUrl:'https://images.unsplash.com/photo-1514933651103-005eec06c04b?w=600&h=400&fit=crop&q=70', heroUrl:'' },
+  { demo:true, id:'akari', name:'スナック 灯り', yomi:'あかり', romaji:'AKARI',
+    lat:34.3929, lng:132.4538, hours:{open:'18:00',close:'00:00',crossDay:true,closedDays:[]},
+    seats:null, categories:['snack'], area:'中新地',
+    imageUrl:'https://images.unsplash.com/photo-1572116469696-31de0f17cc34?w=600&h=400&fit=crop&q=70', heroUrl:'' },
+  { demo:true, id:'rasen', name:'BAR 螺旋', yomi:'らせん', romaji:'RASEN',
+    lat:34.3912, lng:132.4625, hours:{open:'20:00',close:'04:00',crossDay:true,closedDays:[]},
+    seats:null, categories:['bar'], area:'流川',
+    imageUrl:'https://images.unsplash.com/photo-1543007630-9710e4a00a20?w=600&h=400&fit=crop&q=70', heroUrl:'' },
+  { demo:true, id:'tsubaki', name:'ラウンジ 椿', yomi:'つばき', romaji:'TSUBAKI',
+    lat:34.3909, lng:132.4631, hours:{open:'20:00',close:'02:00',crossDay:true,closedDays:[]},
+    seats:null, categories:['lounge'], area:'流川',
+    imageUrl:'https://images.unsplash.com/photo-1546171753-97d7676e4602?w=600&h=400&fit=crop&q=70', heroUrl:'' },
+  { demo:true, id:'kujira', name:'立ち呑み 鯨', yomi:'くじら', romaji:'KUJIRA',
+    lat:34.3922, lng:132.4641, hours:{open:'16:00',close:'23:00',crossDay:false,closedDays:[]},
+    seats:null, categories:['standing'], area:'薬研堀',
+    imageUrl:'https://images.unsplash.com/photo-1574096079513-d8259312b785?w=600&h=400&fit=crop&q=70', heroUrl:'' },
+  { demo:true, id:'bullseye', name:'DARTS & BAR Bullseye', short:'Bullseye', yomi:'ブルズアイ', romaji:'BULLSEYE',
+    lat:34.3935, lng:132.4612, hours:{open:'19:00',close:'05:00',crossDay:true,closedDays:[]},
+    seats:null, categories:['darts','bar'], area:'銀山町',
+    imageUrl:'https://images.unsplash.com/photo-1566417713940-fe7c737a9ef2?w=600&h=400&fit=crop&q=70', heroUrl:'' },
+  { demo:true, id:'homura', name:'炭火 火群', yomi:'ほむら', romaji:'HOMURA',
+    lat:34.3927, lng:132.4533, hours:{open:'17:00',close:'00:00',crossDay:true,closedDays:[]},
+    seats:null, categories:['izakaya'], area:'中新地',
+    imageUrl:'https://images.unsplash.com/photo-1525268323446-0505b6fe7778?w=600&h=400&fit=crop&q=70', heroUrl:'' },
+  { demo:true, id:'yasou', name:'BAR 夜想', yomi:'やそう', romaji:'YASOU',
+    lat:34.3916, lng:132.4652, hours:{open:'20:00',close:'03:00',crossDay:true,closedDays:[]},
+    seats:null, categories:['bar'], area:'薬研堀',
+    imageUrl:'https://images.unsplash.com/photo-1559339352-11d035aa65de?w=600&h=400&fit=crop&q=70', heroUrl:'' },
+  { demo:true, id:'miyabi', name:'スナック みやび', yomi:'みやび', romaji:'MIYABI',
+    lat:34.3911, lng:132.4628, hours:{open:'18:30',close:'01:00',crossDay:true,closedDays:[]},
+    seats:null, categories:['snack'], area:'流川',
+    imageUrl:'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=600&h=400&fit=crop&q=70', heroUrl:'' },
+  { demo:true, id:'verde', name:'Lounge Verde', short:'Verde', yomi:'ヴェルデ', romaji:'VERDE',
+    lat:34.3908, lng:132.4634, hours:{open:'20:00',close:'02:00',crossDay:true,closedDays:[0]},
+    seats:null, categories:['lounge'], area:'流川',
+    imageUrl:'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=600&h=400&fit=crop&q=70', heroUrl:'' },
+  { demo:true, id:'daikoku', name:'角打ち 大黒', yomi:'だいこく', romaji:'DAIKOKU',
+    lat:34.3930, lng:132.4536, hours:{open:'15:00',close:'22:00',crossDay:false,closedDays:[]},
+    seats:null, categories:['standing'], area:'中新地',
+    imageUrl:'https://images.unsplash.com/photo-1436076863939-06870fe779c2?w=600&h=400&fit=crop&q=70', heroUrl:'' },
+  { demo:true, id:'aria', name:'CLUB Aria', short:'Aria', yomi:'アリア', romaji:'ARIA',
+    lat:34.3907, lng:132.4637, hours:{open:'21:00',close:'05:00',crossDay:true,closedDays:[]},
+    seats:null, categories:['club','lounge'], area:'流川',
+    imageUrl:'https://images.unsplash.com/photo-1485182708500-e8f1f318ba72?w=600&h=400&fit=crop&q=70', heroUrl:'' },
+  { demo:true, id:'ebisu', name:'酒場 ゑびす', yomi:'えびす', romaji:'EBISU',
+    lat:34.3937, lng:132.4615, hours:{open:'17:00',close:'23:30',crossDay:false,closedDays:[]},
+    seats:null, categories:['izakaya'], area:'銀山町',
+    imageUrl:'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&h=400&fit=crop&q=70', heroUrl:'' }
 ];
 
 // ジャンル定義 (タブ表示順 + ラベル)
