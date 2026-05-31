@@ -1172,13 +1172,18 @@ strong, b { font-weight: 700; }
 }
 .favs-list-viewport {
   max-width: 1100px; margin: 0 auto;
-  overflow: hidden;
-  padding: 4px 0 16px;
+  overflow-x: auto;
+  overflow-y: hidden;
+  padding: 4px 20px 16px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  scroll-behavior: auto;
+  overscroll-behavior-x: contain;
 }
+.favs-list-viewport::-webkit-scrollbar { display: none; }
 .favs-list {
-  display: flex; gap: 14px;
+  display: flex; gap: 12px;
   width: max-content;
-  will-change: transform;
 }
 .favs-list[data-static="true"] {
   width: 100%;
@@ -1529,7 +1534,7 @@ input, button, select, textarea { font-weight: 600; }
   <p style="margin-top:14px"><a href="login/" class="footer__login">店舗関係者 ログイン →</a></p>
   <p style="margin-top:18px">© 2026 nakashinchi</p>
   <p class="footer__version" id="footer-version">
-    <span data-build="v48">v48 · 2026-05-26 17:40</span>
+    <span data-build="v49">v49 · 2026-05-26 17:55</span>
     <span id="sw-version-tag"></span>
   </p>
 </footer>
@@ -2896,7 +2901,7 @@ input, button, select, textarea { font-weight: 600; }
   }
 
   // ===========================================
-  // お気に入り 自動スライド (translateX マルキー方式・viewport で overflow:hidden)
+  // お気に入り 自動スライド (scrollLeft 方式 = 自動送り + 手動スワイプ両立)
   // ===========================================
   var _favsMarqueeCancel = null;
   function initFavsMarquee() {
@@ -2907,6 +2912,7 @@ input, button, select, textarea { font-weight: 600; }
     Array.prototype.forEach.call(grid.querySelectorAll('.fav-card--clone'), function (c) { c.remove(); });
     grid.style.transform = '';
     grid.removeAttribute('data-static');
+    viewport.scrollLeft = 0;
 
     var originals = Array.prototype.slice.call(grid.querySelectorAll('.fav-card:not(.fav-card--clone)'));
     if (originals.length < 2) {
@@ -2919,14 +2925,11 @@ input, button, select, textarea { font-weight: 600; }
     function measureSetWidth() {
       var w = 0;
       originals.forEach(function (c) { w += c.offsetWidth + gapPx(); });
-      return w;  // 末尾の gap は次のセット境界として使うのでそのまま含める
+      return w;
     }
 
     var setWidth = measureSetWidth();
     var viewWidth = viewport.clientWidth;
-
-    // ビューポートに収まる場合、複数セットクローンしてビューを溢れさせる
-    // 最低 1 セット (シームレスループ用) + ビュー充填分
     var clonesToAdd = Math.max(1, Math.ceil((viewWidth + setWidth) / setWidth));
     for (var i = 0; i < clonesToAdd; i++) {
       originals.forEach(function (card) {
@@ -2939,20 +2942,26 @@ input, button, select, textarea { font-weight: 600; }
     }
 
     var SPEED = 26;             // px/sec
-    var IDLE_RESUME_MS = 1500;
-    var paused = false, lastT = 0, pos = 0, idleTimer = null;
-    var rafId;
+    var IDLE_RESUME_MS = 2000;
+    var paused = false, lastT = 0, accum = 0, idleTimer = null, rafId;
 
     function step(now) {
       if (!lastT) lastT = now;
-      var dt = now - lastT;
-      lastT = now;
+      var dt = now - lastT; lastT = now;
       if (!paused && setWidth > 4) {
-        pos += SPEED * dt / 1000;
-        if (pos >= setWidth) pos -= setWidth;  // 半周境界で巻き戻し (シームレス)
-        grid.style.transform = 'translate3d(' + (-pos) + 'px, 0, 0)';
+        accum += SPEED * dt / 1000;
+        if (accum >= 1) {
+          var add = Math.floor(accum);
+          accum -= add;
+          viewport.scrollLeft += add;
+        }
       } else if (paused) {
-        lastT = 0;
+        accum = 0; lastT = 0;
+      }
+      if (setWidth > 4 && viewport.scrollLeft >= setWidth) {
+        viewport.scrollLeft -= setWidth;
+      } else if (viewport.scrollLeft < 0) {
+        viewport.scrollLeft += setWidth;
       }
       rafId = requestAnimationFrame(step);
     }
@@ -2968,8 +2977,9 @@ input, button, select, textarea { font-weight: 600; }
     viewport.addEventListener('mouseenter', onEnter);
     viewport.addEventListener('mouseleave', onLeave);
     viewport.addEventListener('touchstart', pauseTemp, { passive: true });
-    viewport.addEventListener('wheel',      pauseTemp, { passive: true });
     viewport.addEventListener('pointerdown',pauseTemp, { passive: true });
+    viewport.addEventListener('wheel',      pauseTemp, { passive: true });
+    viewport.addEventListener('scroll',     pauseTemp, { passive: true });
     var onResize = function () {
       setWidth  = measureSetWidth();
       viewWidth = viewport.clientWidth;
@@ -2981,11 +2991,11 @@ input, button, select, textarea { font-weight: 600; }
       viewport.removeEventListener('mouseenter', onEnter);
       viewport.removeEventListener('mouseleave', onLeave);
       viewport.removeEventListener('touchstart', pauseTemp);
-      viewport.removeEventListener('wheel', pauseTemp);
       viewport.removeEventListener('pointerdown', pauseTemp);
+      viewport.removeEventListener('wheel', pauseTemp);
+      viewport.removeEventListener('scroll', pauseTemp);
       window.removeEventListener('resize', onResize);
       clearTimeout(idleTimer);
-      grid.style.transform = '';
     };
   }
 
