@@ -114,7 +114,25 @@ window.NAKASHINCHI_STORES = [
   { demo:true, id:'ebisu', name:'酒場 ゑびす', yomi:'えびす', romaji:'EBISU',
     lat:34.3937, lng:132.4615, hours:{open:'17:00',close:'23:30',crossDay:false,closedDays:[]},
     seats:null, categories:['izakaya'], area:'銀山町',
-    imageUrl:'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&h=400&fit=crop&q=70', heroUrl:'' }
+    imageUrl:'https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=600&h=400&fit=crop&q=70', heroUrl:'' },
+
+  /* キャバクラ デモ 4件 */
+  { demo:true, id:'rin', name:'CLUB 凛', short:'凛', yomi:'りん', romaji:'RIN',
+    lat:34.3905, lng:132.4640, hours:{open:'20:00',close:'01:00',crossDay:true,closedDays:[]},
+    seats:null, categories:['cabaret'], area:'流川',
+    imageUrl:'https://images.unsplash.com/photo-1543007630-9710e4a00a20?w=600&h=400&fit=crop&q=70', heroUrl:'' },
+  { demo:true, id:'oiran', name:'CLUB 花魁', short:'花魁', yomi:'おいらん', romaji:'OIRAN',
+    lat:34.3903, lng:132.4644, hours:{open:'20:00',close:'02:00',crossDay:true,closedDays:[]},
+    seats:null, categories:['cabaret'], area:'流川',
+    imageUrl:'https://images.unsplash.com/photo-1551024709-8f23befc6f87?w=600&h=400&fit=crop&q=70', heroUrl:'' },
+  { demo:true, id:'diamond', name:'Club Diamond', short:'Diamond', yomi:'ダイヤモンド', romaji:'DIAMOND',
+    lat:34.3906, lng:132.4646, hours:{open:'19:00',close:'01:00',crossDay:true,closedDays:[]},
+    seats:null, categories:['cabaret','lounge'], area:'流川',
+    imageUrl:'https://images.unsplash.com/photo-1574391884720-bbc049ec09ad?w=600&h=400&fit=crop&q=70', heroUrl:'' },
+  { demo:true, id:'mai', name:'CLUB 舞', short:'舞', yomi:'まい', romaji:'MAI',
+    lat:34.3919, lng:132.4655, hours:{open:'20:00',close:'00:00',crossDay:true,closedDays:[0]},
+    seats:null, categories:['cabaret'], area:'薬研堀',
+    imageUrl:'https://images.unsplash.com/photo-1470337458703-46ad1756a187?w=600&h=400&fit=crop&q=70', heroUrl:'' }
 ];
 
 // ジャンル定義 (タブ表示順 + ラベル)
@@ -127,6 +145,7 @@ window.NAKASHINCHI_CATEGORIES = [
   { id: 'snack',    label: 'スナック',     romaji: 'SNACK' },
   { id: 'izakaya',  label: '居酒屋',       romaji: 'IZAKAYA' },
   { id: 'club',     label: 'クラブ',       romaji: 'CLUB' },
+  { id: 'cabaret',  label: 'キャバクラ',   romaji: 'CABARET' },
   { id: 'other',    label: 'その他',       romaji: 'OTHER' }
 ];
 

@@ -240,6 +240,24 @@ strong, b { font-weight: 700; }
   border-color: var(--color-brand);
 }
 .genre-tab__romaji { display: none; }   /* クリーン版では非表示 */
+.genre-tab { touch-action: pan-x; }      /* 横スクロールは許可、縦は親へ */
+.genre-tab--dragging {
+  opacity: 0.85;
+  transform: scale(1.08);
+  box-shadow: 0 8px 20px rgba(16,18,29,0.22);
+  background: var(--color-accent);
+  color: #fff;
+  border-color: var(--color-accent);
+  z-index: 5;
+}
+.genre-tabs__hint {
+  max-width: 1100px;
+  margin: -8px auto 6px;
+  padding: 0 20px;
+  font-size: 10px;
+  color: var(--color-text-soft);
+  letter-spacing: 0.02em;
+}
 .genre-tab__count {
   font-size: 11px;
   font-weight: 700;
@@ -1344,6 +1362,7 @@ input, button, select, textarea { font-weight: 600; }
 
   <!-- ジャンルタブ -->
   <div class="genre-tabs" id="genre-tabs" role="tablist"></div>
+  <p class="genre-tabs__hint">タブを長押しして左右にドラッグすると並び替えできます</p>
 
   <!-- ジャンル別棚 (動的生成) -->
   <div class="genre-rows" id="genre-rows"></div>
@@ -1509,7 +1528,7 @@ input, button, select, textarea { font-weight: 600; }
   <p style="margin-top:14px"><a href="login/" class="footer__login">店舗関係者 ログイン →</a></p>
   <p style="margin-top:18px">© 2026 nakashinchi</p>
   <p class="footer__version" id="footer-version">
-    <span data-build="v45">v45 · 2026-05-26 16:30</span>
+    <span data-build="v46">v46 · 2026-05-26 17:00</span>
     <span id="sw-version-tag"></span>
   </p>
 </footer>
@@ -1896,10 +1915,38 @@ input, button, select, textarea { font-weight: 600; }
     });
   }
 
-  // タブ生成 (クリックでジャンル棚にスクロール)
+  // ===== ジャンル並び順 (端末ごとに localStorage 保存・ドラッグ並び替え用) =====
+  var ORDER_KEY = 'landing-genre-order';
+  var genreOrder = (function loadOrder() {
+    var defIds = (window.NAKASHINCHI_CATEGORIES || []).map(function (g) { return g.id; });
+    try {
+      var saved = JSON.parse(localStorage.getItem(ORDER_KEY) || 'null');
+      if (Array.isArray(saved)) {
+        var merged = saved.filter(function (id) { return defIds.indexOf(id) !== -1; });
+        defIds.forEach(function (id) { if (merged.indexOf(id) < 0) merged.push(id); });
+        return merged;
+      }
+    } catch (_) {}
+    return defIds;
+  })();
+  function saveGenreOrder() { try { localStorage.setItem(ORDER_KEY, JSON.stringify(genreOrder)); } catch (_) {} }
+  // genreOrder の順に並べた categories を返す ('all' は常に先頭固定)
+  function getOrderedCategories() {
+    var byId = {};
+    (window.NAKASHINCHI_CATEGORIES || []).forEach(function (g) { byId[g.id] = g; });
+    var out = [];
+    if (byId['all']) out.push(byId['all']);
+    genreOrder.forEach(function (id) {
+      if (id !== 'all' && byId[id]) out.push(byId[id]);
+    });
+    return out;
+  }
+
+  // タブ生成 (クリックでジャンル棚にスクロール / 長押しドラッグで並び替え)
   function renderGenreTabs() {
     if (!genreTabsEl) return;
-    var defs = window.NAKASHINCHI_CATEGORIES || [{id:'all',label:'全て',romaji:'ALL'}];
+    var defs = getOrderedCategories();
+    if (defs.length === 0) defs = [{id:'all',label:'全て',romaji:'ALL'}];
     genreTabsEl.innerHTML = '';
     defs.forEach(function (g) {
       var n;
@@ -2001,7 +2048,7 @@ input, button, select, textarea { font-weight: 600; }
             '<path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/>' +
           '</svg>' +
         '</button>' +
-        (s.imageUrl ? '<img src="' + s.imageUrl + '" alt="' + s.name + '" loading="lazy">' : '') +
+        (s.imageUrl ? '<img src="' + s.imageUrl + '" alt="' + s.name + '" loading="lazy" onerror="this.onerror=null;this.src=\'https://picsum.photos/seed/' + encodeURIComponent(s.id) + '/600/400\'">' : '') +
       '</div>' +
       '<div class="genre-card__body">' +
         '<p class="genre-card__yomi">' + yomi + '</p>' +
@@ -2022,7 +2069,7 @@ input, button, select, textarea { font-weight: 600; }
     _rowMarqueeCancel = {};
     container.innerHTML = '';
 
-    var defs = window.NAKASHINCHI_CATEGORIES || [];
+    var defs = getOrderedCategories();
     var allStores = (window.NAKASHINCHI_STORES || []);
 
     defs.forEach(function (g) {
@@ -2151,6 +2198,71 @@ input, button, select, textarea { font-weight: 600; }
   renderGenreTabs();
   renderGenreRows();
   applyFilter();
+
+  // ===========================================
+  // ジャンルタブ 長押しドラッグ並び替え
+  // ===========================================
+  (function enableTabReorder() {
+    if (!genreTabsEl) return;
+    var holdTimer = null, dragging = null, startX = 0, startY = 0, didDrag = false, suppressClick = false;
+
+    genreTabsEl.addEventListener('pointerdown', function (e) {
+      var tab = e.target.closest('.genre-tab');
+      if (!tab || tab.dataset.genre === 'all') return;   // 「全て」は固定
+      startX = e.clientX; startY = e.clientY; didDrag = false;
+      var pid = e.pointerId;
+      clearTimeout(holdTimer);
+      holdTimer = setTimeout(function () {
+        dragging = tab; didDrag = true;
+        tab.classList.add('genre-tab--dragging');
+        try { tab.setPointerCapture(pid); } catch (_) {}
+        if (navigator.vibrate) { try { navigator.vibrate(18); } catch (_) {} }
+      }, 320);
+    });
+
+    genreTabsEl.addEventListener('pointermove', function (e) {
+      if (!dragging) {
+        // 長押し成立前に動いたら = スクロール意図 → 長押しキャンセル
+        if (Math.abs(e.clientX - startX) > 8 || Math.abs(e.clientY - startY) > 8) clearTimeout(holdTimer);
+        return;
+      }
+      e.preventDefault();
+      var over = document.elementFromPoint(e.clientX, e.clientY);
+      var overTab = over && over.closest && over.closest('.genre-tab');
+      if (overTab && overTab !== dragging && overTab.dataset.genre !== 'all') {
+        var rect = overTab.getBoundingClientRect();
+        var before = e.clientX < rect.left + rect.width / 2;
+        genreTabsEl.insertBefore(dragging, before ? overTab : overTab.nextSibling);
+      }
+    });
+
+    function endDrag() {
+      clearTimeout(holdTimer);
+      if (!dragging) return;
+      dragging.classList.remove('genre-tab--dragging');
+      dragging = null;
+      // DOM順から新しい order を読む
+      var ids = [];
+      genreTabsEl.querySelectorAll('.genre-tab').forEach(function (t) { ids.push(t.dataset.genre); });
+      // 'all' を先頭に保証
+      ids = ids.filter(function (id) { return id !== 'all'; });
+      genreOrder = ['all'].concat(ids);
+      saveGenreOrder();
+      renderGenreRows();           // 棚も並び替え
+      refreshAsanoha(); refreshIvory(); updateDemoBadges();   // バッジ再適用
+      applyFilter();
+      // 直後のクリック (スクロール) を抑制
+      suppressClick = true;
+      setTimeout(function () { suppressClick = false; }, 350);
+    }
+    genreTabsEl.addEventListener('pointerup', endDrag);
+    genreTabsEl.addEventListener('pointercancel', endDrag);
+
+    // ドラッグ直後のクリックを握りつぶす (capture phase で先取り)
+    genreTabsEl.addEventListener('click', function (e) {
+      if (suppressClick) { e.stopPropagation(); e.preventDefault(); }
+    }, true);
+  })();
 
   // ===========================================
   // 店舗カードの自動スライド (おしゃれな演出・マルキー方式)
