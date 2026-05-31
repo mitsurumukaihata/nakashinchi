@@ -91,40 +91,33 @@ body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-
     <span class="section__crumb">OPEN NOW</span>
     <h2 class="section__title">いま行ける店</h2>
   </div>
-  <div class="grid">
-    <article class="card">
-      <div class="card__media">
-        <span class="card__status"><span class="dot"></span>営業中・空席あり</span>
-        <button class="card__fav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
-        <img src="../asanoha-hero-bg/public/images/hero-japanese.jpg" alt="麻ノ葉">
-      </div>
-      <div class="card__body">
-        <h3 class="card__name">麻<span class="ac">ノ</span>葉</h3>
-        <div class="card__tags"><span class="tag">SNACK</span><span class="tag">BAR</span></div>
-        <div class="card__meta">
-          <div>営業<strong>17:00–25:00</strong></div>
-          <div>空席<strong>残り 7 席</strong></div>
-        </div>
-        <a class="card__cta" href="#">今 か ら 向 か う</a>
-      </div>
-    </article>
-    <article class="card">
-      <div class="card__media">
-        <span class="card__status"><span class="dot"></span>営業中</span>
-        <button class="card__fav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
-        <img src="../ivory-hero-bg/public/images/hero-ivory.jpg" alt="Ivory">
-      </div>
-      <div class="card__body">
-        <h3 class="card__name">Innocent Base Ivory</h3>
-        <div class="card__tags"><span class="tag">BAR</span><span class="tag">DARTS</span></div>
-        <div class="card__meta">
-          <div>営業<strong>21:00–05:00</strong></div>
-          <div>定休<strong>火曜</strong></div>
-        </div>
-        <a class="card__cta" href="#">今 か ら 向 か う</a>
-      </div>
-    </article>
-  </div>
+  <div class="grid" id="store-grid"></div>
 </section>
+
+<script src="dummy-stores.js"></script>
+<script>
+(function(){
+  var heart='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+  var order={available:0,full:1,stopped:2,closed:3};
+  var stores=window.DUMMY_STORES.slice().sort(function(a,b){return order[a.status]-order[b.status];});
+  document.getElementById('store-grid').innerHTML=stores.map(function(s){
+    var dim=s.status==='closed'?' style="opacity:.5"':'';
+    var tags=s.genres.map(function(g){return '<span class="tag">'+window.GENRE_LABELS_EN[g]+'</span>';}).join('');
+    var right=s.seats?('空席<strong>'+s.seats+'</strong>'):('定休<strong>'+(s.closedNote||'—')+'</strong>');
+    return '<article class="card"'+dim+'>'+
+      '<div class="card__media">'+
+        '<span class="card__status"><span class="dot"></span>'+window.STATUS_LABELS[s.status]+'</span>'+
+        '<button class="card__fav">'+heart+'</button>'+
+        '<img src="'+s.img+'" alt="'+s.name+'" loading="lazy" onerror="imgFallback(this,\''+s.id+'\')">'+
+      '</div>'+
+      '<div class="card__body">'+
+        '<h3 class="card__name">'+s.nameHtml+'</h3>'+
+        '<div class="card__tags">'+tags+'</div>'+
+        '<div class="card__meta"><div>営業<strong>'+s.open+'–'+s.close+'</strong></div><div>'+right+'</div></div>'+
+        '<a class="card__cta" href="#">今 か ら 向 か う</a>'+
+      '</div></article>';
+  }).join('');
+})();
+</script>
 </body>
 </html>

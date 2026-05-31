@@ -87,34 +87,36 @@ body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
 <section class="section">
   <div class="section__head">
     <h2 class="section__title">いま行ける店</h2>
-    <span class="section__pill">2軒 空席あり</span>
+    <span class="section__pill" id="avail-pill">— 軒 空席あり</span>
   </div>
-  <div class="grid">
-    <article class="card">
-      <div class="card__media">
-        <span class="card__status"><span class="dot"></span>空席あり</span>
-        <button class="card__fav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
-        <img src="../asanoha-hero-bg/public/images/hero-japanese.jpg" alt="麻ノ葉">
-      </div>
-      <div class="card__body">
-        <h3 class="card__name">麻ノ葉</h3>
-        <div class="card__tags"><span class="tag">🍶 スナック</span><span class="tag">🍸 バー</span></div>
-        <a class="card__cta" href="#">今から向かう 🚶</a>
-      </div>
-    </article>
-    <article class="card">
-      <div class="card__media">
-        <span class="card__status"><span class="dot"></span>営業中</span>
-        <button class="card__fav"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg></button>
-        <img src="../ivory-hero-bg/public/images/hero-ivory.jpg" alt="Ivory">
-      </div>
-      <div class="card__body">
-        <h3 class="card__name">Ivory</h3>
-        <div class="card__tags"><span class="tag">🍸 バー</span><span class="tag">🎯 ダーツ</span></div>
-        <a class="card__cta" href="#">今から向かう 🚶</a>
-      </div>
-    </article>
-  </div>
+  <div class="grid" id="store-grid"></div>
 </section>
+
+<script src="dummy-stores.js"></script>
+<script>
+(function(){
+  var heart='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>';
+  var emoji={bar:'🍸',snack:'🍶',lounge:'🛋️',darts:'🎯',izakaya:'🏮',standing:'🧍',club:'✨'};
+  var order={available:0,full:1,stopped:2,closed:3};
+  var stores=window.DUMMY_STORES.slice().sort(function(a,b){return order[a.status]-order[b.status];});
+  document.getElementById('avail-pill').textContent=stores.filter(function(s){return s.status==='available';}).length+'軒 空席あり';
+  document.getElementById('store-grid').innerHTML=stores.map(function(s){
+    var dim=s.status==='closed'?' style="opacity:.5"':'';
+    var tags=s.genres.map(function(g){return '<span class="tag">'+(emoji[g]||'')+' '+window.GENRE_LABELS[g]+'</span>';}).join('');
+    var stTxt=s.status==='available'?'空席あり':s.status==='full'?'満席':s.status==='stopped'?'受付停止':'時間外';
+    return '<article class="card"'+dim+'>'+
+      '<div class="card__media">'+
+        '<span class="card__status"><span class="dot"></span>'+stTxt+'</span>'+
+        '<button class="card__fav">'+heart+'</button>'+
+        '<img src="'+s.img+'" alt="'+s.name+'" loading="lazy" onerror="imgFallback(this,\''+s.id+'\')">'+
+      '</div>'+
+      '<div class="card__body">'+
+        '<h3 class="card__name">'+s.name+'</h3>'+
+        '<div class="card__tags">'+tags+'</div>'+
+        '<a class="card__cta" href="#">今から向かう 🚶</a>'+
+      '</div></article>';
+  }).join('');
+})();
+</script>
 </body>
 </html>

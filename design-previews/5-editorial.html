@@ -84,36 +84,34 @@ body{font-family:var(--sans);background:var(--bg);color:var(--ink);-webkit-font-
 <section class="section">
   <p class="section__num">01</p>
   <h2 class="section__title">いま行ける店</h2>
-
-  <article class="feature">
-    <div class="feature__media">
-      <span class="feature__status">営業中・空席あり</span>
-      <img src="../asanoha-hero-bg/public/images/hero-japanese.jpg" alt="麻ノ葉">
-    </div>
-    <p class="feature__no">No. 01</p>
-    <h3 class="feature__name">麻<span class="ac">ノ</span>葉</h3>
-    <p class="feature__cat">スナック・バー / 中新地</p>
-    <dl class="feature__meta">
-      <div><dt>Hours</dt><dd>17:00–25:00</dd></div>
-      <div><dt>Seats</dt><dd>残り 7 席</dd></div>
-    </dl>
-    <a class="feature__cta" href="#">今から向かう →</a>
-  </article>
-
-  <article class="feature">
-    <div class="feature__media">
-      <span class="feature__status">営業中</span>
-      <img src="../ivory-hero-bg/public/images/hero-ivory.jpg" alt="Ivory">
-    </div>
-    <p class="feature__no">No. 02</p>
-    <h3 class="feature__name">Innocent Base Ivory</h3>
-    <p class="feature__cat">バー・ダーツバー / 流川</p>
-    <dl class="feature__meta">
-      <div><dt>Hours</dt><dd>21:00–05:00</dd></div>
-      <div><dt>Closed</dt><dd>火曜</dd></div>
-    </dl>
-    <a class="feature__cta" href="#">今から向かう →</a>
-  </article>
+  <div id="store-list"></div>
 </section>
+
+<script src="dummy-stores.js"></script>
+<script>
+(function(){
+  var order={available:0,full:1,stopped:2,closed:3};
+  var stores=window.DUMMY_STORES.slice().sort(function(a,b){return order[a.status]-order[b.status];});
+  document.getElementById('store-list').innerHTML=stores.map(function(s,i){
+    var dim=s.status==='closed'?' style="opacity:.55"':'';
+    var statusCls=(s.status==='full'||s.status==='stopped')?' feature__status--full':'';
+    var no='No. '+String(i+1).padStart(2,'0');
+    var cat=s.genres.map(function(g){return window.GENRE_LABELS[g];}).join('・')+' / '+s.area;
+    var right=s.seats?('<div><dt>Seats</dt><dd>'+s.seats+'</dd></div>'):
+              (s.closedNote?('<div><dt>Closed</dt><dd>'+s.closedNote+'</dd></div>'):'');
+    return '<article class="feature"'+dim+'>'+
+      '<div class="feature__media">'+
+        '<span class="feature__status'+statusCls+'">'+window.STATUS_LABELS[s.status]+'</span>'+
+        '<img src="'+s.img+'" alt="'+s.name+'" loading="lazy" onerror="imgFallback(this,\''+s.id+'\')">'+
+      '</div>'+
+      '<p class="feature__no">'+no+'</p>'+
+      '<h3 class="feature__name">'+s.nameHtml+'</h3>'+
+      '<p class="feature__cat">'+cat+'</p>'+
+      '<dl class="feature__meta"><div><dt>Hours</dt><dd>'+s.open+'–'+s.close+'</dd></div>'+right+'</dl>'+
+      '<a class="feature__cta" href="#">今から向かう →</a>'+
+    '</article>';
+  }).join('');
+})();
+</script>
 </body>
 </html>

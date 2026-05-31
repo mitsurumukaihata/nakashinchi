@@ -91,27 +91,39 @@ body{font-family:var(--sans);background:var(--bg2);color:var(--ink);-webkit-font
   <span class="fbtn">現在地順</span>
 </div>
 
-<div class="listhead">現在地周辺 <strong>2 軒</strong> が今すぐ行けます</div>
+<div class="listhead">現在地周辺 <strong id="open-count">—</strong> 軒が今すぐ行けます</div>
+<div id="store-list"></div>
 
-<a class="row" href="#">
-  <div class="row__thumb"><img src="../asanoha-hero-bg/public/images/hero-japanese.jpg" alt=""><span class="row__badge">空席7</span></div>
-  <div class="row__body">
-    <div class="row__name">麻ノ葉</div>
-    <div class="row__tags">スナック・バー / 中新地</div>
-    <div class="row__line"><span class="dist">120m</span> · 徒歩2分</div>
-    <div class="row__line"><span class="row__open">営業中</span> 17:00–25:00</div>
-    <div class="row__line"><span class="row__seats">残り 7 / 11 席</span></div>
-  </div>
-</a>
-<a class="row" href="#">
-  <div class="row__thumb"><img src="../ivory-hero-bg/public/images/hero-ivory.jpg" alt=""><span class="row__badge">営業中</span></div>
-  <div class="row__body">
-    <div class="row__name">Innocent Base Ivory</div>
-    <div class="row__tags">バー・ダーツバー / 流川</div>
-    <div class="row__line"><span class="dist">340m</span> · 徒歩4分</div>
-    <div class="row__line"><span class="row__open">営業中</span> 21:00–05:00</div>
-    <div class="row__line">定休 火曜</div>
-  </div>
-</a>
+<script src="dummy-stores.js"></script>
+<script>
+(function(){
+  var order={available:0,full:1,stopped:2,closed:3};
+  var stores=window.DUMMY_STORES.slice().sort(function(a,b){return order[a.status]-order[b.status];});
+  var dists=['90m','120m','180m','230m','280m','340m','410m','460m','520m','600m','680m','740m','810m','900m','1.0km'];
+  document.getElementById('open-count').textContent=stores.filter(function(s){return s.status==='available';}).length;
+  document.getElementById('store-list').innerHTML=stores.map(function(s,i){
+    var dim=s.status==='closed'?' style="opacity:.55"':'';
+    var badge,bcls='';
+    if(s.status==='available'){badge='空席';}
+    else if(s.status==='full'){badge='満席';bcls=' row__badge--full';}
+    else if(s.status==='stopped'){badge='停止';bcls=' row__badge--full';}
+    else{badge='時間外';bcls=' row__badge--full';}
+    var genreTxt=s.genres.map(function(g){return window.GENRE_LABELS[g];}).join('・');
+    var openLine=(s.status==='closed')
+      ? '<div class="row__line">営業時間外 '+s.open+'–'+s.close+'</div>'
+      : '<div class="row__line"><span class="row__open">営業中</span> '+s.open+'–'+s.close+'</div>';
+    var seatLine=s.seats?('<div class="row__line"><span class="row__seats">'+s.seats+'</span></div>'):
+                 (s.closedNote?('<div class="row__line">'+s.closedNote+'</div>'):'');
+    return '<a class="row" href="#"'+dim+'>'+
+      '<div class="row__thumb"><img src="'+s.img+'" alt="" loading="lazy" onerror="imgFallback(this,\''+s.id+'\')"><span class="row__badge'+bcls+'">'+badge+'</span></div>'+
+      '<div class="row__body">'+
+        '<div class="row__name">'+s.name+'</div>'+
+        '<div class="row__tags">'+genreTxt+' / '+s.area+'</div>'+
+        '<div class="row__line"><span class="dist">'+dists[i]+'</span> · 徒歩'+Math.max(1,Math.round(i*0.7+1))+'分</div>'+
+        openLine+seatLine+
+      '</div></a>';
+  }).join('');
+})();
+</script>
 </body>
 </html>
