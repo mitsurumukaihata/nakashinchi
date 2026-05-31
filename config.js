@@ -34,6 +34,7 @@ window.NAKASHINCHI_STORES = [
     hours:    { open: '17:00', close: '01:00', crossDay: true, closedDays: [] },
     seats:    { box: 5, counter: 6, total: 11 },
     categories: ['snack', 'bar'],
+    area:     '中新地',
     imageUrl: 'asanoha-hero-bg/public/images/hero-japanese.jpg',
     heroUrl:  'asanoha-hero-bg/',
     adminUrl: 'asanoha-admin/'
@@ -51,6 +52,7 @@ window.NAKASHINCHI_STORES = [
     hours:    { open: '21:00', close: '05:00', crossDay: true, closedDays: [2] },
     seats:    null,  // Gun Arena + Bar (席管理は今後検討)
     categories: ['bar', 'darts'],   // Bar + Gun Arena
+    area:     '流川',
     imageUrl: 'ivory-hero-bg/public/images/hero-ivory.jpg',
     heroUrl:  'ivory-hero-bg/',
     adminUrl: null   // 管理画面は今後対応
