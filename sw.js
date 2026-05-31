@@ -4,7 +4,7 @@
    - API リクエスト: pass-through (常にネット最新)
    - 古いキャッシュは activate 時に削除
    =========================================== */
-const CACHE = 'nakashinchi-v49';
+const CACHE = 'nakashinchi-v50';
 
 const ASSETS = [
   './',

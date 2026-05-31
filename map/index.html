@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
-<meta name="theme-color" content="#0a0604">
+<meta name="theme-color" content="#ffffff">
 <meta name="description" content="広島・中新地 飲み屋街ガイド — 地図で探す">
 <title>地図で探す — 中新地</title>
 
@@ -14,7 +14,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;700;800&family=Yuji+Syuku&family=Cormorant+Garamond:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&family=Zen+Kaku+Gothic+New:wght@700;900&display=swap" rel="stylesheet">
 
 <!-- Leaflet (OpenStreetMap) -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
@@ -27,553 +27,444 @@
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg:#0a0604;
-  --paper:#f5efe6;
-  --paper-soft:rgba(245,239,230,0.88);
-  --paper-dim:rgba(245,239,230,0.62);
-  --paper-faint:rgba(245,239,230,0.28);
-  --accent:#c8102e;
-  --accent-soft:#e85060;
-  --green:#06c755;
-  --amber:#ffb648;
-  --font-jp:'Shippori Mincho B1','Yu Mincho',serif;
-  --font-brush:'Yuji Syuku',serif;
-  --font-num:'Cormorant Garamond',Georgia,serif;
+  --bg:#f6f7f9; --surface:#ffffff; --ink:#16181d; --muted:#6b7280; --soft:#9aa1ab;
+  --line:#e6e8ec; --brand:#1f2233; --accent:#d4365a; --green:#16a34a; --amber:#e8920c; --blue:#2563eb;
+  --sans:'Noto Sans JP',system-ui,sans-serif; --disp:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
 }
 html, body { height: 100%; background: var(--bg); }
 body {
-  font-family: var(--font-jp);
-  color: var(--paper);
+  font-family: var(--sans);
+  color: var(--ink);
   -webkit-font-smoothing: antialiased;
+  display: flex; flex-direction: column;
+  height: 100vh; height: 100dvh;
   overflow: hidden;
 }
 
-/* ====== トップバー ====== */
-.map-topbar {
-  position: fixed; top: 0; left: 0; right: 0;
-  z-index: 500;
+/* topbar */
+.topbar {
+  flex-shrink: 0;
   padding: calc(10px + env(safe-area-inset-top, 0px)) 14px 10px;
-  background: linear-gradient(180deg, rgba(10,6,4,0.92) 0%, rgba(10,6,4,0.55) 100%);
-  backdrop-filter: blur(10px);
-  -webkit-backdrop-filter: blur(10px);
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
   display: flex; align-items: center; gap: 10px;
+  z-index: 20;
 }
-.map-topbar__back {
-  color: var(--paper);
-  text-decoration: none;
-  font-size: 11px;
-  letter-spacing: 0.18em;
+.topbar__back {
+  color: var(--brand); text-decoration: none;
+  font-size: 12px; font-weight: 700;
   padding: 8px 14px;
-  background: rgba(245,239,230,0.10);
-  border: 1px solid var(--paper-faint);
-  border-radius: 999px;
+  background: var(--bg); border: 1px solid var(--line); border-radius: 999px;
   flex-shrink: 0;
 }
-.map-topbar__back:hover { background: rgba(245,239,230,0.15); }
-.map-topbar__title {
-  flex: 1; text-align: center;
-  font-family: var(--font-brush);
-  font-weight: 400;
-  font-size: 18px;
-  letter-spacing: 0.06em;
-  line-height: 1;
-}
-.map-topbar__title .ac { color: var(--accent); }
-.map-topbar__title__sub {
-  display: block;
-  font-family: var(--font-num);
-  font-size: 8px;
-  letter-spacing: 0.4em;
-  color: var(--paper-dim);
-  margin-top: 4px;
-}
-.map-topbar__filter {
-  padding: 8px 12px;
-  background: transparent;
-  border: 1px solid var(--paper-faint);
-  border-radius: 999px;
-  color: var(--paper-soft);
-  font-family: inherit;
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  cursor: pointer;
+.topbar__title { flex: 1; text-align: center; font-family: var(--disp); font-weight: 900; font-size: 16px; }
+.topbar__title .ac { color: var(--accent); }
+.topbar__filter {
   flex-shrink: 0;
-  transition: all 0.18s;
+  padding: 8px 13px; font-size: 11px; font-weight: 700;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 999px;
+  color: var(--muted); cursor: pointer;
 }
-.map-topbar__filter[aria-pressed="true"] {
-  background: var(--accent); color: #fff; border-color: var(--accent);
-}
+.topbar__filter[aria-pressed="true"] { background: var(--accent); color: #fff; border-color: var(--accent); }
 
-/* ====== マップ ====== */
-#map {
-  position: absolute; inset: 0;
-  background: #0a0604;
+/* map */
+.map-wrap { position: relative; flex-shrink: 0; height: 42vh; }
+#map { position: absolute; inset: 0; background: #e9edf0; }
+.locate-fab {
+  position: absolute; bottom: 14px; right: 14px; z-index: 500;
+  width: 44px; height: 44px;
+  background: var(--surface); border: 1px solid var(--line); border-radius: 50%;
+  color: var(--brand); display: flex; align-items: center; justify-content: center;
+  cursor: pointer; box-shadow: 0 4px 12px rgba(0,0,0,.18);
 }
+.locate-fab svg { width: 20px; height: 20px; }
 
-/* ====== ピン (divIcon) ====== */
-.store-pin {
-  position: relative;
-}
+/* ピン */
 .store-pin__inner {
-  width: 36px; height: 36px;
+  width: 30px; height: 30px;
   border-radius: 50% 50% 50% 0;
   transform: rotate(-45deg);
   border: 2.5px solid #fff;
-  box-shadow: 0 6px 14px rgba(0,0,0,0.55);
-  position: relative;
-  transition: transform 0.2s;
+  box-shadow: 0 3px 8px rgba(0,0,0,.4);
 }
 .store-pin__inner::after {
-  content: '';
-  position: absolute;
-  top: 50%; left: 50%;
-  transform: translate(-50%, -50%);
-  width: 12px; height: 12px;
-  background: #fff;
-  border-radius: 50%;
+  content: ''; position: absolute; top: 50%; left: 50%;
+  transform: translate(-50%,-50%); width: 9px; height: 9px; background: #fff; border-radius: 50%;
 }
-.store-pin__label {
-  position: absolute;
-  top: 38px; left: 50%;
-  transform: translateX(-50%);
-  font-family: var(--font-brush);
-  font-size: 12px;
-  white-space: nowrap;
-  color: #fff;
-  text-shadow:
-    0 0 4px rgba(0,0,0,0.95),
-    0 0 8px rgba(0,0,0,0.85),
-    0 0 2px rgba(0,0,0,1);
-  padding: 2px 6px;
-  background: rgba(10,6,4,0.65);
-  border-radius: 4px;
-  letter-spacing: 0.05em;
-  pointer-events: none;
-}
-/* 状態別カラー */
-.store-pin--available .store-pin__inner { background: var(--accent); animation: pinPulse 2.4s ease-in-out infinite; }
-.store-pin--full      .store-pin__inner { background: #888; }
-.store-pin--closed    .store-pin__inner { background: #555; opacity: 0.75; }
+.store-pin--available .store-pin__inner { background: var(--accent); }
+.store-pin--full      .store-pin__inner { background: #9aa1ab; }
 .store-pin--stopped   .store-pin__inner { background: var(--amber); }
-@keyframes pinPulse {
-  0%, 100% { box-shadow: 0 6px 14px rgba(0,0,0,0.55), 0 0 0 0 rgba(200,16,46,0.5); }
-  50%      { box-shadow: 0 6px 14px rgba(0,0,0,0.55), 0 0 0 14px rgba(200,16,46,0); }
+.store-pin--closed    .store-pin__inner { background: #b8bec7; }
+.store-pin--active .store-pin__inner {
+  width: 40px; height: 40px;
+  border-width: 3px;
+  box-shadow: 0 0 0 6px rgba(212,54,90,0.25), 0 4px 10px rgba(0,0,0,.4);
+  z-index: 1000 !important;
 }
-
-/* ====== 現在地マーカー ====== */
 .user-pin {
-  width: 18px; height: 18px;
-  background: var(--green);
-  border: 3px solid #fff;
-  border-radius: 50%;
-  box-shadow: 0 0 0 0 rgba(6,199,85,0.5);
-  animation: userPulse 2s ease-in-out infinite;
+  width: 16px; height: 16px; background: var(--blue);
+  border: 3px solid #fff; border-radius: 50%;
+  box-shadow: 0 0 0 0 rgba(37,99,235,0.4); animation: userPulse 2s ease-in-out infinite;
 }
-@keyframes userPulse {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(6,199,85,0.5); }
-  50%      { box-shadow: 0 0 0 18px rgba(6,199,85,0); }
-}
+@keyframes userPulse { 0%,100%{box-shadow:0 0 0 0 rgba(37,99,235,.4);} 50%{box-shadow:0 0 0 14px rgba(37,99,235,0);} }
 
-/* ====== ポップアップ ====== */
-.leaflet-popup-content-wrapper {
-  background: rgba(20,12,8,0.94) !important;
-  color: var(--paper) !important;
-  border-radius: 12px !important;
-  border: 1px solid var(--paper-faint);
-  backdrop-filter: blur(10px);
+/* フィルタチップ */
+.chips {
+  flex-shrink: 0;
+  display: flex; gap: 8px; overflow-x: auto;
+  padding: 12px 14px 10px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--line);
+  scrollbar-width: none;
 }
-.leaflet-popup-content {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 240px !important;
+.chips::-webkit-scrollbar { display: none; }
+.chip {
+  flex-shrink: 0; font-size: 13px; font-weight: 600;
+  padding: 8px 15px; border-radius: 999px;
+  background: var(--bg); border: 1px solid var(--line); color: var(--muted);
+  white-space: nowrap; cursor: pointer;
 }
-.leaflet-popup-tip {
-  background: rgba(20,12,8,0.94) !important;
+.chip[aria-pressed="true"] { background: var(--brand); color: #fff; border-color: var(--brand); }
+
+/* リスト */
+.list {
+  flex: 1; overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: var(--bg);
+  padding: 8px 0 calc(20px + env(safe-area-inset-bottom, 0px));
 }
-.leaflet-popup-close-button {
-  color: var(--paper-soft) !important;
-  font-size: 22px !important;
-  padding: 6px 8px !important;
+.list__head { padding: 10px 16px 6px; font-size: 12px; color: var(--muted); font-weight: 600; }
+.list__head strong { color: var(--ink); }
+.row {
+  display: flex; gap: 12px; align-items: center;
+  background: var(--surface);
+  margin: 0 12px 8px; padding: 10px;
+  border: 1px solid var(--line); border-radius: 12px;
+  text-decoration: none; color: inherit; cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
 }
-.popup {
-  overflow: hidden;
-  border-radius: 12px;
+.row--active {
+  border-color: var(--accent);
+  box-shadow: 0 4px 16px rgba(212,54,90,0.18);
 }
-.popup__media {
-  position: relative;
-  width: 100%;
-  aspect-ratio: 16 / 9;
-  overflow: hidden;
-  background: #1a0c08;
+.row__thumb {
+  width: 72px; height: 72px; border-radius: 10px; overflow: hidden; flex-shrink: 0;
+  position: relative; background: #eceef1;
 }
-.popup__media img {
-  position: absolute; inset: 0;
-  width: 100%; height: 100%;
-  object-fit: cover;
+.row__thumb img { width: 100%; height: 100%; object-fit: cover; }
+.row__badge {
+  position: absolute; bottom: 4px; left: 4px;
+  font-size: 9px; font-weight: 700; padding: 1px 6px; border-radius: 4px;
+  background: rgba(22,163,74,0.92); color: #fff;
 }
-.popup__badge {
-  position: absolute;
-  top: 8px; left: 8px;
-  padding: 4px 10px;
-  font-size: 10px;
-  letter-spacing: 0.15em;
-  background: rgba(0,0,0,0.6);
-  border-radius: 999px;
-  color: #fff;
-}
-.popup__badge--available { background: rgba(200,16,46,0.85); }
-.popup__badge--full      { background: rgba(120,120,120,0.85); }
-.popup__badge--closed    { background: rgba(80,80,80,0.85); }
-.popup__badge--stopped   { background: rgba(255,182,72,0.85); color: #1a1410; }
-.popup__body { padding: 14px 16px 16px; }
-.popup__name {
-  font-family: var(--font-brush);
-  font-weight: 400;
-  font-size: 22px;
-  letter-spacing: 0.05em;
-  margin-bottom: 2px;
-}
+.row__badge--full   { background: rgba(154,161,171,0.95); }
+.row__badge--stopped{ background: rgba(232,146,12,0.95); }
+.row__badge--closed { background: rgba(120,127,138,0.92); }
+.row__body { flex: 1; min-width: 0; }
+.row__name { font-family: var(--disp); font-weight: 900; font-size: 16px; margin-bottom: 3px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row__name .ac { color: var(--accent); }
+.row__tags { font-size: 11px; color: var(--soft); margin-bottom: 5px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.row__line { display: flex; gap: 12px; font-size: 12px; color: var(--muted); align-items: baseline; }
+.row__open { color: var(--green); font-weight: 700; }
+.row__open--closed { color: var(--soft); }
+.row__dist { color: var(--blue); font-weight: 700; }
+.row__chevron { color: var(--soft); flex-shrink: 0; }
+
+/* ポップアップ (Leaflet) */
+.leaflet-popup-content-wrapper { border-radius: 12px !important; }
+.leaflet-popup-content { margin: 10px 12px !important; }
+.popup__name { font-family: var(--disp); font-weight: 900; font-size: 16px; margin-bottom: 2px; }
 .popup__name .ac { color: var(--accent); }
-.popup__sub {
-  font-size: 10px;
-  letter-spacing: 0.12em;
-  color: var(--paper-dim);
-  margin-bottom: 10px;
-}
-.popup__cta {
-  display: block;
-  text-align: center;
-  padding: 9px;
-  background: var(--accent);
-  color: #fff;
-  border-radius: 999px;
-  text-decoration: none;
-  font-size: 11px;
-  letter-spacing: 0.22em;
-  font-weight: 600;
-}
-.popup__cta:hover { background: #8e0e1c; }
+.popup__meta { font-size: 11px; color: var(--muted); }
+.popup__cta { display:inline-block; margin-top:8px; font-size:12px; font-weight:700; color:var(--accent); }
 
-/* ====== 凡例 ====== */
-.legend {
-  position: fixed;
-  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-  left: 16px;
-  z-index: 400;
-  padding: 10px 14px;
-  background: rgba(10,6,4,0.85);
-  border: 1px solid var(--paper-faint);
-  border-radius: 10px;
-  backdrop-filter: blur(8px);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  color: var(--paper-soft);
-  line-height: 1.9;
-}
-.legend__row { display: flex; align-items: center; gap: 8px; }
-.legend__dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
-.legend__dot--available { background: var(--accent); }
-.legend__dot--full      { background: #888; }
-.legend__dot--closed    { background: #555; }
-.legend__dot--stopped   { background: var(--amber); }
-.legend__dot--user      { background: var(--green); border: 2px solid #fff; box-sizing: border-box; }
+.leaflet-control-attribution { font-size: 9px !important; }
 
-/* 現在地ボタン */
-.locate-fab {
-  position: fixed;
-  bottom: calc(16px + env(safe-area-inset-bottom, 0px));
-  right: 16px;
-  z-index: 400;
-  width: 50px; height: 50px;
-  background: rgba(10,6,4,0.92);
-  border: 1px solid var(--paper-faint);
-  border-radius: 50%;
-  color: var(--paper);
-  display: flex; align-items: center; justify-content: center;
-  cursor: pointer;
-  backdrop-filter: blur(8px);
-  box-shadow: 0 6px 14px rgba(0,0,0,0.4);
-}
-.locate-fab:hover { background: rgba(200,16,46,0.30); border-color: var(--accent); }
-.locate-fab svg { width: 22px; height: 22px; }
-
-/* Leaflet attribution を控えめに */
-.leaflet-control-attribution {
-  background: rgba(10,6,4,0.7) !important;
-  color: var(--paper-dim) !important;
-  font-size: 9px !important;
-}
-.leaflet-control-attribution a { color: var(--paper-soft) !important; }
-
-/* ===== 全ページ共通 フォントウェイト底上げ ===== */
+/* ===== font weight ===== */
 body { font-weight: 500; }
-h1, h2, h3, h4 { font-weight: 600; }
+h1,h2,h3 { font-weight: 700; }
 strong, b { font-weight: 700; }
 </style>
 </head>
 <body>
 
-<header class="map-topbar">
-  <a class="map-topbar__back" href="../">← 戻る</a>
-  <div class="map-topbar__title">
-    中<span class="ac">新</span>地
-    <span class="map-topbar__title__sub">M A P</span>
-  </div>
-  <button class="map-topbar__filter" id="filter-btn" type="button" aria-pressed="false">
-    <span id="filter-label">空席あり</span>
-  </button>
+<header class="topbar">
+  <a class="topbar__back" href="../">← 戻る</a>
+  <div class="topbar__title">中<span class="ac">新</span>地 マップ</div>
+  <button class="topbar__filter" id="filter-btn" type="button" aria-pressed="false">空席あり</button>
 </header>
 
-<div id="map"></div>
-
-<div class="legend" id="legend">
-  <div class="legend__row"><span class="legend__dot legend__dot--available"></span> 空席あり</div>
-  <div class="legend__row"><span class="legend__dot legend__dot--full"></span> 満席</div>
-  <div class="legend__row"><span class="legend__dot legend__dot--stopped"></span> 受付停止</div>
-  <div class="legend__row"><span class="legend__dot legend__dot--closed"></span> 営業時間外</div>
-  <div class="legend__row"><span class="legend__dot legend__dot--user"></span> 現在地</div>
+<div class="map-wrap">
+  <div id="map"></div>
+  <button class="locate-fab" id="locate-fab" type="button" aria-label="現在地">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><line x1="12" y1="2" x2="12" y2="5"/><line x1="12" y1="19" x2="12" y2="22"/><line x1="2" y1="12" x2="5" y2="12"/><line x1="19" y1="12" x2="22" y2="12"/></svg>
+  </button>
 </div>
 
-<button class="locate-fab" id="locate-fab" type="button" aria-label="現在地を中心に">
-  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true">
-    <circle cx="12" cy="12" r="3"/>
-    <line x1="12" y1="2"  x2="12" y2="5"/>
-    <line x1="12" y1="19" x2="12" y2="22"/>
-    <line x1="2"  y1="12" x2="5"  y2="12"/>
-    <line x1="19" y1="12" x2="22" y2="12"/>
-  </svg>
-</button>
+<div class="chips" id="chips"></div>
+
+<div class="list" id="list">
+  <div class="list__head" id="list-head">—</div>
+  <div id="list-rows"></div>
+</div>
 
 <script>
 (function () {
   'use strict';
 
-  // ====== 店舗データ + 営業状態判定ロジック (landing と同じ) ======
-  var HOURS_KEY   = 'manoha-hours-v1';
-  var DISPLAY_KEY = 'manoha-display-v1';
-  var SEATS_KEY   = 'manoha-seats-v1';
-  var DEFAULT_HOURS_ASANOHA = { open: '17:00', close: '01:00', crossDay: true, closedDays: [], reception: 'normal', receptionDate: '' };
-  var DEFAULT_HOURS_IVORY   = { open: '21:00', close: '05:00', crossDay: true, closedDays: [2], reception: 'normal', receptionDate: '' };
-  var TOTAL_SEATS_ASANOHA = 11;
-
-  function todayStr() {
-    var d = new Date();
-    return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+  // ===== 営業状態判定 (landing と同じロジック) =====
+  var HOURS_KEY='manoha-hours-v1', SEATS_KEY='manoha-seats-v1';
+  var DEF_ASA={open:'17:00',close:'01:00',crossDay:true,closedDays:[],reception:'normal',receptionDate:''};
+  var DEF_IVO={open:'21:00',close:'05:00',crossDay:true,closedDays:[2],reception:'normal',receptionDate:''};
+  var TOTAL_ASA=11;
+  function todayStr(){var d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  function readCache(id,key,legacy,def){
+    try{var c=JSON.parse(localStorage.getItem('store-cache:'+id+':'+key)||'null');if(c&&c.value)return Object.assign({},def||{},c.value);}catch(_){}
+    if(id==='asanoha'){try{var v=JSON.parse(localStorage.getItem(legacy)||'null');if(v)return Object.assign({},def||{},v);}catch(_){}}
+    return Object.assign({},def||{});
   }
-  function readCacheOrLegacy(storeId, cacheKey, legacyKey, defaults) {
-    try {
-      var c = JSON.parse(localStorage.getItem('store-cache:' + storeId + ':' + cacheKey) || 'null');
-      if (c && c.value) return Object.assign({}, defaults || {}, c.value);
-    } catch (_) {}
-    if (storeId === 'asanoha') {
-      try {
-        var v = JSON.parse(localStorage.getItem(legacyKey) || 'null');
-        if (v) return Object.assign({}, defaults || {}, v);
-      } catch (_) {}
-    }
-    return Object.assign({}, defaults || {});
-  }
-  function readHours(storeId) {
-    var def = storeId === 'ivory' ? DEFAULT_HOURS_IVORY : DEFAULT_HOURS_ASANOHA;
-    var h = readCacheOrLegacy(storeId, 'hours', storeId === 'asanoha' ? HOURS_KEY : null, def);
-    if (h.reception !== 'normal' && h.receptionDate !== todayStr()) h.reception = 'normal';
+  function readHours(s){
+    var def = s.id==='ivory'?DEF_IVO : (s.hours?{open:s.hours.open,close:s.hours.close,crossDay:s.hours.crossDay,closedDays:s.hours.closedDays||[],reception:'normal',receptionDate:''}:DEF_ASA);
+    var h=readCache(s.id,'hours',s.id==='asanoha'?HOURS_KEY:null,def);
+    if(h.reception!=='normal'&&h.receptionDate!==todayStr())h.reception='normal';
     return h;
   }
-  function readSeats(storeId) {
-    return readCacheOrLegacy(storeId, 'seats', storeId === 'asanoha' ? SEATS_KEY : null, {});
+  function readSeats(id){return readCache(id,'seats',id==='asanoha'?SEATS_KEY:null,{});}
+  function countTaken(s){var t=0;Object.keys(s).forEach(function(k){if(s[k])t++;});return t;}
+  function isOpenNow(now,h){
+    if(h.reception==='closed')return{open:false};
+    if(h.reception==='stopped')return{open:false,stopped:true};
+    if((h.closedDays||[]).indexOf(now.getDay())!==-1)return{open:false};
+    var op=h.open.split(':'),cl=h.close.split(':');
+    var n=now.getHours()*60+now.getMinutes(),o=(+op[0])*60+(+op[1]),c=(+cl[0])*60+(+cl[1]);
+    var open=h.crossDay?(n>=o||n<c):(n>=o&&n<c);
+    return{open:open};
   }
-  function countTaken(seats) {
-    var t = 0;
-    Object.keys(seats).forEach(function (k) { if (seats[k]) t++; });
-    return t;
+  function getState(s){
+    var h=readHours(s),st=isOpenNow(new Date(),h);
+    if(st.stopped)return'stopped';
+    if(!st.open)return'closed';
+    if(s.id==='asanoha'){var open=TOTAL_ASA-countTaken(readSeats('asanoha'));return open>0?'available':'full';}
+    return'available';
   }
-  function isOpenNow(now, h) {
-    if (h.reception === 'closed')  return { open: false, state: 'closed',  label: '本日終了' };
-    if (h.reception === 'stopped') return { open: false, state: 'stopped', label: '受付停止' };
-    if ((h.closedDays || []).indexOf(now.getDay()) !== -1) return { open: false, state: 'closed', label: '本日定休' };
-    var op = h.open.split(':'), cl = h.close.split(':');
-    var nowM   = now.getHours()*60 + now.getMinutes();
-    var openM  = (+op[0])*60 + (+op[1]);
-    var closeM = (+cl[0])*60 + (+cl[1]);
-    var open = h.crossDay ? (nowM >= openM || nowM < closeM) : (nowM >= openM && nowM < closeM);
-    return { open: open, state: open ? 'open' : 'closed', label: open ? '営業中' : '営業時間外' };
+  var STATE_LABEL={available:'営業中・空席あり',full:'営業中・満席',stopped:'受付停止',closed:'営業時間外'};
+  var STATE_SHORT={available:'空席',full:'満席',stopped:'停止',closed:'時間外'};
+  var STATE_ORDER={available:0,full:1,stopped:2,closed:3};
+
+  function fmtHours(h){
+    if(!h||!h.open||!h.close)return'';
+    var c=h.close;
+    if(h.crossDay){var p=c.split(':');var hh=parseInt(p[0],10);if(hh<12)c=(hh+24)+':'+p[1];}
+    return h.open+'–'+c;
   }
-  function getStoreState(storeId) {
-    var h = readHours(storeId);
-    var st = isOpenNow(new Date(), h);
-    if (!st.open) return st.state === 'stopped' ? 'stopped' : 'closed';
-    if (storeId === 'asanoha') {
-      var seats = readSeats(storeId);
-      var open = TOTAL_SEATS_ASANOHA - countTaken(seats);
-      return open > 0 ? 'available' : 'full';
-    }
-    return 'available'; // ivory は seats 管理なし → 営業中なら available
+  function genreLabels(s){
+    var defs=window.NAKASHINCHI_CATEGORIES||[];
+    return (s.categories||[]).map(function(c){var d=defs.find(function(x){return x.id===c;});return d?d.label:c;});
   }
-  function getStateLabel(state) {
-    switch (state) {
-      case 'available': return '営業中・空席あり';
-      case 'full':      return '営業中・満席';
-      case 'stopped':   return '受付停止中';
-      case 'closed':    return '営業時間外';
-      default:          return '確認中';
-    }
+  function nameHtml(s){
+    if(s.id==='asanoha')return'麻<span class="ac">ノ</span>葉';
+    return s.short||s.name;
   }
 
-  // ====== サーバから最新データ取得 ======
-  async function fetchStoreAll(storeId) {
-    if (!window.NAKASHINCHI_API) return;
-    try {
-      var r = await fetch(window.NAKASHINCHI_API + '/api/store/' + storeId + '/all', { cache: 'no-cache' });
-      if (!r.ok) return;
-      var data = await r.json();
-      Object.keys(data.data || {}).forEach(function (k) {
-        try {
-          localStorage.setItem('store-cache:' + storeId + ':' + k, JSON.stringify({
-            value: data.data[k].value, updatedAt: data.data[k].updatedAt
-          }));
-        } catch (_) {}
-      });
-    } catch (_) {}
+  // ===== 距離 =====
+  var userLat=null,userLng=null;
+  function haversine(la1,lo1,la2,lo2){
+    var R=6371,dLa=(la2-la1)*Math.PI/180,dLo=(lo2-lo1)*Math.PI/180;
+    var a=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(la1*Math.PI/180)*Math.cos(la2*Math.PI/180)*Math.sin(dLo/2)*Math.sin(dLo/2);
+    return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));
   }
+  function fmtDist(km){return km<1?Math.round(km*1000)+'m':km.toFixed(1)+'km';}
 
-  // ====== 店舗一覧 ======
-  var STORES = (window.NAKASHINCHI_STORES || []).filter(function (s) { return s.lat && s.lng; });
+  // ===== 店舗 =====
+  var STORES=(window.NAKASHINCHI_STORES||[]).filter(function(s){return s.lat&&s.lng;});
 
-  // ====== マップ初期化 ======
-  // 中新地中心 (薬研堀あたり) をデフォルトに
-  var DEFAULT_CENTER = [34.391, 132.464];
-  var DEFAULT_ZOOM = 16;
-
-  var map = L.map('map', {
-    zoomControl: false,
-    attributionControl: true
-  }).setView(DEFAULT_CENTER, DEFAULT_ZOOM);
-
-  // ズームコントロールを右上に
-  L.control.zoom({ position: 'topright' }).addTo(map);
-
-  // CARTO Dark Matter (無料・キー不要・ダーク系)
-  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
-    attribution: '© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/attributions">CARTO</a>',
-    subdomains: 'abcd',
-    maxZoom: 19
+  // ===== マップ =====
+  var map=L.map('map',{zoomControl:false,attributionControl:true}).setView([34.3915,132.4595],15);
+  L.control.zoom({position:'topleft'}).addTo(map);
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png',{
+    attribution:'© <a href="https://www.openstreetmap.org/copyright">OSM</a> © <a href="https://carto.com/attributions">CARTO</a>',
+    subdomains:'abcd',maxZoom:20
   }).addTo(map);
 
-  // ====== 店舗ピン ======
-  function makeStoreIcon(state, name) {
+  var markers={};   // id -> marker
+  var rowEls={};    // id -> row element
+  var activeId=null;
+
+  function makeIcon(state,active){
     return L.divIcon({
-      className: 'store-pin store-pin--' + state,
-      html: '<div class="store-pin__inner"></div><div class="store-pin__label">' + name + '</div>',
-      iconSize: [36, 56],
-      iconAnchor: [18, 36]
+      className:'store-pin store-pin--'+state+(active?' store-pin--active':''),
+      html:'<div class="store-pin__inner"></div>',
+      iconSize:[30,38],iconAnchor:[15,30]
     });
   }
-  function buildPopupHtml(s, state) {
-    var name = s.id === 'asanoha'
-      ? '麻<span class="ac">ノ</span>葉'
-      : (s.short || s.name);
-    return '' +
-      '<div class="popup">' +
-        '<div class="popup__media">' +
-          (s.imageUrl ? '<img src="' + s.imageUrl + '" alt="">' : '') +
-          '<span class="popup__badge popup__badge--' + state + '">' + getStateLabel(state) + '</span>' +
-        '</div>' +
-        '<div class="popup__body">' +
-          '<div class="popup__name">' + name + '</div>' +
-          '<div class="popup__sub">' + (s.romaji || '') + ' / ' + (s.yomi || '') + '</div>' +
-          '<a class="popup__cta" href="../' + (s.heroUrl || '') + '">店ページへ →</a>' +
-        '</div>' +
-      '</div>';
+  function popupHtml(s,state){
+    return '<div class="popup__name">'+nameHtml(s)+'</div>'+
+      '<div class="popup__meta">'+STATE_LABEL[state]+' · '+genreLabels(s).join('・')+'</div>'+
+      (s.heroUrl?'<a class="popup__cta" href="../'+s.heroUrl+'">店ページへ →</a>':'');
   }
 
-  var markers = {};   // storeId → marker
-  var availabilityFilterOn = false;
-  try { availabilityFilterOn = localStorage.getItem('map-filter-available') === '1'; } catch (_) {}
+  // ===== フィルタ状態 =====
+  var genre='all', availOnly=false;
+  try{availOnly=localStorage.getItem('map-filter-available')==='1';}catch(_){}
 
-  function renderMarkers() {
-    // 既存マーカー削除
-    Object.keys(markers).forEach(function (k) {
-      map.removeLayer(markers[k]);
+  function visibleStores(){
+    return STORES.filter(function(s){
+      if(genre!=='all'&&(s.categories||[]).indexOf(genre)<0)return false;
+      if(availOnly&&getState(s)!=='available')return false;
+      return true;
     });
-    markers = {};
+  }
+  function sortStores(arr){
+    return arr.slice().sort(function(a,b){
+      if(userLat!=null){
+        return haversine(userLat,userLng,a.lat,a.lng)-haversine(userLat,userLng,b.lat,b.lng);
+      }
+      return STATE_ORDER[getState(a)]-STATE_ORDER[getState(b)];
+    });
+  }
 
-    STORES.forEach(function (s) {
-      var state = getStoreState(s.id);
-      // フィルタ ON 時は available のみ
-      if (availabilityFilterOn && state !== 'available') return;
+  function setActive(id,fly){
+    activeId=id;
+    // ピン更新
+    Object.keys(markers).forEach(function(k){
+      var s=storeById(k),st=getState(s);
+      markers[k].setIcon(makeIcon(st,k===id));
+    });
+    // 行ハイライト
+    Object.keys(rowEls).forEach(function(k){
+      rowEls[k].classList.toggle('row--active',k===id);
+    });
+    if(id){
+      var s=storeById(id);
+      if(fly) map.flyTo([s.lat,s.lng],17,{duration:0.5});
+      if(markers[id]) markers[id].openPopup();
+      if(rowEls[id]) rowEls[id].scrollIntoView({behavior:'smooth',block:'nearest'});
+    }
+  }
+  function storeById(id){return STORES.find(function(s){return s.id===id;});}
 
-      var m = L.marker([s.lat, s.lng], {
-        icon: makeStoreIcon(state, s.short || s.name)
-      });
-      m.bindPopup(buildPopupHtml(s, state), { maxWidth: 240, closeButton: true, autoPan: true });
+  // ===== 描画 =====
+  function render(){
+    var list=sortStores(visibleStores());
+    // マーカー
+    Object.keys(markers).forEach(function(k){map.removeLayer(markers[k]);});
+    markers={};
+    list.forEach(function(s){
+      var st=getState(s);
+      var m=L.marker([s.lat,s.lng],{icon:makeIcon(st,s.id===activeId)});
+      m.bindPopup(popupHtml(s,st),{closeButton:true,autoPan:true});
+      m.on('click',function(){ setActive(s.id,false); });
       m.addTo(map);
-      markers[s.id] = m;
+      markers[s.id]=m;
+    });
+    // リスト
+    var head=document.getElementById('list-head');
+    var availN=list.filter(function(s){return getState(s)==='available';}).length;
+    head.innerHTML='<strong>'+list.length+'</strong> 軒'+(userLat!=null?'（近い順）':'')+' / 今すぐ行ける <strong>'+availN+'</strong> 軒';
+    var rowsWrap=document.getElementById('list-rows');
+    rowsWrap.innerHTML='';
+    rowEls={};
+    list.forEach(function(s){
+      var st=getState(s);
+      var bcls = st==='available'?'':(' row__badge--'+st);
+      var hoursStr=fmtHours(s.hours)||'';
+      var distStr=(userLat!=null)?fmtDist(haversine(userLat,userLng,s.lat,s.lng)):'';
+      var row=document.createElement('div');
+      row.className='row';
+      row.dataset.storeId=s.id;
+      row.innerHTML=
+        '<div class="row__thumb">'+
+          (s.imageUrl?'<img src="'+s.imageUrl+'" alt="" loading="lazy" onerror="this.onerror=null;this.src=\'https://picsum.photos/seed/'+encodeURIComponent(s.id)+'/200/200\'">':'')+
+          '<span class="row__badge'+bcls+'">'+STATE_SHORT[st]+'</span>'+
+        '</div>'+
+        '<div class="row__body">'+
+          '<div class="row__name">'+nameHtml(s)+'</div>'+
+          '<div class="row__tags">'+genreLabels(s).join('・')+(s.area?' / '+s.area:'')+'</div>'+
+          '<div class="row__line">'+
+            '<span class="'+(st==='closed'?'row__open--closed':'row__open')+'">'+(st==='closed'?'時間外':'営業中')+'</span>'+
+            (hoursStr?'<span>'+hoursStr+'</span>':'')+
+            (distStr?'<span class="row__dist">'+distStr+'</span>':'')+
+          '</div>'+
+        '</div>'+
+        '<div class="row__chevron">›</div>';
+      row.addEventListener('click',function(){ setActive(s.id,true); });
+      rowsWrap.appendChild(row);
+      rowEls[s.id]=row;
     });
   }
-  renderMarkers();
 
-  // ====== 現在地 ======
-  var userMarker = null;
-  function placeUserMarker(lat, lng) {
-    if (userMarker) map.removeLayer(userMarker);
-    var icon = L.divIcon({
-      className: 'user-pin-wrap',
-      html: '<div class="user-pin"></div>',
-      iconSize: [18, 18],
-      iconAnchor: [9, 9]
+  // ===== チップ =====
+  function renderChips(){
+    var chipsEl=document.getElementById('chips');
+    var defs=window.NAKASHINCHI_CATEGORIES||[];
+    chipsEl.innerHTML='';
+    defs.forEach(function(g){
+      var n = g.id==='all'?STORES.length:STORES.filter(function(s){return (s.categories||[]).indexOf(g.id)!==-1;}).length;
+      if(n===0&&g.id!=='all')return;
+      var b=document.createElement('button');
+      b.className='chip';b.type='button';b.dataset.genre=g.id;
+      b.setAttribute('aria-pressed',g.id===genre?'true':'false');
+      b.textContent=g.label+' '+n;
+      b.addEventListener('click',function(){
+        genre=g.id;
+        chipsEl.querySelectorAll('.chip').forEach(function(x){x.setAttribute('aria-pressed',x.dataset.genre===genre?'true':'false');});
+        activeId=null; render();
+      });
+      chipsEl.appendChild(b);
     });
-    userMarker = L.marker([lat, lng], { icon: icon, interactive: false }).addTo(map);
   }
-  function locate() {
-    if (!navigator.geolocation) return;
-    navigator.geolocation.getCurrentPosition(
-      function (pos) {
-        var lat = pos.coords.latitude;
-        var lng = pos.coords.longitude;
-        placeUserMarker(lat, lng);
-        map.setView([lat, lng], 17);
-      },
-      function () { /* 拒否されたら中新地中心のまま */ },
-      { timeout: 8000, enableHighAccuracy: false }
-    );
-  }
-  // 初回自動 + ボタン
-  locate();
-  document.getElementById('locate-fab').addEventListener('click', locate);
 
-  // ====== フィルタトグル ======
-  var filterBtn   = document.getElementById('filter-btn');
-  var filterLabel = document.getElementById('filter-label');
-  function applyFilterUI() {
-    filterBtn.setAttribute('aria-pressed', availabilityFilterOn ? 'true' : 'false');
-    filterLabel.textContent = availabilityFilterOn ? '空席あり ON' : '空席あり';
+  // ===== 空席フィルタ =====
+  var filterBtn=document.getElementById('filter-btn');
+  function applyFilterUI(){
+    filterBtn.setAttribute('aria-pressed',availOnly?'true':'false');
+    filterBtn.textContent=availOnly?'空席あり ✓':'空席あり';
   }
   applyFilterUI();
-  filterBtn.addEventListener('click', function () {
-    availabilityFilterOn = !availabilityFilterOn;
-    try { localStorage.setItem('map-filter-available', availabilityFilterOn ? '1' : '0'); } catch (_) {}
-    applyFilterUI();
-    renderMarkers();
+  filterBtn.addEventListener('click',function(){
+    availOnly=!availOnly;
+    try{localStorage.setItem('map-filter-available',availOnly?'1':'0');}catch(_){}
+    applyFilterUI(); activeId=null; render();
   });
 
-  // ====== サーバ同期 ======
-  async function syncAll() {
-    await Promise.all(STORES.map(function (s) { return fetchStoreAll(s.id); }));
-    renderMarkers();
+  // ===== 現在地 =====
+  var userMarker=null;
+  function locate(){
+    if(!navigator.geolocation)return;
+    navigator.geolocation.getCurrentPosition(function(pos){
+      userLat=pos.coords.latitude;userLng=pos.coords.longitude;
+      if(userMarker)map.removeLayer(userMarker);
+      userMarker=L.marker([userLat,userLng],{icon:L.divIcon({className:'',html:'<div class="user-pin"></div>',iconSize:[16,16],iconAnchor:[8,8]}),interactive:false}).addTo(map);
+      map.setView([userLat,userLng],16);
+      render();  // 近い順で再ソート
+    },function(){},{timeout:8000,enableHighAccuracy:false});
   }
-  syncAll();
-  setInterval(syncAll, 30 * 1000);
-  window.addEventListener('storage', function (e) {
-    if (!e.key) return;
-    if (e.key.indexOf('store-cache:') === 0 || [HOURS_KEY, SEATS_KEY, DISPLAY_KEY].indexOf(e.key) !== -1) {
-      renderMarkers();
-    }
-  });
+  document.getElementById('locate-fab').addEventListener('click',locate);
 
-  // タブ復帰時にも更新
-  document.addEventListener('visibilitychange', function () {
-    if (!document.hidden) syncAll();
-  });
+  // ===== サーバ同期 =====
+  async function fetchStoreAll(id){
+    if(!window.NAKASHINCHI_API)return;
+    try{var r=await fetch(window.NAKASHINCHI_API+'/api/store/'+id+'/all',{cache:'no-cache'});if(!r.ok)return;
+      var d=await r.json();Object.keys(d.data||{}).forEach(function(k){try{localStorage.setItem('store-cache:'+id+':'+k,JSON.stringify({value:d.data[k].value,updatedAt:d.data[k].updatedAt}));}catch(_){}});}catch(_){}
+  }
+  async function syncAll(){
+    // 実データ店 (asanoha/ivory) のみ取得
+    await Promise.all(STORES.filter(function(s){return !s.demo;}).map(function(s){return fetchStoreAll(s.id);}));
+    var keepActive=activeId; render(); if(keepActive)setActive(keepActive,false);
+  }
+
+  // 初期化
+  renderChips();
+  render();
+  locate();
+  syncAll();
+  setInterval(syncAll,30*1000);
+  // マップサイズ確定後にリサイズ
+  setTimeout(function(){map.invalidateSize();},200);
+  window.addEventListener('resize',function(){map.invalidateSize();});
+  document.addEventListener('visibilitychange',function(){if(!document.hidden)syncAll();});
 })();
 </script>
 
