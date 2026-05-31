@@ -1,0 +1,113 @@
+/* ============================================================
+   admin-clean.css — 管理画面 共通クリーンテーマ
+   ------------------------------------------------------------
+   各管理ページの style.css の「後」に読み込み、
+   CSS 変数（--color-* / --font-* / --radius）を上書きして
+   ランディングと同じクリーン SaaS 基調に統一する。
+   - LIGHT を既定とし、昼夜トグル(data-theme="dark")も
+     クリーンなニュートラル・ダークへ再調整して残す。
+   - 個別ページの構造・JS には一切手を入れない（色とフォントのみ）。
+   ============================================================ */
+
+:root {
+  /* ===== LIGHT (既定) — index.html と同じパレット ===== */
+  --color-bg:           #f6f7f9;
+  --color-paper:        #ffffff;
+  --color-paper-2:      #ffffff;
+  --color-paper-line:   #e6e8ec;
+  --color-grid:         #eef0f3;
+  --color-ink:          #16181d;
+  --color-text:         #16181d;
+  --color-text-muted:   #6b7280;
+  --color-text-soft:    #9aa1ab;
+  --color-accent:       #d4365a;
+  --color-accent-deep:  #b02547;
+  --color-accent-soft:  #e85a78;
+  --color-success:      #16a34a;
+  --color-success-soft: #4ade80;
+  --color-warn:         #e8920c;
+  --color-input-bg:     #ffffff;
+
+  --font-jp:    'Noto Sans JP', system-ui, sans-serif;
+  --font-brush: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
+  --font-num:   'Cormorant Garamond', Georgia, serif;
+
+  --radius:    16px;
+  --radius-sm: 10px;
+
+  /* seats（席管理）トークン再調整 */
+  --seat-open-bg:      linear-gradient(180deg, #ffffff 0%, #f3f5f8 100%);
+  --seat-open-border:  #d3d8df;
+  --seat-open-fg:      #4b5563;
+  --seat-open-shadow:  0 2px 6px rgba(20,30,50,0.06), inset 0 1px 0 rgba(255,255,255,0.8);
+  --seat-taken-bg:     linear-gradient(180deg, #e85a78 0%, #d4365a 100%);
+  --seat-taken-border: #b02547;
+  --seat-taken-fg:     #ffffff;
+  --seat-taken-shadow: 0 4px 18px rgba(212,54,90,0.30), inset 0 1px 0 rgba(255,255,255,0.18);
+  --table-bg:          rgba(31,35,51,0.05);
+  --table-line:        rgba(31,35,51,0.16);
+}
+
+/* ===== DARK — 暖色ブラウンをやめ、ニュートラルなスレートへ ===== */
+body[data-theme="dark"] {
+  --color-bg:           #0f1115;
+  --color-paper:        #171a21;
+  --color-paper-2:      #1d212a;
+  --color-paper-line:   rgba(255,255,255,0.08);
+  --color-grid:         rgba(255,255,255,0.05);
+  --color-ink:          #f4f6f9;
+  --color-text:         #f4f6f9;
+  --color-text-muted:   #9aa1ab;
+  --color-text-soft:    #6b727d;
+  --color-accent:       #f0577a;
+  --color-accent-deep:  #d4365a;
+  --color-accent-soft:  #ff7d98;
+  --color-success:      #4ade80;
+  --color-success-soft: #86efac;
+  --color-warn:         #f0a83e;
+  --color-input-bg:     #1d212a;
+
+  --seat-open-bg:      linear-gradient(180deg, #232833 0%, #1b1f28 100%);
+  --seat-open-border:  rgba(255,255,255,0.12);
+  --seat-open-fg:      #c4cad3;
+  --seat-open-shadow:  0 2px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.05);
+  --seat-taken-bg:     linear-gradient(180deg, #f0577a 0%, #d4365a 100%);
+  --seat-taken-border: #b02547;
+  --seat-taken-fg:     #ffffff;
+  --seat-taken-shadow: 0 4px 18px rgba(212,54,90,0.40), inset 0 1px 0 rgba(255,255,255,0.18);
+  --table-bg:          rgba(255,255,255,0.05);
+  --table-line:        rgba(255,255,255,0.14);
+}
+
+/* ===== 見出し系：明朝の細さをやめ、ゴシックで太く ===== */
+.topbar__brand,
+.hero__brand,
+.brand,
+.footer__brand { font-weight: 900 !important; letter-spacing: 0.01em; }
+
+.topbar__brand { font-size: 26px; }
+
+/* セクション見出しの字間を詰めてクリーンに */
+.cards__heading { letter-spacing: 0.25em; }
+
+/* カード角丸をクリーン基調へ（タッチ感のある柔らかさ） */
+.card,
+.summary__col,
+.modal__panel,
+.modal__plan { border-radius: var(--radius); }
+
+/* バッジ・チップは小さめ角丸のまま */
+.card__badge { letter-spacing: 0.15em; }
+
+/* 入力・ボタンのフォーカスをアクセント色で統一 */
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+/* ライト基調ではカードの影をやわらかく（暖色前提の濃い影を上書き） */
+.card { box-shadow: 0 1px 3px rgba(20,30,50,0.05); }
+.card:hover { box-shadow: 0 12px 32px rgba(20,30,50,0.10); }

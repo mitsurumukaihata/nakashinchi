@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0a0604">
+<meta name="theme-color" content="#ffffff">
 <meta name="robots" content="noindex">
 <title>プロフィール設定 — 中新地</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;700;800&family=Noto+Serif+JP:wght@400;500;600;700;800;900&family=Yuji+Syuku&family=Cormorant+Garamond:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="../config.js"></script>
 <script src="../line-auth.js" defer></script>
 
@@ -17,18 +17,18 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 [hidden] { display: none !important; }
 :root {
-  --bg-1:#2a1812; --bg-2:#1a0e09; --bg-3:#0c0604;
-  --paper:#f5efe6;
-  --paper-soft:rgba(245,239,230,0.94);
-  --paper-dim:rgba(245,239,230,0.72);
-  --paper-faint:rgba(245,239,230,0.28);
-  --panel-bg:rgba(245,239,230,0.14);
-  --panel-bg-hi:rgba(245,239,230,0.18);
-  --panel-border:rgba(245,239,230,0.32);
-  --accent:#c8102e;
+  --bg-1:#eef0f3; --bg-2:#f6f7f9; --bg-3:#ffffff;
+  --paper:#16181d;
+  --paper-soft:rgba(22,24,29,0.86);
+  --paper-dim:rgba(22,24,29,0.56);
+  --paper-faint:rgba(22,24,29,0.16);
+  --panel-bg:#ffffff;
+  --panel-bg-hi:#ffffff;
+  --panel-border:#e6e8ec;
+  --accent:#d4365a;
   --green:#06c755;
-  --font-jp:'Shippori Mincho B1','Yu Mincho',serif;
-  --font-brush:'Yuji Syuku',serif;
+  --font-jp:'Noto Sans JP',system-ui,sans-serif;
+  --font-brush:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
   --font-num:'Cormorant Garamond',Georgia,serif;
 }
 html,body { height:100%; background: var(--bg-2); }
@@ -37,10 +37,8 @@ body {
   color: var(--paper);
   padding: calc(28px + env(safe-area-inset-top,0px)) 20px calc(40px + env(safe-area-inset-bottom,0px));
   background:
-    radial-gradient(ellipse at 20% 10%, rgba(200,16,46,0.16) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 60%, rgba(255,165,80,0.12) 0%, transparent 55%),
-    radial-gradient(ellipse at 50% 100%, rgba(40,20,15,0.5) 0%, transparent 65%),
-    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 60%, var(--bg-3) 100%);
+    radial-gradient(ellipse at 50% 0%, rgba(212,54,90,0.05) 0%, transparent 55%),
+    linear-gradient(180deg, #f6f7f9 0%, #eef0f3 100%);
   -webkit-font-smoothing: antialiased;
 }
 .wrap { max-width: 480px; margin: 0 auto; }
@@ -70,7 +68,7 @@ body {
 .crumb::before, .crumb::after { content: '·'; color: var(--accent); margin: 0 8px; }
 .brand {
   font-family: var(--font-brush);
-  font-weight: 400;
+  font-weight: 900;
   font-size: 30px;
   text-align: center;
   letter-spacing: 0.08em;
@@ -91,7 +89,7 @@ body {
   border: 1px solid var(--panel-border);
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
-  box-shadow: inset 0 1px 0 rgba(245,239,230,0.18), 0 8px 24px rgba(0,0,0,0.35);
+  box-shadow: 0 1px 3px rgba(20,30,50,0.05), 0 10px 30px rgba(20,30,50,0.08);
   border-radius: 14px;
   padding: 22px;
   display: flex; align-items: center; gap: 16px;
@@ -111,7 +109,7 @@ body {
   border: 1px solid var(--panel-border);
   backdrop-filter: blur(16px) saturate(140%);
   -webkit-backdrop-filter: blur(16px) saturate(140%);
-  box-shadow: inset 0 1px 0 rgba(245,239,230,0.18), 0 8px 24px rgba(0,0,0,0.35);
+  box-shadow: 0 1px 3px rgba(20,30,50,0.05), 0 10px 30px rgba(20,30,50,0.08);
   border-radius: 14px;
   padding: 22px 22px 24px;
   margin-bottom: 16px;
@@ -162,7 +160,7 @@ body {
 .score-row {
   display: flex; justify-content: space-between;
   padding: 8px 12px;
-  background: rgba(0,0,0,0.12);
+  background: rgba(20,30,50,0.04);
   border: 1px solid var(--paper-faint);
   border-radius: 8px;
   font-size: 11px;
@@ -190,7 +188,7 @@ body {
 .privacy-option {
   display: flex; align-items: flex-start; gap: 14px;
   padding: 16px 18px;
-  background: rgba(0,0,0,0.18);
+  background: rgba(20,30,50,0.04);
   border: 1px solid var(--paper-faint);
   border-radius: 10px;
   cursor: pointer;
@@ -198,7 +196,7 @@ body {
 }
 .privacy-option:hover { border-color: var(--paper-dim); }
 .privacy-option[aria-pressed="true"] {
-  background: rgba(200,16,46,0.10);
+  background: rgba(212,54,90,0.08);
   border-color: var(--accent);
 }
 .privacy-option__radio {
@@ -244,7 +242,7 @@ body {
   transition: all 0.18s;
 }
 .btn--primary { background: var(--accent); color: #fff; }
-.btn--primary:hover { background: #8e0e1c; transform: translateY(-1px); }
+.btn--primary:hover { background: #b02547; transform: translateY(-1px); }
 .btn--primary:disabled { opacity: 0.5; cursor: default; transform: none; }
 .btn--ghost {
   background: transparent;
@@ -262,7 +260,7 @@ body {
   color: #fff;
   border-radius: 999px;
   font-size: 12px; letter-spacing: 0.18em;
-  box-shadow: 0 12px 32px rgba(0,0,0,0.4);
+  box-shadow: 0 12px 32px rgba(20,30,50,0.18);
   opacity: 0; transition: opacity 0.3s ease;
   z-index: 50;
 }

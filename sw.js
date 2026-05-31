@@ -4,12 +4,13 @@
    - API リクエスト: pass-through (常にネット最新)
    - 古いキャッシュは activate 時に削除
    =========================================== */
-const CACHE = 'nakashinchi-v50';
+const CACHE = 'nakashinchi-v51';
 
 const ASSETS = [
   './',
   './index.html',
   './config.js',
+  './admin-clean.css',
   './api-client.js',
   './line-auth.js',
   './favorites.js',

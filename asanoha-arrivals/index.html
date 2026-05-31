@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1a0c08">
+<meta name="theme-color" content="#ffffff">
 <title>麻ノ葉 — 来店通知</title>
 
 <link rel="icon"             href="../icons/icon-192.png" type="image/png">
@@ -13,7 +13,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;700;800&family=Noto+Serif+JP:wght@400;500;600;700;800;900&family=Yuji+Syuku&family=Cormorant+Garamond:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../pin-modal.css">
 
 <script src="../config.js"></script>
@@ -42,44 +42,46 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 /* ライトモード (デフォルト) */
 :root {
-  --bg-1: #f5efe6;
-  --bg-2: #faf6ee;
-  --paper:#1a1410;
-  --paper-soft: rgba(26,20,16,0.82);
-  --paper-dim:  rgba(26,20,16,0.58);
-  --paper-faint:rgba(26,20,16,0.22);
-  --ink:#1a1410;
-  --accent: #c8102e;
-  --accent-soft: #e85060;
+  --bg-1: #eef0f3;
+  --bg-2: #f6f7f9;
+  --paper:#16181d;
+  --paper-soft: rgba(22,24,29,0.80);
+  --paper-dim:  rgba(22,24,29,0.56);
+  --paper-faint:rgba(22,24,29,0.18);
+  --ink:#16181d;
+  --accent: #d4365a;
+  --accent-soft: #e85a78;
   --green:  #06c755;
-  --amber:  #ffb648;
-  --panel-bg: rgba(0,0,0,0.05);
+  --amber:  #e8920c;
+  --panel-bg: rgba(20,30,50,0.05);
   --panel-bg-2: #fff;
   --body-bg:
-    radial-gradient(ellipse at 50% 0%, rgba(200,16,46,0.06) 0%, transparent 55%),
-    linear-gradient(180deg, #f5efe6 0%, #ebe2d2 60%, #ddcfb8 100%);
-  --topbar-bg: rgba(250,246,238,0.85);
-  --font-jp:    'Shippori Mincho B1', 'Yu Mincho', serif;
-  --font-brush: 'Yuji Syuku', serif;
+    radial-gradient(ellipse at 50% 0%, rgba(212,54,90,0.05) 0%, transparent 55%),
+    linear-gradient(180deg, #f6f7f9 0%, #eef0f3 100%);
+  --topbar-bg: rgba(255,255,255,0.85);
+  --font-jp:    'Noto Sans JP', system-ui, sans-serif;
+  --font-brush: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
   --font-num:   'Cormorant Garamond', Georgia, serif;
 }
 /* ダークモード (manoha-theme=dark で発動) */
 body[data-theme="dark"] {
-  --bg-1: #2a1812;
-  --bg-2: #1a0e09;
-  --paper:#f5efe6;
-  --paper-soft: rgba(245,239,230,0.94);
-  --paper-dim:  rgba(245,239,230,0.72);
-  --paper-faint:rgba(245,239,230,0.28);
-  --ink:  #1a1410;
-  --panel-bg: rgba(245,239,230,0.14);
-  --panel-bg-hi: rgba(245,239,230,0.18);
-  --panel-bg-2: rgba(245,239,230,0.16);
-  --panel-border: rgba(245,239,230,0.32);
+  --bg-1: #171a21;
+  --bg-2: #0f1115;
+  --paper:#f4f6f9;
+  --paper-soft: rgba(244,246,249,0.94);
+  --paper-dim:  rgba(244,246,249,0.70);
+  --paper-faint:rgba(244,246,249,0.26);
+  --ink:  #16181d;
+  --accent: #f0577a;
+  --accent-soft: #ff7d98;
+  --panel-bg: rgba(255,255,255,0.07);
+  --panel-bg-hi: rgba(255,255,255,0.11);
+  --panel-bg-2: rgba(255,255,255,0.08);
+  --panel-border: rgba(255,255,255,0.16);
   --body-bg:
-    radial-gradient(ellipse at 50% 0%, rgba(200,16,46,0.10) 0%, transparent 55%),
-    linear-gradient(180deg, #1a0c08 0%, #0a0604 60%, #050201 100%);
-  --topbar-bg: rgba(15,8,5,0.85);
+    radial-gradient(ellipse at 50% 0%, rgba(240,87,122,0.10) 0%, transparent 55%),
+    linear-gradient(180deg, #0f1115 0%, #0b0d11 60%, #08090c 100%);
+  --topbar-bg: rgba(15,17,21,0.85);
 }
 html, body { background: var(--bg-2); min-height: 100%; }
 body {
@@ -92,10 +94,9 @@ body {
 }
 body[data-theme="dark"] {
   background:
-    radial-gradient(ellipse at 20% 10%, rgba(200,16,46,0.18) 0%, transparent 50%),
-    radial-gradient(ellipse at 80% 70%, rgba(255,165,80,0.13) 0%, transparent 55%),
-    radial-gradient(ellipse at 50% 100%, rgba(40,20,15,0.5) 0%, transparent 65%),
-    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 60%, var(--bg-3, #050201) 100%);
+    radial-gradient(ellipse at 20% 10%, rgba(240,87,122,0.10) 0%, transparent 50%),
+    radial-gradient(ellipse at 80% 70%, rgba(99,102,241,0.08) 0%, transparent 55%),
+    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 60%, var(--bg-3, #08090c) 100%);
 }
 
 /* topbar */
@@ -240,14 +241,14 @@ body[data-theme="dark"] {
   box-shadow: inset 0 1px 0 rgba(245,239,230,0.18), 0 8px 24px rgba(0,0,0,0.35);
 }
 .arr--new {
-  border-color: rgba(200,16,46,0.55);
-  background: rgba(200,16,46,0.12);
+  border-color: rgba(212,54,90,0.55);
+  background: rgba(212,54,90,0.12);
   animation: arrFlash 1.4s ease-out;
 }
-body[data-theme="light"] .arr--new { background: rgba(200,16,46,0.08); }
+body[data-theme="light"] .arr--new { background: rgba(212,54,90,0.08); }
 @keyframes arrFlash {
-  0%   { box-shadow: 0 0 0 0 rgba(200,16,46,0.55); }
-  100% { box-shadow: 0 0 0 18px rgba(200,16,46,0); }
+  0%   { box-shadow: 0 0 0 0 rgba(212,54,90,0.55); }
+  100% { box-shadow: 0 0 0 18px rgba(212,54,90,0); }
 }
 .arr--done   { opacity: 0.55; }
 .arr--cancel { opacity: 0.4; }

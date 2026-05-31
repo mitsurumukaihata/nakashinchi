@@ -4,21 +4,21 @@
    - 試験段階表示 + スキップボタン
    =========================================== */
 :root {
-  --color-bg:           #0a0604;
-  --color-bg-2:         #1a0c08;
-  --color-paper:        #f5efe6;
-  --color-paper-dim:    rgba(245,239,230,0.85);
-  --color-text-muted:   #a89888;
-  --color-text-soft:    #786858;
-  --color-line:         rgba(245,239,230,0.12);
-  --color-line-strong:  rgba(245,239,230,0.25);
-  --color-input-bg:     rgba(245,239,230,0.04);
-  --color-accent:       #c8102e;
-  --color-accent-deep:  #8e0e1c;
-  --color-accent-soft:  #e85060;
-  --color-warn:         #f0a64a;
-  --font-jp:    'Shippori Mincho B1', 'Yu Mincho', serif;
-  --font-brush: 'Yuji Syuku', 'Shippori Mincho B1', serif;
+  --color-bg:           #f6f7f9;
+  --color-bg-2:         #eef0f3;
+  --color-paper:        #16181d;
+  --color-paper-dim:    rgba(22,24,29,0.72);
+  --color-text-muted:   #6b7280;
+  --color-text-soft:    #9aa1ab;
+  --color-line:         #e6e8ec;
+  --color-line-strong:  #d3d8df;
+  --color-input-bg:     #ffffff;
+  --color-accent:       #d4365a;
+  --color-accent-deep:  #b02547;
+  --color-accent-soft:  #e85a78;
+  --color-warn:         #e8920c;
+  --font-jp:    'Noto Sans JP', system-ui, sans-serif;
+  --font-brush: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
   --font-num:   'Cormorant Garamond', Georgia, serif;
 }
 
@@ -41,9 +41,8 @@ button { font-family: inherit; cursor: pointer; }
   display: flex; align-items: center; justify-content: center;
   padding: calc(24px + env(safe-area-inset-top, 0px)) 24px 40px;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(200,16,46,0.18) 0%, transparent 55%),
-    radial-gradient(ellipse at 50% 100%, rgba(40,20,15,0.5) 0%, transparent 65%),
-    linear-gradient(180deg, #1a0c08 0%, #0a0604 60%, #050201 100%);
+    radial-gradient(ellipse at 50% 0%, rgba(212,54,90,0.05) 0%, transparent 55%),
+    linear-gradient(180deg, #f6f7f9 0%, #eef0f3 100%);
   position: relative;
   overflow: hidden;
 }
@@ -51,20 +50,18 @@ button { font-family: inherit; cursor: pointer; }
   content: '';
   position: absolute; inset: 0;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.1 0 0 0 0 0.05 0 0 0 0.15 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
-  opacity: 0.30;
+  opacity: 0.04;
   pointer-events: none;
 }
 
 .login__inner {
   position: relative; z-index: 2;
   width: 100%; max-width: 420px;
-  background: rgba(20, 10, 6, 0.55);
+  background: #ffffff;
   border: 1px solid var(--color-line);
-  border-radius: 8px;
+  border-radius: var(--radius, 16px);
   padding: 36px 30px 32px;
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+  box-shadow: 0 1px 3px rgba(20,30,50,0.05), 0 20px 50px rgba(20,30,50,0.10);
   animation: cardFadeIn 0.8s cubic-bezier(.2,.7,.2,1);
 }
 
@@ -84,7 +81,7 @@ button { font-family: inherit; cursor: pointer; }
   border-radius: 999px;
   transition: all 0.2s;
 }
-.login__back:hover { color: var(--color-paper); border-color: var(--color-line-strong); background: rgba(245,239,230,0.06); }
+.login__back:hover { color: var(--color-paper); border-color: var(--color-line-strong); background: rgba(20,30,50,0.04); }
 
 /* ===== HEADER ===== */
 .login__head {
@@ -100,7 +97,7 @@ button { font-family: inherit; cursor: pointer; }
 }
 .login__title {
   font-family: var(--font-brush);
-  font-weight: 400;
+  font-weight: 900;
   font-size: 34px;
   letter-spacing: 0.08em;
   color: var(--color-paper);
@@ -166,8 +163,8 @@ button { font-family: inherit; cursor: pointer; }
 .field__input:focus {
   outline: none;
   border-color: var(--color-accent-soft);
-  background: rgba(245,239,230,0.06);
-  box-shadow: 0 0 0 3px rgba(200,16,46,0.15);
+  background: rgba(20,30,50,0.04);
+  box-shadow: 0 0 0 3px rgba(212,54,90,0.15);
 }
 .field__input::placeholder { color: var(--color-text-soft); }
 .field-note {
@@ -199,7 +196,7 @@ button { font-family: inherit; cursor: pointer; }
 .link-text {
   color: var(--color-text-muted);
   text-decoration: underline;
-  text-decoration-color: rgba(245,239,230,0.25);
+  text-decoration-color: rgba(20,30,50,0.20);
   text-underline-offset: 3px;
   letter-spacing: 0.06em;
   transition: color 0.2s;
@@ -229,15 +226,15 @@ button { font-family: inherit; cursor: pointer; }
 }
 .btn--primary {
   background: var(--color-accent);
-  color: var(--color-paper);
+  color: #fff;
   border-color: var(--color-accent);
-  box-shadow: 0 4px 18px rgba(200,16,46,0.30);
+  box-shadow: 0 4px 18px rgba(212,54,90,0.28);
 }
 .btn--primary:hover:not(:disabled) {
   background: var(--color-accent-deep);
   border-color: var(--color-accent-deep);
   transform: translateY(-2px);
-  box-shadow: 0 6px 24px rgba(200,16,46,0.40);
+  box-shadow: 0 6px 24px rgba(212,54,90,0.38);
 }
 .btn--primary:disabled {
   opacity: 0.5; cursor: not-allowed; transform: none; box-shadow: none;
@@ -252,7 +249,7 @@ button { font-family: inherit; cursor: pointer; }
 .btn--skip:hover {
   color: var(--color-paper);
   border-color: var(--color-paper-dim);
-  background: rgba(245,239,230,0.04);
+  background: rgba(20,30,50,0.03);
 }
 .skip-note {
   font-size: 9px;
@@ -265,8 +262,8 @@ button { font-family: inherit; cursor: pointer; }
 .form-error {
   margin-top: 4px;
   padding: 10px 14px;
-  background: rgba(200,16,46,0.10);
-  border: 1px solid rgba(200,16,46,0.35);
+  background: rgba(212,54,90,0.08);
+  border: 1px solid rgba(212,54,90,0.30);
   border-radius: 4px;
   color: var(--color-accent-soft);
   font-size: 12px;
@@ -308,7 +305,7 @@ button { font-family: inherit; cursor: pointer; }
   font-size: 12px;
   letter-spacing: 0.1em;
   font-weight: 600;
-  box-shadow: 0 12px 30px rgba(0,0,0,0.4);
+  box-shadow: 0 12px 30px rgba(20,30,50,0.20);
   animation: toastSlide 0.3s cubic-bezier(.2,.7,.2,1);
 }
 .toast[hidden] { display: none; }

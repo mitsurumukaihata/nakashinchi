@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0a0604">
+<meta name="theme-color" content="#ffffff">
 <meta name="robots" content="noindex">
 <title>来店通知 受信登録 — 中新地</title>
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;700;800&family=Noto+Serif+JP:wght@400;500;600;700;800;900&family=Yuji+Syuku&family=Cormorant+Garamond:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <script src="../config.js"></script>
 <script src="../line-auth.js" defer></script>
 
@@ -17,16 +17,16 @@
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 [hidden] { display: none !important; }
 :root {
-  --bg-1:#1a0c08; --bg-2:#0a0604; --bg-3:#050201;
-  --paper:#f5efe6;
-  --paper-soft:rgba(245,239,230,0.78);
-  --paper-dim:rgba(245,239,230,0.45);
-  --paper-faint:rgba(245,239,230,0.16);
-  --ink:#1a1410;
-  --accent:#c8102e;
+  --bg-1:#eef0f3; --bg-2:#f6f7f9; --bg-3:#ffffff;
+  --paper:#16181d;
+  --paper-soft:rgba(22,24,29,0.78);
+  --paper-dim:rgba(22,24,29,0.52);
+  --paper-faint:rgba(22,24,29,0.16);
+  --ink:#16181d;
+  --accent:#d4365a;
   --green:#06c755;
-  --font-jp:'Shippori Mincho B1','Yu Mincho',serif;
-  --font-brush:'Yuji Syuku',serif;
+  --font-jp:'Noto Sans JP',system-ui,sans-serif;
+  --font-brush:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
   --font-num:'Cormorant Garamond',Georgia,serif;
 }
 html,body{height:100%;background:var(--bg-2);}
@@ -35,9 +35,8 @@ body{
   color:var(--paper);
   padding:calc(24px + env(safe-area-inset-top,0px)) 20px calc(36px + env(safe-area-inset-bottom,0px));
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(0,200,80,0.10) 0%, transparent 55%),
-    radial-gradient(ellipse at 50% 100%, rgba(40,20,15,0.5) 0%, transparent 65%),
-    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 60%, var(--bg-3) 100%);
+    radial-gradient(ellipse at 50% 0%, rgba(6,199,85,0.06) 0%, transparent 55%),
+    linear-gradient(180deg, #f6f7f9 0%, #eef0f3 100%);
   -webkit-font-smoothing:antialiased;
 }
 .wrap{ max-width:440px; margin:0 auto; }
@@ -54,7 +53,7 @@ body{
 .crumb::before, .crumb::after{ content:'·'; color:var(--accent); margin:0 8px; }
 .brand{
   font-family:var(--font-brush);
-  font-weight:400;
+  font-weight:900;
   font-size:34px;
   text-align:center;
   letter-spacing:0.08em;
@@ -71,11 +70,12 @@ body{
 }
 
 .card{
-  background:rgba(245,239,230,0.045);
+  background:#ffffff;
   border:1px solid var(--paper-faint);
   border-radius:14px;
   padding:22px 22px 24px;
   margin-bottom:14px;
+  box-shadow:0 1px 3px rgba(20,30,50,0.05), 0 10px 30px rgba(20,30,50,0.06);
 }
 .card__num{
   font-family:var(--font-num);
@@ -133,7 +133,7 @@ body{
 }
 .btn--ghost:hover{ color:var(--paper); border-color:var(--paper); }
 .btn--accent{ background:var(--accent); color:#fff; }
-.btn--accent:hover{ background:#8e0e1c; transform:translateY(-1px); }
+.btn--accent:hover{ background:#b02547; transform:translateY(-1px); }
 .btn:disabled{ opacity:0.5; cursor:default; transform:none; }
 
 .profile{
@@ -178,7 +178,7 @@ label.field{
 .field input{
   width:100%;
   padding:11px 14px;
-  background:rgba(0,0,0,0.25);
+  background:#ffffff;
   border:1px solid var(--paper-faint);
   border-radius:8px;
   color:var(--paper);
@@ -191,7 +191,7 @@ label.field{
 .error{
   margin-top:10px;
   font-size:11px;
-  color:#ff9aa2;
+  color:#d4365a;
   letter-spacing:0.06em;
 }
 .success{
@@ -234,7 +234,7 @@ label.field{
 }
 .store-pick button[aria-pressed="true"]{
   background:var(--paper);
-  color:var(--ink);
+  color:#fff;
   border-color:var(--paper);
 }
 

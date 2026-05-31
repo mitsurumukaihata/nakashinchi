@@ -3,27 +3,27 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0a0604">
+<meta name="theme-color" content="#ffffff">
 <meta name="robots" content="noindex">
 <title>ログイン中… — 中新地</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;700;800&family=Noto+Serif+JP:wght@400;500;600;700;800;900&family=Yuji+Syuku&family=Cormorant+Garamond:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg-1: #1a0c08;
-  --bg-2: #0a0604;
-  --bg-3: #050201;
-  --paper: #f5efe6;
-  --paper-soft: rgba(245,239,230,0.78);
-  --paper-dim:  rgba(245,239,230,0.45);
-  --paper-faint:rgba(245,239,230,0.18);
-  --accent: #c8102e;
-  --accent-soft: #e85060;
+  --bg-1: #eef0f3;
+  --bg-2: #f6f7f9;
+  --bg-3: #ffffff;
+  --paper: #16181d;
+  --paper-soft: rgba(22,24,29,0.78);
+  --paper-dim:  rgba(22,24,29,0.52);
+  --paper-faint:rgba(22,24,29,0.18);
+  --accent: #d4365a;
+  --accent-soft: #e85a78;
   --line-green: #06c755;
-  --font-jp:    'Shippori Mincho B1', 'Yu Mincho', serif;
-  --font-brush: 'Yuji Syuku', 'Shippori Mincho B1', serif;
+  --font-jp:    'Noto Sans JP', system-ui, sans-serif;
+  --font-brush: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
   --font-num:   'Cormorant Garamond', Georgia, serif;
 }
 html, body { height: 100%; }
@@ -37,16 +37,15 @@ body {
   position: relative;
   overflow: hidden;
   background:
-    radial-gradient(ellipse at 50% -10%, rgba(200,16,46,0.14) 0%, transparent 55%),
-    radial-gradient(ellipse at 50% 110%, rgba(40,20,15,0.45) 0%, transparent 65%),
-    linear-gradient(180deg, var(--bg-1) 0%, var(--bg-2) 60%, var(--bg-3) 100%);
+    radial-gradient(ellipse at 50% -10%, rgba(212,54,90,0.05) 0%, transparent 55%),
+    linear-gradient(180deg, #f6f7f9 0%, #eef0f3 100%);
 }
 /* 紙粒子 (画面全体にノイズ) */
 body::before {
   content: '';
   position: fixed; inset: 0;
   background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/><feColorMatrix values='0 0 0 0 0.2 0 0 0 0 0.1 0 0 0 0 0.05 0 0 0 0.13 0'/></filter><rect width='200' height='200' filter='url(%23n)'/></svg>");
-  opacity: 0.4;
+  opacity: 0.04;
   pointer-events: none;
   z-index: 0;
 }
@@ -75,11 +74,11 @@ body::before {
 }
 .cb__brand {
   font-family: var(--font-brush);
-  font-weight: 400;
+  font-weight: 900;
   font-size: 44px;
   letter-spacing: 0.08em;
   line-height: 1;
-  text-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  text-shadow: 0 1px 2px rgba(20,30,50,0.08);
   opacity: 0;
   animation: fadeUp 1.3s 0.2s cubic-bezier(.2,.7,.2,1) forwards;
 }
@@ -147,7 +146,7 @@ body[data-leaving="true"] { opacity: 0; }
 }
 .cb__name {
   font-family: var(--font-brush);
-  font-weight: 400;
+  font-weight: 700;
   font-size: 22px;
   letter-spacing: 0.05em;
   color: var(--paper);
@@ -188,7 +187,7 @@ body[data-leaving="true"] { opacity: 0; }
 }
 .cb__back:hover {
   color: var(--paper); border-color: var(--paper);
-  background: rgba(245,239,230,0.05);
+  background: rgba(20,30,50,0.04);
   transform: translateY(-1px);
 }
 

@@ -3,47 +3,46 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#0a0604">
+<meta name="theme-color" content="#ffffff">
 <meta name="robots" content="noindex">
 <title>LINE ログイン 動作確認 — 中新地</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;700;800&family=Noto+Serif+JP:wght@400;500;600;700;800;900&family=Yuji+Syuku&family=Cormorant+Garamond:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-html, body { min-height: 100%; background: #0a0604; }
+html, body { min-height: 100%; background: #f6f7f9; }
 body {
-  font-family: 'Shippori Mincho B1', serif;
-  color: #f5efe6;
+  font-family: 'Noto Sans JP', system-ui, sans-serif;
+  color: #16181d;
   display: flex; align-items: center; justify-content: center;
   min-height: 100vh;
   padding: calc(40px + env(safe-area-inset-top, 0px)) 24px 40px;
   background:
-    radial-gradient(ellipse at 50% 0%, rgba(0,200,80,0.10) 0%, transparent 55%),
-    radial-gradient(ellipse at 50% 100%, rgba(40,20,15,0.5) 0%, transparent 65%),
-    linear-gradient(180deg, #1a0c08 0%, #0a0604 60%, #050201 100%);
+    radial-gradient(ellipse at 50% 0%, rgba(6,199,85,0.06) 0%, transparent 55%),
+    linear-gradient(180deg, #f6f7f9 0%, #eef0f3 100%);
 }
 .card {
   width: 100%; max-width: 420px;
-  background: rgba(20,10,6,0.65);
-  border: 1px solid rgba(245,239,230,0.10);
+  background: #ffffff;
+  border: 1px solid #e6e8ec;
   border-radius: 10px;
   padding: 32px 26px;
   backdrop-filter: blur(10px);
-  box-shadow: 0 20px 60px rgba(0,0,0,0.55);
+  box-shadow: 0 1px 3px rgba(20,30,50,0.05), 0 20px 50px rgba(20,30,50,0.10);
 }
 .brand {
-  font-family: 'Yuji Syuku', serif;
+  font-family: 'Zen Kaku Gothic New', 'Noto Sans JP', sans-serif;
   font-size: 30px;
   text-align: center;
   letter-spacing: 0.08em;
   margin-bottom: 6px;
 }
-.brand .ac { color: #c8102e; }
+.brand .ac { color: #d4365a; }
 .lead {
   text-align: center;
   font-size: 12px;
-  color: rgba(245,239,230,0.65);
+  color: rgba(22,24,29,0.62);
   letter-spacing: 0.15em;
   margin-bottom: 26px;
 }
@@ -55,12 +54,12 @@ body {
 .profile img {
   width: 80px; height: 80px;
   border-radius: 50%;
-  border: 2px solid rgba(245,239,230,0.25);
+  border: 2px solid #e6e8ec;
   margin-bottom: 12px;
   object-fit: cover;
 }
 .profile__name { font-size: 18px; font-weight: 600; }
-.profile__id   { font-size: 10px; color: rgba(245,239,230,0.5); margin-top: 4px; letter-spacing: 0.05em; word-break: break-all; }
+.profile__id   { font-size: 10px; color: rgba(22,24,29,0.5); margin-top: 4px; letter-spacing: 0.05em; word-break: break-all; }
 body[data-state="logged-in"] .profile { display: block; }
 
 .btn {
@@ -87,10 +86,10 @@ body[data-state="logged-in"] .profile { display: block; }
 .btn--line:hover { background: #05a647; transform: translateY(-2px); }
 .btn--ghost {
   background: transparent;
-  color: rgba(245,239,230,0.7);
-  border: 1px solid rgba(245,239,230,0.25);
+  color: rgba(22,24,29,0.7);
+  border: 1px solid #d3d8df;
 }
-.btn--ghost:hover { background: rgba(245,239,230,0.05); color: #fff; }
+.btn--ghost:hover { background: rgba(20,30,50,0.04); color: #16181d; }
 
 .line-icon {
   display: inline-block; vertical-align: middle;
@@ -109,7 +108,7 @@ body:not([data-state="logged-in"]) #btn-logout { display: none; }
 .note {
   margin-top: 20px;
   font-size: 10px;
-  color: rgba(245,239,230,0.4);
+  color: rgba(22,24,29,0.5);
   text-align: center;
   letter-spacing: 0.08em;
   line-height: 1.8;

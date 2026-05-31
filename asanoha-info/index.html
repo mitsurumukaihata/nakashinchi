@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<meta name="theme-color" content="#1a0c08">
+<meta name="theme-color" content="#ffffff">
 <title>麻ノ葉 — 店舗情報</title>
 
 <link rel="icon"             href="../icons/icon-192.png" type="image/png">
@@ -13,7 +13,7 @@
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Shippori+Mincho+B1:wght@400;500;600;700;800&family=Noto+Serif+JP:wght@400;500;600;700;800;900&family=Yuji+Syuku&family=Cormorant+Garamond:wght@400;500;600;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;600;700;800&family=Zen+Kaku+Gothic+New:wght@500;700;900&family=Cormorant+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="../pin-modal.css">
 
 <script src="../config.js"></script>
@@ -41,37 +41,38 @@
 [hidden] { display: none !important; }
 /* ライトモード (デフォルト) */
 :root {
-  --paper:#1a1410;
-  --paper-soft:rgba(26,20,16,0.78);
-  --paper-dim:rgba(26,20,16,0.50);
-  --paper-faint:rgba(26,20,16,0.16);
-  --accent:#c8102e;
+  --paper:#16181d;
+  --paper-soft:rgba(22,24,29,0.72);
+  --paper-dim:rgba(22,24,29,0.50);
+  --paper-faint:rgba(22,24,29,0.14);
+  --accent:#d4365a;
   --green:#06c755;
-  --panel-bg:rgba(0,0,0,0.04);
+  --panel-bg:rgba(20,30,50,0.04);
   --input-bg:#fff;
   --body-bg:
-    radial-gradient(ellipse at 50% 0%, rgba(200,16,46,0.06) 0%, transparent 55%),
-    linear-gradient(180deg, #f5efe6 0%, #ebe2d2 60%, #ddcfb8 100%);
-  --topbar-bg:rgba(250,246,238,0.85);
-  --sticky-fade:#ebe2d2;
-  --preview-bg:rgba(0,0,0,0.05);
-  --font-jp:'Shippori Mincho B1','Yu Mincho',serif;
-  --font-brush:'Yuji Syuku',serif;
+    radial-gradient(ellipse at 50% 0%, rgba(212,54,90,0.05) 0%, transparent 55%),
+    linear-gradient(180deg, #f6f7f9 0%, #eef0f3 100%);
+  --topbar-bg:rgba(255,255,255,0.85);
+  --sticky-fade:#eef0f3;
+  --preview-bg:rgba(20,30,50,0.04);
+  --font-jp:'Noto Sans JP',system-ui,sans-serif;
+  --font-brush:'Zen Kaku Gothic New','Noto Sans JP',sans-serif;
   --font-num:'Cormorant Garamond',Georgia,serif;
 }
 body[data-theme="dark"] {
-  --paper:#f5efe6;
-  --paper-soft:rgba(245,239,230,0.78);
-  --paper-dim:rgba(245,239,230,0.45);
-  --paper-faint:rgba(245,239,230,0.16);
-  --panel-bg:rgba(245,239,230,0.045);
-  --input-bg:rgba(0,0,0,0.25);
+  --paper:#f4f6f9;
+  --paper-soft:rgba(244,246,249,0.78);
+  --paper-dim:rgba(244,246,249,0.48);
+  --paper-faint:rgba(244,246,249,0.16);
+  --accent:#f0577a;
+  --panel-bg:rgba(255,255,255,0.05);
+  --input-bg:rgba(255,255,255,0.06);
   --body-bg:
-    radial-gradient(ellipse at 50% 0%, rgba(200,16,46,0.10) 0%, transparent 55%),
-    linear-gradient(180deg, #1a0c08 0%, #0a0604 60%, #050201 100%);
-  --topbar-bg:rgba(15,8,5,0.85);
-  --sticky-fade:#0a0604;
-  --preview-bg:rgba(0,0,0,0.3);
+    radial-gradient(ellipse at 50% 0%, rgba(240,87,122,0.10) 0%, transparent 55%),
+    linear-gradient(180deg, #0f1115 0%, #0b0d11 60%, #08090c 100%);
+  --topbar-bg:rgba(15,17,21,0.85);
+  --sticky-fade:#0b0d11;
+  --preview-bg:rgba(255,255,255,0.06);
 }
 html, body { min-height: 100%; }
 body {
@@ -192,7 +193,7 @@ body {
   transition: all 0.18s;
 }
 .btn--primary { background: var(--accent); color: #fff; }
-.btn--primary:hover { background: #8e0e1c; transform: translateY(-1px); }
+.btn--primary:hover { background: #b02547; transform: translateY(-1px); }
 .btn--primary:disabled { opacity: 0.5; cursor: default; transform: none; }
 .btn--ghost {
   background: transparent; color: var(--paper-soft);
@@ -233,12 +234,12 @@ body {
 .cat-chip:hover { color: var(--paper); border-color: var(--paper); }
 .cat-chip[aria-pressed="true"] {
   background: var(--paper);
-  color: #1a1410;
+  color: #16181d;
   border-color: var(--paper);
 }
 body[data-theme="light"] .cat-chip[aria-pressed="true"] {
   background: var(--paper);
-  color: #faf6ee;
+  color: #f6f7f9;
 }
 
 .preview {
