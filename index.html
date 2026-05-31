@@ -866,14 +866,19 @@ strong, b { font-weight: 700; }
   letter-spacing: 0;
 }
 .genre-row__viewport {
-  overflow: hidden;
+  overflow-x: auto;
+  overflow-y: hidden;
   padding: 4px 20px 12px;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  scroll-behavior: auto;
+  overscroll-behavior-x: contain;
 }
+.genre-row__viewport::-webkit-scrollbar { display: none; }
 .genre-row__list {
   display: flex;
-  gap: 16px;
+  gap: 12px;
   width: max-content;
-  will-change: transform;
 }
 .genre-row__list[data-static="true"] {
   width: 100%;
@@ -881,15 +886,15 @@ strong, b { font-weight: 700; }
 }
 
 .genre-card {
-  flex: 0 0 280px;
+  flex: 0 0 180px;
   background: var(--color-surface);
   border: 1px solid var(--color-line);
-  border-radius: var(--radius);
+  border-radius: 12px;
   overflow: hidden;
   text-decoration: none;
   color: inherit;
   display: flex; flex-direction: column;
-  box-shadow: 0 1px 2px rgba(16,18,29,.04), 0 8px 24px rgba(16,18,29,.05);
+  box-shadow: 0 1px 2px rgba(16,18,29,.04), 0 6px 16px rgba(16,18,29,.05);
   transition: transform 0.25s cubic-bezier(.2,.7,.2,1), box-shadow 0.25s, border-color 0.25s;
 }
 .genre-card:hover {
@@ -915,13 +920,13 @@ strong, b { font-weight: 700; }
 .genre-card__media::after { content: none; }
 .genre-card__badge {
   position: absolute;
-  top: 12px; left: 12px;
+  top: 8px; left: 8px;
   z-index: 2;
-  display: inline-flex; align-items: center; gap: 6px;
-  padding: 6px 11px;
-  font-size: 11px;
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 4px 8px;
+  font-size: 10px;
   font-weight: 700;
-  letter-spacing: 0.02em;
+  letter-spacing: 0.01em;
   background: rgba(255,255,255,0.94);
   color: var(--color-success);
   border: none;
@@ -938,76 +943,66 @@ strong, b { font-weight: 700; }
 .genre-card__badge[data-status="ended"]   .dot { background: var(--color-text-soft); }
 .genre-card__badge[data-status="full"]    { color: var(--color-accent); }
 .genre-card__badge[data-status="full"]    .dot { background: var(--color-accent); }
-.genre-card__badge .dot { width: 7px; height: 7px; border-radius: 50%; }
+.genre-card__badge .dot { width: 6px; height: 6px; border-radius: 50%; }
 
-.genre-card__body { padding: 14px 16px 16px; }
+.genre-card__body { padding: 10px 11px 12px; }
 .genre-card__yomi {
-  font-size: 10px;
+  font-size: 9px;
   font-weight: 600;
   letter-spacing: 0.04em;
   color: var(--color-text-soft);
-  margin-bottom: 4px;
+  margin-bottom: 2px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .genre-card__name {
   font-family: var(--font-brush);
   font-weight: 900;
-  font-size: 19px;
-  line-height: 1.3;
+  font-size: 15px;
+  line-height: 1.25;
   letter-spacing: 0.01em;
   color: var(--color-ink);
-  margin-bottom: 8px;
+  margin-bottom: 6px;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
 .genre-card__name .ja-accent { color: var(--color-accent); }
 .genre-card__name--latin {
   font-weight: 800;
-  font-size: 18px;
+  font-size: 14px;
   letter-spacing: 0.01em;
 }
-.genre-card__tags { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; }
+.genre-card__tags { display: flex; gap: 5px; flex-wrap: wrap; margin-bottom: 8px; align-items: center; }
 .genre-card__tag {
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 600;
   color: var(--color-text-muted);
   background: var(--color-bg);
   border: 1px solid var(--color-line);
-  padding: 3px 9px;
-  border-radius: 6px;
+  padding: 2px 7px;
+  border-radius: 5px;
 }
 .genre-card__tag--area { border: none; background: transparent; color: var(--color-text-soft); padding-left: 0; }
 .genre-card__meta {
-  display: flex; gap: 16px;
-  font-size: 12px;
+  display: flex; gap: 6px; align-items: baseline;
+  font-size: 11px;
   color: var(--color-text-muted);
   border-top: 1px solid var(--color-line);
-  padding-top: 10px;
+  padding-top: 8px;
 }
 .genre-card__meta strong {
-  display: block;
   color: var(--color-ink);
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 700;
-  margin-top: 1px;
 }
 .genre-card__meta strong.is-full { color: var(--color-accent); }
-.genre-card__cta {
-  margin-top: 12px;
-  display: block;
-  text-align: center;
-  background: var(--color-brand);
-  color: #fff;
-  font-weight: 700;
-  font-size: 13px;
-  padding: 11px;
-  border-radius: var(--radius-sm);
-}
-.genre-card__cta:hover { background: var(--color-accent); }
+.genre-card__cta { display: none; }   /* 小型カードでは非表示 (カード全体タップで遷移) */
 .genre-card__sub { display: none; }
 
 @media (max-width: 600px) {
-  .genre-rows { gap: 28px; }
+  .genre-rows { gap: 26px; }
   .genre-row__head { gap: 10px; }
   .genre-row__title { font-size: 17px; }
-  .genre-card { flex: 0 0 75%; max-width: 300px; }
+  .genre-card { flex: 0 0 150px; }
+  .genre-card__name { font-size: 14px; }
 }
 
 /* ============ AUTH PILL (appbar 右) ============ */
@@ -1186,10 +1181,10 @@ strong, b { font-weight: 700; }
 
 /* お気に入りカード (掲載店舗カードのミニ版) */
 .fav-card {
-  flex: 0 0 240px;
+  flex: 0 0 180px;
   background: var(--color-surface);
   border: 1px solid var(--color-line);
-  border-radius: var(--radius);
+  border-radius: 12px;
   overflow: hidden;
   text-decoration: none;
   color: inherit;
@@ -1528,7 +1523,7 @@ input, button, select, textarea { font-weight: 600; }
   <p style="margin-top:14px"><a href="login/" class="footer__login">店舗関係者 ログイン →</a></p>
   <p style="margin-top:18px">© 2026 nakashinchi</p>
   <p class="footer__version" id="footer-version">
-    <span data-build="v46">v46 · 2026-05-26 17:00</span>
+    <span data-build="v47">v47 · 2026-05-26 17:25</span>
     <span id="sw-version-tag"></span>
   </p>
 </footer>
@@ -2029,8 +2024,8 @@ input, button, select, textarea { font-weight: 600; }
 
     var metaHtml =
       '<div class="genre-card__meta">' +
-        (hoursStr ? '<div>営業<strong>' + hoursStr + '</strong></div>' : '') +
-        '<div>' + rightLabel + '<strong>' + rightVal + '</strong></div>' +
+        (hoursStr ? '<strong>' + hoursStr + '</strong>' : '') +
+        (closed ? '<span>休 ' + closed + '</span>' : '') +
       '</div>';
 
     var a = document.createElement('a');
@@ -2111,13 +2106,14 @@ input, button, select, textarea { font-weight: 600; }
     }
   }
 
-  // 棚ごとのマルキー (translate3d 方式)
+  // 棚ごとのマルキー (scrollLeft 方式 = 自動送り + 手動スワイプ両立)
   function initRowMarquee(rowId, viewport, list) {
     if (!viewport || !list) return;
     if (_rowMarqueeCancel[rowId]) { _rowMarqueeCancel[rowId](); }
     Array.prototype.forEach.call(list.querySelectorAll('.genre-card--clone'), function (c) { c.remove(); });
     list.style.transform = '';
     list.removeAttribute('data-static');
+    viewport.scrollLeft = 0;
 
     var originals = Array.prototype.slice.call(list.querySelectorAll('.genre-card:not(.genre-card--clone)'));
     if (originals.length < 2) {
@@ -2133,6 +2129,7 @@ input, button, select, textarea { font-weight: 600; }
     }
     var setWidth = measureSetWidth();
     var viewWidth = viewport.clientWidth;
+    // ビュー幅 + 1セット分を超えるまでクローンを足して シームレスループ
     var clonesToAdd = Math.max(1, Math.ceil((viewWidth + setWidth) / setWidth));
     for (var i = 0; i < clonesToAdd; i++) {
       originals.forEach(function (card) {
@@ -2144,22 +2141,33 @@ input, button, select, textarea { font-weight: 600; }
       });
     }
 
-    var SPEED = 24;
-    var IDLE_RESUME_MS = 1500;
-    var paused = false, lastT = 0, pos = 0, idleTimer = null, rafId;
+    var SPEED = 24;              // px/sec
+    var IDLE_RESUME_MS = 2000;   // 操作後の再開待ち
+    var paused = false, lastT = 0, accum = 0, idleTimer = null, rafId;
+
     function step(now) {
       if (!lastT) lastT = now;
       var dt = now - lastT; lastT = now;
       if (!paused && setWidth > 4) {
-        pos += SPEED * dt / 1000;
-        if (pos >= setWidth) pos -= setWidth;
-        list.style.transform = 'translate3d(' + (-pos) + 'px, 0, 0)';
+        accum += SPEED * dt / 1000;
+        if (accum >= 1) {
+          var add = Math.floor(accum);
+          accum -= add;
+          viewport.scrollLeft += add;
+        }
       } else if (paused) {
-        lastT = 0;
+        accum = 0; lastT = 0;
+      }
+      // 手動・自動どちらでも、1セット分を超えたら無音で巻き戻す (シームレス)
+      if (setWidth > 4 && viewport.scrollLeft >= setWidth) {
+        viewport.scrollLeft -= setWidth;
+      } else if (viewport.scrollLeft < 0) {
+        viewport.scrollLeft += setWidth;
       }
       rafId = requestAnimationFrame(step);
     }
     rafId = requestAnimationFrame(step);
+
     function pauseTemp() {
       paused = true;
       clearTimeout(idleTimer);
@@ -2167,11 +2175,13 @@ input, button, select, textarea { font-weight: 600; }
     }
     function onEnter() { paused = true; }
     function onLeave() { paused = false; lastT = 0; }
+    // 手動操作で一時停止 → 放置で再開
     viewport.addEventListener('mouseenter', onEnter);
     viewport.addEventListener('mouseleave', onLeave);
     viewport.addEventListener('touchstart', pauseTemp, { passive: true });
-    viewport.addEventListener('wheel',      pauseTemp, { passive: true });
-    viewport.addEventListener('pointerdown',pauseTemp, { passive: true });
+    viewport.addEventListener('pointerdown', pauseTemp, { passive: true });
+    viewport.addEventListener('wheel',       pauseTemp, { passive: true });
+    viewport.addEventListener('scroll',      pauseTemp, { passive: true });
     var onResize = function () { setWidth = measureSetWidth(); viewWidth = viewport.clientWidth; };
     window.addEventListener('resize', onResize);
     _rowMarqueeCancel[rowId] = function () {
@@ -2179,11 +2189,11 @@ input, button, select, textarea { font-weight: 600; }
       viewport.removeEventListener('mouseenter', onEnter);
       viewport.removeEventListener('mouseleave', onLeave);
       viewport.removeEventListener('touchstart', pauseTemp);
-      viewport.removeEventListener('wheel', pauseTemp);
       viewport.removeEventListener('pointerdown', pauseTemp);
+      viewport.removeEventListener('wheel', pauseTemp);
+      viewport.removeEventListener('scroll', pauseTemp);
       window.removeEventListener('resize', onResize);
       clearTimeout(idleTimer);
-      list.style.transform = '';
     };
   }
 
