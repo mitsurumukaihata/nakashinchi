@@ -1502,6 +1502,8 @@ input, button, select, textarea { font-weight: 600; }
     <p class="eta-modal__crumb">A R R I V I N G &nbsp; S O O N</p>
     <h3 class="eta-modal__title" id="eta-modal-title">今から向かう</h3>
     <p class="eta-modal__store"><strong id="eta-modal-store">—</strong> に向かいます</p>
+    <p class="eta-modal__ref" id="eta-modal-ref" hidden
+       style="font-size:11px;color:var(--color-accent);letter-spacing:.06em;margin-top:2px;font-weight:700;"></p>
 
     <p class="eta-modal__label">到 着 ま で</p>
     <div class="eta-options" id="eta-options">
@@ -1534,7 +1536,7 @@ input, button, select, textarea { font-weight: 600; }
   <p style="margin-top:14px"><a href="login/" class="footer__login">店舗関係者 ログイン →</a></p>
   <p style="margin-top:18px">© 2026 nakashinchi</p>
   <p class="footer__version" id="footer-version">
-    <span data-build="v51">v51 · 2026-05-31 15:20</span>
+    <span data-build="v52">v52 · 2026-05-31 16:10</span>
     <span id="sw-version-tag"></span>
   </p>
 </footer>
@@ -2431,6 +2433,27 @@ input, button, select, textarea { font-weight: 600; }
   // 「今から向かう」モーダル + arrivals API
   // ===========================================
   var ETA_STORAGE = 'nakashinchi-recent-arrivals';
+
+  // ===== 紹介元 (Phase 0: 店同士の送客記録。お金は動かさない) =====
+  // ?ref=<storeId> で来訪 → 3時間有効で保持。次に「今から向かう」した店へ紹介元として付与。
+  var REFERRER_KEY = 'nakashinchi-referrer';
+  function captureReferrerFromUrl() {
+    try {
+      var ref = new URLSearchParams(location.search).get('ref');
+      if (ref) localStorage.setItem(REFERRER_KEY, JSON.stringify({ storeId: ref, exp: Date.now() + 3 * 3600 * 1000 }));
+    } catch (_) {}
+  }
+  function getActiveReferrer(targetStoreId) {
+    try {
+      var v = JSON.parse(localStorage.getItem(REFERRER_KEY) || 'null');
+      if (!v || !v.storeId || Date.now() > v.exp) return null;
+      if (v.storeId === targetStoreId) return null;        // 自店紹介は無効
+      if (!STORE_BY_ID[v.storeId]) return null;            // 未知の店は無視
+      return v.storeId;
+    } catch (_) { return null; }
+  }
+  captureReferrerFromUrl();
+
   function getRecentArrivals() {
     try { return JSON.parse(localStorage.getItem(ETA_STORAGE) || '{}'); } catch (_) { return {}; }
   }
@@ -2451,6 +2474,7 @@ input, button, select, textarea { font-weight: 600; }
 
   var etaModal      = document.getElementById('eta-modal');
   var etaModalStore = document.getElementById('eta-modal-store');
+  var etaModalRef   = document.getElementById('eta-modal-ref');
   var etaModalNote  = document.getElementById('eta-modal-note');
   var etaModalSubmit= document.getElementById('eta-modal-submit');
   var etaModalLogin = document.getElementById('eta-modal-login');
@@ -2464,6 +2488,16 @@ input, button, select, textarea { font-weight: 600; }
     etaCurrentStoreId = storeId;
     var s = STORE_BY_ID[storeId];
     if (etaModalStore) etaModalStore.textContent = (s && s.name) || storeId;
+    // 紹介元があれば表示
+    if (etaModalRef) {
+      var refId = getActiveReferrer(storeId);
+      if (refId && STORE_BY_ID[refId]) {
+        etaModalRef.textContent = STORE_BY_ID[refId].name + ' さんの紹介で来店';
+        etaModalRef.hidden = false;
+      } else {
+        etaModalRef.hidden = true;
+      }
+    }
     etaSelected = 20;
     etaOptionsWrap.querySelectorAll('.eta-option').forEach(function (b) {
       b.setAttribute('aria-pressed', b.dataset.eta === '20' ? 'true' : 'false');
@@ -2533,13 +2567,14 @@ input, button, select, textarea { font-weight: 600; }
     etaModalSubmit.disabled = true;
     etaModalSubmit.textContent = '送信中…';
     try {
+      var refStoreId = getActiveReferrer(etaCurrentStoreId);
       var r = await fetch(window.NAKASHINCHI_API + '/api/store/' + encodeURIComponent(etaCurrentStoreId) + '/arrivals', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': 'Bearer ' + auth.getToken()
         },
-        body: JSON.stringify({ etaMinutes: etaSelected, note: etaModalNote.value || null })
+        body: JSON.stringify({ etaMinutes: etaSelected, note: etaModalNote.value || null, referrerStoreId: refStoreId || undefined })
       });
       if (!r.ok) throw new Error('http_' + r.status);
       var data = await r.json();

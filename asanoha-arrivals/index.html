@@ -288,6 +288,37 @@ body[data-theme="light"] .arr--new { background: rgba(212,54,90,0.08); }
   border-radius: 999px;
   font-family: var(--font-num);
 }
+.arr__ref-tag {
+  display: inline-block;
+  padding: 1px 7px;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  background: rgba(212,54,90,0.14);
+  color: var(--accent);
+  border-radius: 999px;
+  font-family: var(--font-num);
+}
+/* 今月の送客/受客 サマリ (Phase 0) */
+.referral-summary {
+  max-width: 920px;
+  margin: 12px auto 0;
+  padding: 0 20px;
+}
+.referral-summary__head {
+  font-size: 10px; letter-spacing: 0.3em; color: var(--paper-dim);
+  font-family: var(--font-num); margin: 0 2px 6px;
+}
+.referral-summary__cells { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.ref-cell {
+  background: var(--panel-bg-2, #fff);
+  border: 1px solid var(--paper-faint);
+  border-radius: 12px; padding: 12px 16px; text-align: center;
+}
+.ref-cell__label { font-size: 10px; letter-spacing: 0.3em; color: var(--paper-dim); font-family: var(--font-num); }
+.ref-cell__value { display: block; font-family: var(--font-num); font-size: 30px; line-height: 1.1; font-weight: 600; margin: 2px 0; }
+.ref-cell:nth-child(1) .ref-cell__value { color: var(--accent); }
+.ref-cell:nth-child(2) .ref-cell__value { color: var(--green); }
+.ref-cell__sub { font-size: 10px; color: var(--paper-dim); letter-spacing: 0.06em; line-height: 1.6; }
 .arr__sub {
   margin: 4px 0 6px;
   display: flex; align-items: center; gap: 6px; flex-wrap: wrap;
@@ -604,6 +635,22 @@ input, button, select, textarea { font-weight: 500; }
   </div>
 </section>
 
+<section class="referral-summary" id="referral-summary" hidden>
+  <div class="referral-summary__head">今月の紹介（送客 / 受客）<span id="ref-month"></span></div>
+  <div class="referral-summary__cells">
+    <div class="ref-cell">
+      <div class="ref-cell__label">送 客</div>
+      <span class="ref-cell__value" id="ref-sent">0</span>
+      <div class="ref-cell__sub" id="ref-sent-detail">他店へ紹介して来店</div>
+    </div>
+    <div class="ref-cell">
+      <div class="ref-cell__label">受 客</div>
+      <span class="ref-cell__value" id="ref-recv">0</span>
+      <div class="ref-cell__sub" id="ref-recv-detail">紹介を受けて来店</div>
+    </div>
+  </div>
+</section>
+
 <section class="list-wrap">
   <div class="list-heading">
     <h2>受信中の通知</h2>
@@ -793,6 +840,9 @@ input, button, select, textarea { font-weight: 500; }
     var visitTag = (a.visitCount && a.visitCount > 0)
       ? '<span class="arr__visit-tag">当店 ' + a.visitCount + ' 回</span>'
       : '';
+    var refTag = a.referrerStoreName
+      ? '<span class="arr__ref-tag">紹介 ' + escapeHtml(a.referrerStoreName) + '</span>'
+      : '';
     var trustTag = '';
     if (a.trustScore != null) {
       var filled = '★'.repeat(a.trustStars || 0);
@@ -836,7 +886,7 @@ input, button, select, textarea { font-weight: 500; }
           '<div class="arr__name">' + escapeHtml(name) +
             (isAnon ? ' <span class="arr__anon-tag">匿名</span>' : '') +
           '</div>' +
-          '<div class="arr__sub">' + trustTag + ' ' + visitTag + '</div>' +
+          '<div class="arr__sub">' + trustTag + ' ' + visitTag + ' ' + refTag + '</div>' +
           totalsTag +
           '<div class="arr__meta">' +
             '<span>到着予定<strong>' + fmtHm(a.arrivingAt) + '</strong></span>' +
@@ -905,6 +955,35 @@ input, button, select, textarea { font-weight: 500; }
     }
     pollTag.textContent = '受信中';
     render(data);
+  }
+
+  // ===== 今月の送客/受客 サマリ (Phase 0: 記録の可視化) =====
+  async function refreshReferralSummary() {
+    var token = window.nakashinchiApi.getToken();
+    if (!token) return;
+    try {
+      var r = await fetch(API + '/api/store/' + STORE_ID + '/referrals/summary', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!r.ok) return;
+      var d = await r.json();
+      var sec  = document.getElementById('referral-summary');
+      var sent = d.sent     || { total: 0, arrived: 0, byStore: [] };
+      var recv = d.received || { total: 0, arrived: 0, byStore: [] };
+      document.getElementById('ref-month').textContent = ' ' + (d.month || '');
+      document.getElementById('ref-sent').textContent  = sent.arrived;
+      document.getElementById('ref-recv').textContent  = recv.arrived;
+      function detail(s, fallback) {
+        if (!s.byStore || !s.byStore.length) return fallback;
+        return s.byStore.slice(0, 3).map(function (b) {
+          return escapeHtml(b.storeName) + ' ' + b.arrived;
+        }).join(' / ');
+      }
+      document.getElementById('ref-sent-detail').textContent = detail(sent, '他店へ紹介して来店');
+      document.getElementById('ref-recv-detail').textContent = detail(recv, '紹介を受けて来店');
+      // まだ紹介が一件も無いうちは表示しない（画面をうるさくしない）
+      sec.hidden = (sent.total === 0 && recv.total === 0);
+    } catch (_) {}
   }
 
   // ===== 席選択モーダル =====
@@ -1021,6 +1100,7 @@ input, button, select, textarea { font-weight: 500; }
       }
       closeSeatModal();
       await refresh(true);
+      refreshReferralSummary();
     } catch (e) {
       alert('処理に失敗しました: ' + (e && e.message || e));
     } finally {
@@ -1095,7 +1175,9 @@ input, button, select, textarea { font-weight: 500; }
     var t = await ensureAuth();
     if (!t) return;
     await refresh(true);
+    refreshReferralSummary();
     setInterval(refresh, 5000);
+    setInterval(refreshReferralSummary, 60000);
   })();
 
   // visibility change で即時取得

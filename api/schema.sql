@@ -47,6 +47,7 @@ CREATE TABLE IF NOT EXISTS arrivals (
   arriving_at   TEXT NOT NULL,                                  -- ISO 日時
   note          TEXT,
   seat_id       TEXT,                                           -- 店員が席を割当てた場合
+  referrer_store_id TEXT,                                       -- 紹介元店舗 (Phase 0: 店同士の送客記録。お金は動かさない)
   status        TEXT NOT NULL DEFAULT 'pending',                -- pending | arrived | cancelled | timeout
   created_at    TEXT NOT NULL DEFAULT (datetime('now')),
   updated_at    TEXT NOT NULL DEFAULT (datetime('now')),
@@ -57,6 +58,9 @@ CREATE TABLE IF NOT EXISTS arrivals (
 CREATE INDEX IF NOT EXISTS idx_arrivals_store_status ON arrivals(store_id, status);
 CREATE INDEX IF NOT EXISTS idx_arrivals_customer    ON arrivals(customer_id);
 CREATE INDEX IF NOT EXISTS idx_arrivals_arriving    ON arrivals(arriving_at);
+CREATE INDEX IF NOT EXISTS idx_arrivals_referrer    ON arrivals(referrer_store_id);
+-- 既存DB 向け一回限り migration (実行済なら「duplicate column」エラーになるが無視してよい):
+-- ALTER TABLE arrivals ADD COLUMN referrer_store_id TEXT;
 
 -- お気に入り (LINE Login 済みの客が登録)
 CREATE TABLE IF NOT EXISTS favorites (

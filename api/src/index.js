@@ -613,6 +613,16 @@ export default {
           return json({ error: 'etaMinutes は 0〜240 の数値で指定してください' }, 400, cors);
         }
         const note = (typeof body.note === 'string') ? body.note.slice(0, 200) : null;
+        // 紹介元店舗 (Phase 0: 送客の記録のみ。お金は動かさない)
+        let referrerStoreId = (typeof body.referrerStoreId === 'string' && body.referrerStoreId.trim())
+          ? body.referrerStoreId.trim().slice(0, 64) : null;
+        if (referrerStoreId === storeId) referrerStoreId = null;   // 自店紹介は無効
+        let referrerName = null;
+        if (referrerStoreId) {
+          const rr = await env.DB.prepare('SELECT name FROM stores WHERE id = ?').bind(referrerStoreId).first();
+          if (rr) referrerName = rr.name || referrerStoreId;
+          else referrerStoreId = null;   // 未登録の店は記録しない
+        }
         const now  = new Date();
         const arrAt = new Date(now.getTime() + eta * 60 * 1000).toISOString();
         const idBytes = new Uint8Array(12);
@@ -620,9 +630,9 @@ export default {
         const id = 'arr-' + Array.from(idBytes).map(b => b.toString(16).padStart(2, '0')).join('');
 
         await env.DB.prepare(`
-          INSERT INTO arrivals (id, store_id, customer_id, eta_minutes, arriving_at, note, status, created_at, updated_at)
-          VALUES (?, ?, ?, ?, ?, ?, 'pending', ?, ?)
-        `).bind(id, storeId, userId, eta, arrAt, note, now.toISOString(), now.toISOString()).run();
+          INSERT INTO arrivals (id, store_id, customer_id, eta_minutes, arriving_at, note, referrer_store_id, status, created_at, updated_at)
+          VALUES (?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?)
+        `).bind(id, storeId, userId, eta, arrAt, note, referrerStoreId, now.toISOString(), now.toISOString()).run();
 
         // 客側に返す
         const cust = await env.DB
@@ -638,6 +648,7 @@ export default {
         const msg = '【' + storeName + '】来店通知\n'
                   + custName + ' さんが向かっています\n'
                   + '到着予定: ' + arrHHMM + '（あと ' + eta + ' 分）'
+                  + (referrerName ? '\n紹介元: ' + referrerName : '')
                   + (note ? '\nメモ: ' + note : '');
         // fire-and-forget (失敗してもAPIレスポンスは返す)
         try { ctx.waitUntil(pushLineNotification(env, storeId, msg)); } catch (_) {}
@@ -647,6 +658,7 @@ export default {
             customerName:    isAnonCust ? '匿名さん' : (cust ? cust.display_name : null),
             customerPicture: isAnonCust ? null      : (cust ? cust.picture_url  : null),
             privacyMode:     cust ? cust.privacy_mode : 'public',
+            referrerStoreId, referrerStoreName: referrerName,
             etaMinutes: eta, arrivingAt: arrAt, note, status: 'pending',
             createdAt: now.toISOString(), updatedAt: now.toISOString()
           }
@@ -695,6 +707,7 @@ export default {
         let q = `
           SELECT a.id, a.store_id, a.customer_id, a.eta_minutes, a.arriving_at,
                  a.note, a.seat_id, a.status, a.created_at, a.updated_at,
+                 a.referrer_store_id, rs.name AS referrer_store_name,
                  c.display_name AS customer_name, c.picture_url AS customer_picture,
                  COALESCE(c.privacy_mode, 'public') AS privacy_mode,
                  (SELECT COUNT(*) FROM arrivals a2
@@ -712,6 +725,7 @@ export default {
                      AND a5.status = 'timeout') AS timeout_total
           FROM arrivals a
           LEFT JOIN customers c ON c.id = a.customer_id
+          LEFT JOIN stores rs ON rs.id = a.referrer_store_id
           WHERE a.store_id = ?
         `;
         const args = [storeId];
@@ -730,6 +744,8 @@ export default {
               customerName:    isAnon ? '匿名さん' : r.customer_name,
               customerPicture: isAnon ? null      : r.customer_picture,
               privacyMode:     r.privacy_mode,
+              referrerStoreId:   r.referrer_store_id || null,
+              referrerStoreName: r.referrer_store_name || null,
               visitCount:      r.visit_count || 0,
               trustScore:      score.score,
               trustStars:      score.stars,
@@ -742,6 +758,63 @@ export default {
             };
           })
         }, 200, cors);
+      }
+
+      // GET /api/store/:storeId/referrals/summary?month=YYYY-MM  ── 送客/受客 集計 (Phase 0)
+      //   要 store PIN Bearer。月省略時は JST 当月。
+      const refSumMatch = path.match(/^\/api\/store\/([^\/]+)\/referrals\/summary$/);
+      if (refSumMatch && request.method === 'GET') {
+        const [, storeId] = refSumMatch;
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        const verifiedStoreId = await verifyToken(token, env.JWT_SECRET);
+        if (!verifiedStoreId || verifiedStoreId !== storeId) {
+          return json({ error: '認証が必要です' }, 401, cors);
+        }
+        const monthStr = url.searchParams.get('month') || '';
+        let y, m;
+        if (/^\d{4}-\d{2}$/.test(monthStr)) { y = +monthStr.slice(0, 4); m = +monthStr.slice(5, 7); }
+        else { const n = new Date(Date.now() + 9 * 3600 * 1000); y = n.getUTCFullYear(); m = n.getUTCMonth() + 1; }
+        // JST 月初/翌月初 を UTC ISO に変換 (JST = UTC+9)
+        const start = new Date(Date.UTC(y, m - 1, 1) - 9 * 3600 * 1000).toISOString();
+        const end   = new Date(Date.UTC(y, m,     1) - 9 * 3600 * 1000).toISOString();
+        const label = y + '-' + String(m).padStart(2, '0');
+
+        // 送客 (この店が紹介元): referrer = storeId → 送った先の店ごと
+        const sentRows = await env.DB.prepare(`
+          SELECT a.store_id AS partner_id, s.name AS partner_name,
+                 COUNT(*) AS total,
+                 SUM(CASE WHEN a.status = 'arrived' THEN 1 ELSE 0 END) AS arrived
+            FROM arrivals a LEFT JOIN stores s ON s.id = a.store_id
+           WHERE a.referrer_store_id = ? AND a.created_at >= ? AND a.created_at < ?
+           GROUP BY a.store_id
+           ORDER BY arrived DESC, total DESC
+        `).bind(storeId, start, end).all();
+
+        // 受客 (この店が紹介を受けた): store = storeId かつ referrer あり → 紹介元の店ごと
+        const recvRows = await env.DB.prepare(`
+          SELECT a.referrer_store_id AS partner_id, s.name AS partner_name,
+                 COUNT(*) AS total,
+                 SUM(CASE WHEN a.status = 'arrived' THEN 1 ELSE 0 END) AS arrived
+            FROM arrivals a LEFT JOIN stores s ON s.id = a.referrer_store_id
+           WHERE a.store_id = ? AND a.referrer_store_id IS NOT NULL
+             AND a.created_at >= ? AND a.created_at < ?
+           GROUP BY a.referrer_store_id
+           ORDER BY arrived DESC, total DESC
+        `).bind(storeId, start, end).all();
+
+        const summarize = (rows) => {
+          const byStore = (rows.results || []).map(r => ({
+            storeId: r.partner_id, storeName: r.partner_name || r.partner_id,
+            total: r.total || 0, arrived: r.arrived || 0
+          }));
+          return {
+            total:   byStore.reduce((a, b) => a + b.total, 0),
+            arrived: byStore.reduce((a, b) => a + b.arrived, 0),
+            byStore
+          };
+        };
+        return json({ storeId, month: label, sent: summarize(sentRows), received: summarize(recvRows) }, 200, cors);
       }
 
       // PATCH /api/store/:storeId/arrivals/:id  ── 店側: ステータス変更

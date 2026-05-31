@@ -455,6 +455,12 @@ strong, b { font-weight: 700; }
     var keepActive=activeId; render(); if(keepActive)setActive(keepActive,false);
   }
 
+  // 紹介元 (Phase 0): ?ref=<storeId> で来訪 → 3時間保持。ランディングの「今から向かう」で付与される
+  try {
+    var _ref = new URLSearchParams(location.search).get('ref');
+    if (_ref) localStorage.setItem('nakashinchi-referrer', JSON.stringify({ storeId: _ref, exp: Date.now() + 3 * 3600 * 1000 }));
+  } catch (_) {}
+
   // 初期化
   renderChips();
   render();
