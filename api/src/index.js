@@ -707,13 +707,18 @@ export default {
         let q = `
           SELECT a.id, a.store_id, a.customer_id, a.eta_minutes, a.arriving_at,
                  a.note, a.seat_id, a.status, a.created_at, a.updated_at,
-                 a.referrer_store_id, rs.name AS referrer_store_name,
+                 a.referrer_store_id, rs.name AS referrer_store_name, a.fee_exempt,
                  c.display_name AS customer_name, c.picture_url AS customer_picture,
                  COALESCE(c.privacy_mode, 'public') AS privacy_mode,
                  (SELECT COUNT(*) FROM arrivals a2
                    WHERE a2.customer_id = a.customer_id
                      AND a2.store_id = a.store_id
                      AND a2.status = 'arrived') AS visit_count,
+                 (SELECT COUNT(*) FROM arrivals ap
+                   WHERE ap.customer_id = a.customer_id
+                     AND ap.store_id = a.store_id
+                     AND ap.status = 'arrived'
+                     AND ap.created_at < a.created_at) AS prior_arrived,
                  (SELECT COUNT(*) FROM arrivals a3
                    WHERE a3.customer_id = a.customer_id
                      AND a3.status = 'arrived') AS arrived_total,
@@ -746,6 +751,8 @@ export default {
               privacyMode:     r.privacy_mode,
               referrerStoreId:   r.referrer_store_id || null,
               referrerStoreName: r.referrer_store_name || null,
+              feeExempt:         !!r.fee_exempt,
+              isNewToStore:      (r.prior_arrived || 0) === 0,   // この店で初めて (= 紹介料の対象になり得る)
               visitCount:      r.visit_count || 0,
               trustScore:      score.score,
               trustStars:      score.stars,
@@ -784,33 +791,44 @@ export default {
         const sentRows = await env.DB.prepare(`
           SELECT a.store_id AS partner_id, s.name AS partner_name,
                  COUNT(*) AS total,
-                 SUM(CASE WHEN a.status = 'arrived' THEN 1 ELSE 0 END) AS arrived
+                 SUM(CASE WHEN a.status = 'arrived' THEN 1 ELSE 0 END) AS arrived,
+                 SUM(CASE WHEN a.status = 'arrived' AND a.fee_exempt = 0 AND NOT EXISTS (
+                       SELECT 1 FROM arrivals b
+                        WHERE b.customer_id = a.customer_id AND b.store_id = a.store_id
+                          AND b.status = 'arrived' AND b.created_at < a.created_at
+                     ) THEN 1 ELSE 0 END) AS chargeable
             FROM arrivals a LEFT JOIN stores s ON s.id = a.store_id
            WHERE a.referrer_store_id = ? AND a.created_at >= ? AND a.created_at < ?
            GROUP BY a.store_id
-           ORDER BY arrived DESC, total DESC
+           ORDER BY chargeable DESC, arrived DESC, total DESC
         `).bind(storeId, start, end).all();
 
         // 受客 (この店が紹介を受けた): store = storeId かつ referrer あり → 紹介元の店ごと
         const recvRows = await env.DB.prepare(`
           SELECT a.referrer_store_id AS partner_id, s.name AS partner_name,
                  COUNT(*) AS total,
-                 SUM(CASE WHEN a.status = 'arrived' THEN 1 ELSE 0 END) AS arrived
+                 SUM(CASE WHEN a.status = 'arrived' THEN 1 ELSE 0 END) AS arrived,
+                 SUM(CASE WHEN a.status = 'arrived' AND a.fee_exempt = 0 AND NOT EXISTS (
+                       SELECT 1 FROM arrivals b
+                        WHERE b.customer_id = a.customer_id AND b.store_id = a.store_id
+                          AND b.status = 'arrived' AND b.created_at < a.created_at
+                     ) THEN 1 ELSE 0 END) AS chargeable
             FROM arrivals a LEFT JOIN stores s ON s.id = a.referrer_store_id
            WHERE a.store_id = ? AND a.referrer_store_id IS NOT NULL
              AND a.created_at >= ? AND a.created_at < ?
            GROUP BY a.referrer_store_id
-           ORDER BY arrived DESC, total DESC
+           ORDER BY chargeable DESC, arrived DESC, total DESC
         `).bind(storeId, start, end).all();
 
         const summarize = (rows) => {
           const byStore = (rows.results || []).map(r => ({
             storeId: r.partner_id, storeName: r.partner_name || r.partner_id,
-            total: r.total || 0, arrived: r.arrived || 0
+            total: r.total || 0, arrived: r.arrived || 0, chargeable: r.chargeable || 0
           }));
           return {
-            total:   byStore.reduce((a, b) => a + b.total, 0),
-            arrived: byStore.reduce((a, b) => a + b.arrived, 0),
+            total:      byStore.reduce((a, b) => a + b.total, 0),
+            arrived:    byStore.reduce((a, b) => a + b.arrived, 0),
+            chargeable: byStore.reduce((a, b) => a + b.chargeable, 0),   // 紹介料 対象 (新規かつ非対象外)
             byStore
           };
         };
@@ -837,14 +855,19 @@ export default {
 
         const body = await request.json().catch(() => ({}));
         const allowed = ['pending', 'arrived', 'cancelled', 'timeout'];
+        const hasStatus = body.status !== undefined && body.status !== null && body.status !== '';
         const newStatus = String(body.status || '');
-        if (!allowed.includes(newStatus)) {
+        const hasFee = typeof body.feeExempt === 'boolean';
+        if (!hasStatus && !hasFee) {
+          return json({ error: 'status か feeExempt を指定してください' }, 400, cors);
+        }
+        if (hasStatus && !allowed.includes(newStatus)) {
           return json({ error: 'status が不正です' }, 400, cors);
         }
 
         if (isCustomer && !isStoreAdmin) {
-          // 客は cancelled のみ、かつ自分のレコードのみ
-          if (newStatus !== 'cancelled') {
+          // 客は status=cancelled のみ、かつ自分のレコードのみ。feeExempt(対象外)設定は不可。
+          if (hasFee || !hasStatus || newStatus !== 'cancelled') {
             return json({ error: 'お客様からはキャンセルのみ可能です' }, 403, cors);
           }
           const row = await env.DB
@@ -857,12 +880,18 @@ export default {
         }
 
         const seatId = (typeof body.seatId === 'string') ? body.seatId : null;
+        // fee_exempt(紹介料 対象外)は店舗側のみ設定可
+        const feeVal    = (hasFee && isStoreAdmin) ? (body.feeExempt ? 1 : 0) : null;
+        const statusVal = hasStatus ? newStatus : null;
         const now = new Date().toISOString();
         const r = await env.DB.prepare(`
           UPDATE arrivals
-             SET status = ?, seat_id = COALESCE(?, seat_id), updated_at = ?
+             SET status     = COALESCE(?, status),
+                 seat_id    = COALESCE(?, seat_id),
+                 fee_exempt = COALESCE(?, fee_exempt),
+                 updated_at = ?
            WHERE id = ? AND store_id = ?
-        `).bind(newStatus, seatId, now, arrId, storeId).run();
+        `).bind(statusVal, seatId, feeVal, now, arrId, storeId).run();
         return json({ ok: true, changes: r.meta && r.meta.changes }, 200, cors);
       }
 

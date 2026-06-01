@@ -298,6 +298,18 @@ body[data-theme="light"] .arr--new { background: rgba(212,54,90,0.08); }
   border-radius: 999px;
   font-family: var(--font-num);
 }
+.arr__ref-tag.ref--new    { background: rgba(212,54,90,0.16);   color: var(--accent); }
+.arr__ref-tag.ref--repeat { background: rgba(120,127,138,0.18); color: var(--paper-dim); }
+.arr__ref-tag.ref--exempt { background: rgba(120,127,138,0.14); color: var(--paper-dim); text-decoration: line-through; }
+.arr__ref-ctrl { margin: 4px 0 2px; }
+.ref-toggle {
+  font-family: inherit; font-size: 10px; letter-spacing: 0.06em;
+  padding: 4px 10px; border-radius: 999px;
+  background: transparent; color: var(--paper-dim);
+  border: 1px solid var(--paper-faint); cursor: pointer;
+}
+.ref-toggle:hover { color: var(--paper); border-color: var(--paper-dim); }
+.ref-toggle:disabled { opacity: 0.5; cursor: default; }
 /* 今月の送客/受客 サマリ (Phase 0) */
 .referral-summary {
   max-width: 920px;
@@ -636,17 +648,17 @@ input, button, select, textarea { font-weight: 500; }
 </section>
 
 <section class="referral-summary" id="referral-summary" hidden>
-  <div class="referral-summary__head">今月の紹介（送客 / 受客）<span id="ref-month"></span></div>
+  <div class="referral-summary__head">今月の紹介 — 紹介料の対象（新規のみ・常連は対象外）<span id="ref-month"></span></div>
   <div class="referral-summary__cells">
     <div class="ref-cell">
-      <div class="ref-cell__label">送 客</div>
+      <div class="ref-cell__label">送客 対象</div>
       <span class="ref-cell__value" id="ref-sent">0</span>
-      <div class="ref-cell__sub" id="ref-sent-detail">他店へ紹介して来店</div>
+      <div class="ref-cell__sub" id="ref-sent-detail">他店へ送客</div>
     </div>
     <div class="ref-cell">
-      <div class="ref-cell__label">受 客</div>
+      <div class="ref-cell__label">受客 対象</div>
       <span class="ref-cell__value" id="ref-recv">0</span>
-      <div class="ref-cell__sub" id="ref-recv-detail">紹介を受けて来店</div>
+      <div class="ref-cell__sub" id="ref-recv-detail">紹介で来店</div>
     </div>
   </div>
 </section>
@@ -840,9 +852,18 @@ input, button, select, textarea { font-weight: 500; }
     var visitTag = (a.visitCount && a.visitCount > 0)
       ? '<span class="arr__visit-tag">当店 ' + a.visitCount + ' 回</span>'
       : '';
-    var refTag = a.referrerStoreName
-      ? '<span class="arr__ref-tag">紹介 ' + escapeHtml(a.referrerStoreName) + '</span>'
-      : '';
+    var refTag = '', refControl = '';
+    if (a.referrerStoreName) {
+      var feeLabel, feeCls;
+      if (a.feeExempt)          { feeLabel = '対象外'; feeCls = 'ref--exempt'; }
+      else if (a.isNewToStore)  { feeLabel = '新規';   feeCls = 'ref--new'; }
+      else                      { feeLabel = '再来';   feeCls = 'ref--repeat'; }
+      refTag = '<span class="arr__ref-tag ' + feeCls + '">紹介 ' + escapeHtml(a.referrerStoreName) + ' · ' + feeLabel + '</span>';
+      refControl = '<div class="arr__ref-ctrl">' +
+        '<button type="button" class="ref-toggle" data-fee-id="' + escapeHtml(a.id) + '" data-fee-exempt="' + (a.feeExempt ? '1' : '0') + '">' +
+          (a.feeExempt ? '紹介料の対象に戻す' : 'この方は常連（対象外）') +
+        '</button></div>';
+    }
     var trustTag = '';
     if (a.trustScore != null) {
       var filled = '★'.repeat(a.trustStars || 0);
@@ -893,6 +914,7 @@ input, button, select, textarea { font-weight: 500; }
             '<span>あと<strong>' + a.etaMinutes + '</strong> 分</span>' +
           '</div>' +
           (a.note ? '<div class="arr__note">' + escapeHtml(a.note) + '</div>' : '') +
+          refControl +
           statusTag +
         '</div>' +
         actions +
@@ -968,19 +990,27 @@ input, button, select, textarea { font-weight: 500; }
       if (!r.ok) return;
       var d = await r.json();
       var sec  = document.getElementById('referral-summary');
-      var sent = d.sent     || { total: 0, arrived: 0, byStore: [] };
-      var recv = d.received || { total: 0, arrived: 0, byStore: [] };
+      var sent = d.sent     || { total: 0, arrived: 0, chargeable: 0, byStore: [] };
+      var recv = d.received || { total: 0, arrived: 0, chargeable: 0, byStore: [] };
       document.getElementById('ref-month').textContent = ' ' + (d.month || '');
-      document.getElementById('ref-sent').textContent  = sent.arrived;
-      document.getElementById('ref-recv').textContent  = recv.arrived;
+      // 大きい数字 = 紹介料の対象 (新規かつ非対象外)
+      document.getElementById('ref-sent').textContent  = sent.chargeable;
+      document.getElementById('ref-recv').textContent  = recv.chargeable;
       function detail(s, fallback) {
-        if (!s.byStore || !s.byStore.length) return fallback;
-        return s.byStore.slice(0, 3).map(function (b) {
-          return escapeHtml(b.storeName) + ' ' + b.arrived;
-        }).join(' / ');
+        var lines = [];
+        if (s.byStore && s.byStore.length) {
+          lines.push(s.byStore.slice(0, 3).map(function (b) {
+            return escapeHtml(b.storeName) + ' ' + b.chargeable;
+          }).join(' / '));
+        } else {
+          lines.push(fallback);
+        }
+        var exempt = (s.arrived || 0) - (s.chargeable || 0);
+        lines.push('成立 ' + (s.arrived || 0) + '・対象外 ' + (exempt < 0 ? 0 : exempt));
+        return lines.join('｜');
       }
-      document.getElementById('ref-sent-detail').textContent = detail(sent, '他店へ紹介して来店');
-      document.getElementById('ref-recv-detail').textContent = detail(recv, '紹介を受けて来店');
+      document.getElementById('ref-sent-detail').innerHTML = detail(sent, '他店へ送客');
+      document.getElementById('ref-recv-detail').innerHTML = detail(recv, '紹介で来店');
       // まだ紹介が一件も無いうちは表示しない（画面をうるさくしない）
       sec.hidden = (sent.total === 0 && recv.total === 0);
     } catch (_) {}
@@ -1118,6 +1148,26 @@ input, button, select, textarea { font-weight: 500; }
 
   // アクション (来店確認/キャンセル)
   listEl.addEventListener('click', async function (e) {
+    // 紹介料 対象外トグル (常連の上書き)
+    var ftog = e.target.closest('.ref-toggle');
+    if (ftog) {
+      e.preventDefault();
+      var fid = ftog.dataset.feeId;
+      var cur = ftog.dataset.feeExempt === '1';
+      var ftoken = window.nakashinchiApi.getToken();
+      if (!fid || !ftoken) return;
+      ftog.disabled = true;
+      try {
+        await fetch(API + '/api/store/' + STORE_ID + '/arrivals/' + encodeURIComponent(fid), {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + ftoken },
+          body: JSON.stringify({ feeExempt: !cur })
+        });
+        await refresh(true);
+        refreshReferralSummary();
+      } catch (_) { ftog.disabled = false; }
+      return;
+    }
     var btn = e.target.closest('.arr-btn');
     if (!btn) return;
     var id = btn.dataset.id;
