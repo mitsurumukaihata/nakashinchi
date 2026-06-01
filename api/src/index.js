@@ -916,6 +916,34 @@ export default {
         }, 200, cors);
       }
 
+      // GET /api/customer/visits  ── 客自身の「行った店」(店ごとの来店回数・最終来店日)
+      //   来店確認(arrived)済みのみを集計
+      if (path === '/api/customer/visits' && request.method === 'GET') {
+        const authHeader = request.headers.get('Authorization') || '';
+        const token = authHeader.replace(/^Bearer\s+/i, '').trim();
+        const userId = await verifyCustomerToken(token, env.JWT_SECRET);
+        if (!userId) return json({ error: '認証されていません' }, 401, cors);
+        const rows = await env.DB.prepare(`
+          SELECT a.store_id,
+                 COUNT(*)           AS visit_count,
+                 MAX(a.arriving_at) AS last_arriving_at,
+                 MAX(a.updated_at)  AS last_updated_at,
+                 s.name             AS store_name
+            FROM arrivals a LEFT JOIN stores s ON s.id = a.store_id
+           WHERE a.customer_id = ? AND a.status = 'arrived'
+           GROUP BY a.store_id
+           ORDER BY last_updated_at DESC
+        `).bind(userId).all();
+        return json({
+          visits: (rows.results || []).map(r => ({
+            storeId:       r.store_id,
+            storeName:     r.store_name || r.store_id,
+            visitCount:    r.visit_count || 0,
+            lastVisitedAt: r.last_updated_at || r.last_arriving_at || null
+          }))
+        }, 200, cors);
+      }
+
       // ===== 通知購読 (店舗スタッフの自己登録) =====
 
       // POST /api/store/:storeId/notify-subscribers

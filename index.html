@@ -1099,6 +1099,24 @@ strong, b { font-weight: 700; }
 .fav-btn[data-active="true"]:hover { background: var(--color-accent-deep); }
 .fav-btn svg { width: 13px; height: 13px; }
 
+/* 来店済みバッジ (ログイン客のカード) */
+.visited-badge {
+  position: absolute;
+  left: 8px; bottom: 8px;
+  z-index: 3;
+  display: inline-flex; align-items: center;
+  font-size: 10px; font-weight: 700;
+  letter-spacing: 0.04em;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: rgba(31,34,51,0.82);
+  color: #fff;
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
+.visited-badge::before { content: '✓'; margin-right: 4px; font-size: 9px; }
+
 /* ============ お気に入りセクション ============ */
 .favs-section {
   background: var(--color-bg);
@@ -1536,7 +1554,7 @@ input, button, select, textarea { font-weight: 600; }
   <p style="margin-top:14px"><a href="login/" class="footer__login">店舗関係者 ログイン →</a></p>
   <p style="margin-top:18px">© 2026 nakashinchi</p>
   <p class="footer__version" id="footer-version">
-    <span data-build="v53">v53 · 2026-06-01 09:35</span>
+    <span data-build="v54">v54 · 2026-06-01 10:20</span>
     <span id="sw-version-tag"></span>
   </p>
 </footer>
@@ -2068,6 +2086,51 @@ input, button, select, textarea { font-weight: 600; }
     return a;
   }
 
+  // ===========================================
+  // 来店済み (行った店) — ログイン客のカードにバッジ表示
+  // ===========================================
+  var _visitedSet = {};   // storeId -> { count, last }
+  function applyVisitedBadges() {
+    var cards = [];
+    document.querySelectorAll('.store-card[data-store-id], .genre-card[data-store-id]').forEach(function (c) {
+      cards.push({ el: c, sid: c.getAttribute('data-store-id'), media: c.querySelector('.store-card__media, .genre-card__media') });
+    });
+    document.querySelectorAll('.fav-card[data-fav-card-for]').forEach(function (c) {
+      cards.push({ el: c, sid: c.getAttribute('data-fav-card-for'), media: c.querySelector('.fav-card__media') });
+    });
+    cards.forEach(function (o) {
+      if (!o.media) return;
+      var v = _visitedSet[o.sid];
+      var badge = o.media.querySelector('.visited-badge');
+      if (v) {
+        o.el.setAttribute('data-visited', 'true');
+        if (!badge) {
+          badge = document.createElement('span');
+          badge.className = 'visited-badge';
+          o.media.appendChild(badge);
+        }
+        badge.textContent = (v.count > 1) ? ('来店 ' + v.count + '回') : '来店済み';
+      } else {
+        o.el.removeAttribute('data-visited');
+        if (badge) badge.remove();
+      }
+    });
+  }
+  async function fetchVisits() {
+    var auth = window.nakashinchiLineAuth;
+    if (!auth || !auth.isLoggedIn() || !window.NAKASHINCHI_API) { _visitedSet = {}; applyVisitedBadges(); return; }
+    try {
+      var r = await fetch(window.NAKASHINCHI_API + '/api/customer/visits', {
+        headers: { 'Authorization': 'Bearer ' + auth.getToken() }
+      });
+      if (!r.ok) return;
+      var d = await r.json();
+      _visitedSet = {};
+      (d.visits || []).forEach(function (v) { _visitedSet[v.storeId] = { count: v.visitCount || 0, last: v.lastVisitedAt }; });
+      applyVisitedBadges();
+    } catch (_) {}
+  }
+
   // ジャンル棚 全部レンダリング
   var _rowMarqueeCancel = {};   // genre.id → cancel fn
   function renderGenreRows() {
@@ -2117,6 +2180,7 @@ input, button, select, textarea { font-weight: 600; }
         });
       } catch (_) {}
     }
+    applyVisitedBadges();
   }
 
   // 棚ごとのマルキー (scrollLeft 方式 = 自動送り + 手動スワイプ両立)
@@ -2728,6 +2792,7 @@ input, button, select, textarea { font-weight: 600; }
 
   waitAuth(function () {
     renderAuthPill();
+    fetchVisits();
     // 起動時にプロフィール最新化
     if (window.nakashinchiLineAuth.isLoggedIn()) {
       window.nakashinchiLineAuth.refreshCustomer().then(renderAuthPill);
@@ -2738,6 +2803,7 @@ input, button, select, textarea { font-weight: 600; }
   window.addEventListener('nakashinchi:login-resumed', function () {
     renderAuthPill();
     if (window.nakashinchiFavorites) window.nakashinchiFavorites.refresh();
+    fetchVisits();
     showPickupBanner('done');
   });
   window.addEventListener('nakashinchi:pickup-started', function () {
@@ -2933,6 +2999,7 @@ input, button, select, textarea { font-weight: 600; }
     }
     // 描画後にマルキー再構築
     initFavsMarquee();
+    applyVisitedBadges();
   }
 
   // ===========================================

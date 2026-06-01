@@ -181,6 +181,27 @@ body {
   line-height: 1.9;
 }
 
+.visits-card {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+.visits-list { display: flex; flex-direction: column; }
+.visit-row {
+  display: flex; align-items: center; gap: 10px;
+  padding: 13px 16px;
+  text-decoration: none; color: var(--paper);
+  border-bottom: 1px solid var(--paper-faint);
+}
+.visit-row:last-child { border-bottom: none; }
+.visit-row__name { font-weight: 700; font-size: 14px; flex: 1; min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.visit-row__name .ac { color: var(--accent); }
+.visit-row__meta { font-size: 11px; color: var(--paper-dim); letter-spacing: 0.04em; flex-shrink: 0; }
+.visit-row__arrow { color: var(--paper-dim); font-size: 16px; flex-shrink: 0; }
+.visits-empty { padding: 18px 16px; font-size: 12px; color: var(--paper-dim); line-height: 1.9; text-align: center; }
+
 .privacy-options {
   display: flex; flex-direction: column; gap: 10px;
   margin: 12px 0 14px;
@@ -346,6 +367,15 @@ input, button, select, textarea { font-weight: 500; }
       </div>
     </div>
 
+    <!-- 行った店 -->
+    <div class="section" id="visits-section" hidden>
+      <div class="section__num">V I S I T E D &nbsp; S T O R E S</div>
+      <div class="visits-card">
+        <div class="visits-list" id="visits-list"></div>
+        <p class="visits-empty" id="visits-empty" hidden>まだ来店の記録がありません。<br>お店で「来店確認」されると、ここに行った店が並びます。</p>
+      </div>
+    </div>
+
     <div class="section">
       <div class="section__num">P R I V A C Y</div>
       <div class="privacy-options" id="privacy-options" role="radiogroup">
@@ -446,6 +476,44 @@ input, button, select, textarea { font-weight: 500; }
     loginPrompt.hidden = true;
     loggedIn.hidden = false;
     loadScore();
+    loadVisits();
+  }
+
+  async function loadVisits() {
+    var auth = window.nakashinchiLineAuth;
+    if (!auth || !auth.isLoggedIn()) return;
+    try {
+      var r = await fetch(API + '/api/customer/visits', {
+        headers: { 'Authorization': 'Bearer ' + auth.getToken() }
+      });
+      if (!r.ok) return;
+      var d = await r.json();
+      var sec     = document.getElementById('visits-section');
+      var listEl  = document.getElementById('visits-list');
+      var emptyEl = document.getElementById('visits-empty');
+      sec.hidden = false;
+      var visits = d.visits || [];
+      var stores = window.NAKASHINCHI_STORES || [];
+      function findStore(id) { for (var i = 0; i < stores.length; i++) { if (stores[i].id === id) return stores[i]; } return null; }
+      function nameHtml(s, fallback) { if (!s) return escapeHtml(fallback || ''); if (s.id === 'asanoha') return '麻<span class="ac">ノ</span>葉'; return escapeHtml(s.short || s.name || fallback || ''); }
+      function fmtDate(iso) { if (!iso) return ''; var dd = new Date(iso); if (isNaN(dd.getTime())) return ''; return (dd.getMonth() + 1) + '/' + dd.getDate(); }
+      if (!visits.length) { listEl.innerHTML = ''; emptyEl.hidden = false; return; }
+      emptyEl.hidden = true;
+      listEl.innerHTML = visits.map(function (v) {
+        var s = findStore(v.storeId);
+        var href = (s && s.heroUrl) ? ('../' + s.heroUrl) : '#';
+        var last = fmtDate(v.lastVisitedAt);
+        return '<a class="visit-row" href="' + href + '">' +
+          '<span class="visit-row__name">' + nameHtml(s, v.storeName) + '</span>' +
+          '<span class="visit-row__meta">' + (v.visitCount || 0) + '回' + (last ? ' · 前回 ' + last : '') + '</span>' +
+          '<span class="visit-row__arrow">›</span>' +
+        '</a>';
+      }).join('');
+    } catch (_) {}
+  }
+
+  function escapeHtml(s) {
+    return String(s == null ? '' : s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
   }
 
   async function loadScore() {
